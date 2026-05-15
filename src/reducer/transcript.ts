@@ -189,8 +189,68 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
         }),
       );
 
-    default:
-      return { ...prev, lastEventAt: event.at };
+    case 'web_search_call':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.callId,
+          kind: 'search',
+          status: 'pending',
+          startedAt: event.at,
+          updatedAt: event.at,
+          query: event.query,
+        }),
+      );
+
+    case 'web_search_end':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        updateItem(t, event.callId, (it) => {
+          if (it.kind !== 'search') return it;
+          return { ...it, status: 'completed', updatedAt: event.at, results: event.results };
+        }),
+      );
+
+    case 'patch_apply_end':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.callId,
+          kind: 'patch',
+          status: event.ok ? 'completed' : 'failed',
+          startedAt: event.at,
+          updatedAt: event.at,
+          files: event.files,
+          ok: event.ok,
+        }),
+      );
+
+    case 'raw': {
+      if (!event.turnId) return { ...prev, lastEventAt: event.at };
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.itemId ?? `raw-${t.items.length}`,
+          kind: 'raw',
+          status: 'completed',
+          startedAt: event.at,
+          updatedAt: event.at,
+          payload: event.payload,
+        }),
+      );
+    }
+
+    default: {
+      const e = event as { turnId?: string; at?: number; type?: string; [k: string]: unknown };
+      const at = typeof e.at === 'number' ? e.at : prev.lastEventAt;
+      if (!e.turnId) return { ...prev, lastEventAt: at };
+      return withinTurn(prev, e.turnId, at, (t) =>
+        appendItem(t, {
+          id: `raw-${t.items.length}`,
+          kind: 'raw',
+          status: 'completed',
+          startedAt: at,
+          updatedAt: at,
+          payload: e,
+        }),
+      );
+    }
   }
 }
 

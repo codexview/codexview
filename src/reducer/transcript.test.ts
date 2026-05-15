@@ -160,3 +160,42 @@ describe('reduceTranscript / tool calls and exec', () => {
     expect(m.turns[0]?.items).toHaveLength(0);
   });
 });
+
+describe('reduceTranscript / search, patch, raw', () => {
+  const start = () => reduceTranscript(EMPTY_MODEL, { type: 'turn_started', turnId: 'tn-1', at: 100 });
+
+  it('web_search_call then web_search_end completes', () => {
+    let m = reduceTranscript(start(), { type: 'web_search_call', turnId: 'tn-1', callId: 's1', query: 'ts', at: 110 });
+    m = reduceTranscript(m, { type: 'web_search_end', turnId: 'tn-1', callId: 's1', results: [{ title: 'T', url: 'https://x' }], at: 120 });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'search', status: 'completed', results: [{ title: 'T', url: 'https://x' }] });
+  });
+
+  it('patch_apply_end ok=true => completed; ok=false => failed', () => {
+    const ok = reduceTranscript(start(), {
+      type: 'patch_apply_end', turnId: 'tn-1', callId: 'p1', files: [{ path: 'a.ts', status: 'modified' }], ok: true, at: 110,
+    });
+    expect(ok.turns[0]?.items[0]).toMatchObject({ kind: 'patch', status: 'completed', ok: true });
+
+    const fail = reduceTranscript(start(), {
+      type: 'patch_apply_end', turnId: 'tn-1', callId: 'p2', files: [], ok: false, at: 110,
+    });
+    expect(fail.turns[0]?.items[0]).toMatchObject({ kind: 'patch', status: 'failed', ok: false });
+  });
+
+  it('raw event is appended as kind=raw with payload preserved', () => {
+    const m = reduceTranscript(start(), { type: 'raw', turnId: 'tn-1', payload: { foo: 1 }, at: 110 });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'raw', payload: { foo: 1 }, status: 'completed' });
+  });
+
+  it('raw event with no turnId is dropped silently (lastEventAt still updates)', () => {
+    const m = reduceTranscript(EMPTY_MODEL, { type: 'raw', payload: { lone: true }, at: 50 });
+    expect(m.turns).toEqual([]);
+    expect(m.lastEventAt).toBe(50);
+  });
+
+  it('unknown event-shaped object is treated as raw via TS escape hatch', () => {
+    const unknownEvent = { type: 'foobar', turnId: 'tn-1', at: 110, payload: 1 } as unknown as Parameters<typeof reduceTranscript>[1];
+    const m = reduceTranscript(start(), unknownEvent);
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'raw' });
+  });
+});
