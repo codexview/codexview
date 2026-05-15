@@ -774,6 +774,10 @@ function adaptClaudeCode(lines) {
           pending.delete(callId);
           continue;
         }
+        if (p?.kind === 'todo') {
+          pending.delete(callId);
+          continue;
+        }
         // other kinds handled in later tasks
       }
       continue;
@@ -827,6 +831,21 @@ function adaptClaudeCode(lines) {
               turnId: currentTurnId,
               callId,
               command: String(input.command || ''),
+              at,
+            });
+            return;
+          }
+          if (name === 'TodoWrite') {
+            pending.set(callId, { kind: 'todo' });
+            const todos = Array.isArray(input.todos) ? input.todos : [];
+            out.push({
+              type: 'todo_list',
+              turnId: currentTurnId,
+              itemId: callId,
+              items: todos.map((t) => ({
+                text: String(t?.content || ''),
+                completed: t?.status === 'completed',
+              })),
               at,
             });
             return;

@@ -287,3 +287,52 @@ describe('adaptClaudeCode · Bash tool', () => {
     expect(end).toMatchObject({ exit: 1, stdout: '', stderr: 'oh no' });
   });
 });
+
+describe('adaptClaudeCode · TodoWrite', () => {
+  it('emits a todo_list with completed=true only for status==="completed"', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'plan it' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'TodoWrite', input: { todos: [
+            { content: 'A', status: 'completed', activeForm: 'Doing A' },
+            { content: 'B', status: 'in_progress', activeForm: 'Doing B' },
+            { content: 'C', status: 'pending', activeForm: 'Doing C' },
+          ] } },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const td = events.find((e) => e.type === 'todo_list');
+    expect(td).toMatchObject({
+      itemId: 'tu-1',
+      turnId: 'u-1',
+      items: [
+        { text: 'A', completed: true },
+        { text: 'B', completed: false },
+        { text: 'C', completed: false },
+      ],
+    });
+  });
+
+  it('drops the matching tool_result ack (no extra events)', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'TodoWrite', input: { todos: [] } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'ok', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    // 1 thread_started + 1 turn_started + 1 user_message + 1 todo_list + 1 turn_completed = 5
+    expect(events).toHaveLength(5);
+  });
+});
