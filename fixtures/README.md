@@ -19,3 +19,23 @@ Each line is one event. To produce a new fixture from a real Codex session:
 - `failed-turn.jsonl` — turn ends in failure
 - `aborted-turn.jsonl` — user aborts mid-turn
 - `unknown-types.jsonl` — intentionally injects an unknown event type for the raw fallback
+
+## Claude Code raw fixtures (`claude-code/`)
+
+The files in `fixtures/claude-code/` are **raw Claude Code session JSONL** —
+each line is exactly the shape Claude Code writes to
+`~/.claude/projects/<repo>/<sessionId>.jsonl`. They are NOT
+`ChatStreamEvent` and are NOT consumed by `loadFixture.ts`. They feed
+`playground/adapter.claude-code.test.mjs` and the playground SPA.
+
+Anonymization rules:
+- Usernames in absolute paths → `<user>`
+- Third-party hostnames (except anthropic.com, codexview.*, github.com, react.dev, openai.com) → `example.com`
+- Email addresses → `user@example.com`
+- API tokens / Bearer keys / `sk-…` / `npm_…` → `<redacted>`
+- `sessionId`/`uuid`/`parentUuid` are kept (already random)
+
+Inventory:
+- `short.jsonl` — single turn: 1 user message + 2 Bash tool calls + 1 assistant text reply
+- `tool-heavy.jsonl` — multi-turn: Bash/Edit/TodoWrite/mcp_tool (Claude-in-Chrome)/ToolSearch/AskUserQuestion
+- `thinking-mixed.jsonl` — plaintext thinking + empty (encrypted) thinking blocks, plus Bash + mcp tool call
