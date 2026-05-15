@@ -746,6 +746,11 @@ function adaptClaudeCode(lines) {
 
     if (line.type === 'assistant' && line.message) {
       if (!currentTurnId) continue;
+      const usage = line.message.usage;
+      if (usage && turnUsage) {
+        if (typeof usage.input_tokens === 'number') turnUsage.lastInput = usage.input_tokens;
+        if (typeof usage.output_tokens === 'number') turnUsage.sumOutput = (turnUsage.sumOutput || 0) + usage.output_tokens;
+      }
       const content = line.message.content;
       if (!Array.isArray(content)) continue;
       const asstUuid = String(line.uuid || `cc-a-${out.length}`);

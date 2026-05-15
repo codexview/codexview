@@ -221,3 +221,24 @@ describe('adaptClaudeCode · thinking', () => {
     expect(events.some((e) => e.type === 'reasoning')).toBe(false);
   });
 });
+
+describe('adaptClaudeCode · usage', () => {
+  it('attaches summed output_tokens and last input_tokens to turn_completed', () => {
+    const mkA = (uuid, input, output) => ({
+      type: 'assistant', uuid, sessionId: 'sess', parentUuid: null,
+      timestamp: '2026-05-15T00:00:01Z',
+      message: { role: 'assistant', content: [{ type: 'text', text: 'x' }],
+        usage: { input_tokens: input, output_tokens: output } },
+    });
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'go' } },
+      mkA('a-1', 100, 50),
+      mkA('a-2', 200, 30),
+      mkA('a-3', 250, 20),
+    ];
+    const { events } = adapt(lines);
+    const done = events.find((e) => e.type === 'turn_completed');
+    expect(done.usage).toEqual({ inputTokens: 250, outputTokens: 100 });
+  });
+});
