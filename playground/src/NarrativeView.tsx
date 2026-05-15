@@ -45,7 +45,6 @@ function renderTurn(turn: TurnView, turnIndex: number): JSX.Element[] {
     const key = `${turn.turnId}-${i}`;
     if (g.kind === 'message') return <MessageRow key={key} item={g.item} />;
     if (g.kind === 'reasoning') return <ReasoningRow key={key} item={g.item} />;
-    if (g.kind === 'todo_list') return <TodoRow key={key} item={g.item} />;
     if (g.kind === 'error') return <ErrorRow key={key} item={g.item} />;
     if (g.kind === 'tools') return <ToolGroupRow key={key} items={g.items} />;
     return null as never;
@@ -55,7 +54,6 @@ function renderTurn(turn: TurnView, turnIndex: number): JSX.Element[] {
 type Group =
   | { kind: 'message'; item: Extract<ItemView, { kind: 'user_message' | 'assistant_text' }> }
   | { kind: 'reasoning'; item: Extract<ItemView, { kind: 'reasoning' }> }
-  | { kind: 'todo_list'; item: Extract<ItemView, { kind: 'todo_list' }> }
   | { kind: 'error'; item: Extract<ItemView, { kind: 'error' }> }
   | { kind: 'tools'; items: ItemView[] };
 
@@ -70,15 +68,13 @@ function groupItems(items: ItemView[]): Group[] {
       groups.push({ kind: 'reasoning', item });
       continue;
     }
-    if (item.kind === 'todo_list') {
-      groups.push({ kind: 'todo_list', item });
-      continue;
-    }
     if (item.kind === 'error') {
       groups.push({ kind: 'error', item });
       continue;
     }
-    // tool-ish: collapse consecutive into one group
+    // tool-ish (incl. todo_list): collapse consecutive into one disclosure group.
+    // Mirrors Claude Code's "Updated todos, ran 16 commands >" pattern where
+    // adjacent tool activity is summarised on a single expandable line.
     const last = groups[groups.length - 1];
     if (last && last.kind === 'tools') last.items.push(item);
     else groups.push({ kind: 'tools', items: [item] });
@@ -95,30 +91,6 @@ function MessageRow({ item }: { item: Extract<ItemView, { kind: 'user_message' |
         {/* User input is plain text — render as-is. Assistant output is Markdown. */}
         <Markdown asPlain={isUser}>{item.text}</Markdown>
       </div>
-    </div>
-  );
-}
-
-function TodoRow({ item }: { item: Extract<ItemView, { kind: 'todo_list' }> }): JSX.Element {
-  const [open, setOpen] = useState(true);
-  const total = item.items.length;
-  const done = item.items.filter((e) => e.completed).length;
-  return (
-    <div style={s.todoBlock}>
-      <button type="button" onClick={() => setOpen(!open)} style={s.disclosureRow}>
-        <span style={s.disclosureChevron}>{open ? '▾' : '›'}</span>
-        <span style={s.summary}>📋 计划 ({done}/{total})</span>
-      </button>
-      {open && (
-        <ul style={s.todoList}>
-          {item.items.map((entry, i) => (
-            <li key={i} style={{ ...s.todoEntry, ...(entry.completed ? s.todoDone : null) }}>
-              <span style={s.todoCheck} aria-hidden>{entry.completed ? '☑' : '☐'}</span>
-              <span>{entry.text}</span>
-            </li>
-          ))}
-        </ul>
-      )}
     </div>
   );
 }
@@ -188,10 +160,18 @@ function verbBucket(it: ItemView): string {
     case 'exec': return 'exec';
     case 'tool_call': return `tool:${it.name}`;
     case 'search': return 'search';
-    case 'patch': return 'patch';
+    case 'patch':
+      // Split patch into add/edit so the phrasing matches the action.
+      return it.files.every((f) => f.status === 'added') ? 'patch-add' : 'patch-edit';
+    case 'todo_list': return 'todo';
     case 'raw': return 'raw';
     default: return 'misc';
   }
+}
+
+function basename(path: string): string {
+  const idx = Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\'));
+  return idx >= 0 ? path.slice(idx + 1) : path;
 }
 
 function exampleLabel(it: ItemView): string | undefined {
@@ -200,30 +180,110 @@ function exampleLabel(it: ItemView): string | undefined {
     const first = it.command.trim().split(/\s+/)[0] ?? '';
     return first.length > 0 ? first.slice(0, 32) : undefined;
   }
-  if (it.kind === 'tool_call') return it.name;
-  if (it.kind === 'search') return undefined;
-  if (it.kind === 'patch') return undefined;
+  if (it.kind === 'tool_call') {
+    // Pull the most identifying argument so the summary line tells you WHAT
+    // happened, not just WHICH tool. Mirrors Claude Code's "Read foo.md" /
+    // "Ran skill /superpowers:brainstorming" style summaries.
+    const args = (it.args && typeof it.args === 'object') ? (it.args as Record<string, unknown>) : {};
+    const s = (k: string): string => (typeof args[k] === 'string' ? args[k] as string : '');
+    switch (it.name) {
+      case 'Read':
+      case 'NotebookEdit':
+        return s('file_path') ? basename(s('file_path')) : undefined;
+      case 'Skill':
+        return s('skill') || undefined;
+      case 'Glob':
+        return s('pattern').slice(0, 40) || undefined;
+      case 'Grep':
+        return s('pattern').slice(0, 40) || undefined;
+      case 'WebSearch':
+        return s('query').slice(0, 40) || undefined;
+      case 'WebFetch': {
+        const url = s('url');
+        try { return url ? new URL(url).hostname : undefined; } catch { return undefined; }
+      }
+      case 'Task':
+      case 'Agent':
+        return s('description') || s('subagent_type') || undefined;
+      case 'ToolSearch':
+        return s('query').slice(0, 40) || undefined;
+      default:
+        return undefined;
+    }
+  }
+  if (it.kind === 'search') return it.query.slice(0, 40) || undefined;
+  if (it.kind === 'patch') {
+    // Single-file patches → show the filename. Multi-file → count-only phrase.
+    if (it.files.length === 1 && it.files[0]) return basename(it.files[0].path);
+    return undefined;
+  }
+  if (it.kind === 'todo_list') {
+    const done = it.items.filter((e) => e.completed).length;
+    return `${done}/${it.items.length}`;
+  }
   return undefined;
 }
 
 function formatPhrase(verb: string, count: number, example?: string): string {
   if (verb === 'exec') {
-    return count === 1 ? `执行了命令` : `执行了 ${count} 个命令`;
+    if (example && count === 1) return `执行了 \`${example}\``;
+    return count === 1 ? `执行了一个命令` : `执行了 ${count} 个命令`;
   }
-  if (verb.startsWith('tool:')) {
-    const name = verb.slice('tool:'.length);
-    return count === 1 ? `调用了 ${name}` : `调用了 ${name} ${count} 次`;
+  if (verb === 'patch-add') {
+    if (example && count === 1) return `新建 ${example}`;
+    return count === 1 ? `新建了一个文件` : `新建了 ${count} 个文件`;
+  }
+  if (verb === 'patch-edit') {
+    if (example && count === 1) return `编辑 ${example}`;
+    return count === 1 ? `编辑了一个文件` : `编辑了 ${count} 个文件`;
+  }
+  if (verb === 'todo') {
+    if (example && count === 1) return `更新计划 (${example})`;
+    return count === 1 ? `更新计划` : `更新计划 ${count} 次`;
   }
   if (verb === 'search') {
+    if (example && count === 1) return `搜索 "${example}"`;
     return count === 1 ? `做了一次网页搜索` : `做了 ${count} 次网页搜索`;
   }
-  if (verb === 'patch') {
-    return count === 1 ? `应用了一次代码修改` : `应用了 ${count} 次代码修改`;
+  if (verb.startsWith('tool:')) {
+    return formatToolPhrase(verb.slice('tool:'.length), count, example);
   }
   if (verb === 'raw') {
     return count === 1 ? `1 个未识别事件` : `${count} 个未识别事件`;
   }
   return verb;
+}
+
+function formatToolPhrase(name: string, count: number, example?: string): string {
+  if (name === 'Read' && example) {
+    return count === 1 ? `读 ${example}` : `读了 ${count} 个文件`;
+  }
+  if (name === 'NotebookEdit' && example) {
+    return count === 1 ? `编辑 notebook ${example}` : `编辑了 ${count} 个 notebook`;
+  }
+  if (name === 'Glob' && example) {
+    return count === 1 ? `匹配 \`${example}\`` : `匹配 ${count} 次`;
+  }
+  if (name === 'Grep' && example) {
+    return count === 1 ? `grep \`${example}\`` : `grep ${count} 次`;
+  }
+  if (name === 'WebSearch' && example) {
+    return count === 1 ? `搜索 "${example}"` : `搜索 ${count} 次`;
+  }
+  if (name === 'WebFetch' && example) {
+    return count === 1 ? `抓取 ${example}` : `抓取 ${count} 个 URL`;
+  }
+  if (name === 'Skill' && example) {
+    return count === 1 ? `调用 skill ${example}` : `调用了 ${count} 次 skill`;
+  }
+  if ((name === 'Task' || name === 'Agent') && example) {
+    return count === 1 ? `派 subagent (${example})` : `派了 ${count} 个 subagent`;
+  }
+  if (name === 'ToolSearch' && example) {
+    return count === 1 ? `查工具 "${example}"` : `查了 ${count} 次工具`;
+  }
+  // Fallback for unknown / argument-less tool calls.
+  return count === 1 ? `调用了 ${name}` : `调用了 ${name} ${count} 次`;
 }
 
 function joinChinese(parts: string[]): string {
@@ -294,6 +354,25 @@ function renderDetail(it: ItemView, key: string): JSX.Element {
           </ul>
         </div>
       );
+    case 'todo_list': {
+      const done = it.items.filter((e) => e.completed).length;
+      return (
+        <div key={key} style={s.detail}>
+          <div style={s.detailHead}>
+            <span style={s.dotStatus} data-cv-narrative-status={it.status} />
+            <span>📋 计划 ({done}/{it.items.length})</span>
+          </div>
+          <ul style={s.todoList}>
+            {it.items.map((entry, i) => (
+              <li key={i} style={{ ...s.todoEntry, ...(entry.completed ? s.todoDone : null) }}>
+                <span style={s.todoCheck} aria-hidden>{entry.completed ? '☑' : '☐'}</span>
+                <span>{entry.text}</span>
+              </li>
+            ))}
+          </ul>
+        </div>
+      );
+    }
     case 'raw':
       return (
         <div key={key} style={s.detail}>
