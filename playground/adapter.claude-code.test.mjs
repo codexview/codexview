@@ -191,3 +191,33 @@ describe('adaptClaudeCode · assistant text', () => {
     expect(events.some((e) => e.type === 'agent_message')).toBe(false);
   });
 });
+
+describe('adaptClaudeCode · thinking', () => {
+  it('emits reasoning for non-empty thinking', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant',
+          content: [{ type: 'thinking', thinking: 'pondering...', signature: 'sig' }] } },
+    ];
+    const { events } = adapt(lines);
+    const reasoning = events.filter((e) => e.type === 'reasoning');
+    expect(reasoning).toHaveLength(1);
+    expect(reasoning[0]).toMatchObject({ text: 'pondering...', itemId: 'a-1:0', partial: false });
+  });
+
+  it('drops thinking blocks whose .thinking is an empty string (encrypted)', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant',
+          content: [{ type: 'thinking', thinking: '', signature: 'sig' }] } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.some((e) => e.type === 'reasoning')).toBe(false);
+  });
+});

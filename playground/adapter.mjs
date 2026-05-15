@@ -763,7 +763,19 @@ function adaptClaudeCode(lines) {
             at,
           });
         }
-        // thinking & tool_use handled in later tasks
+        if (c.type === 'thinking') {
+          const text = typeof c.thinking === 'string' ? c.thinking : '';
+          if (!text) return; // encrypted/empty — drop
+          out.push({
+            type: 'reasoning',
+            turnId: currentTurnId,
+            itemId,
+            text,
+            partial: false,
+            at,
+          });
+        }
+        // tool_use handled in later tasks
       });
       continue;
     }
