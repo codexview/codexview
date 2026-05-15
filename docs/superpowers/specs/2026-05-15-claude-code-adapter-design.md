@@ -230,11 +230,15 @@ function isAllowed(path) {
 const detectFormat = (lines) => {
   for (const line of lines) {
     if (line && typeof line === 'object') {
-      // Claude Code 特征：含 sessionId + parentUuid + type='user'/'assistant'/'attachment'/...
-      if ('sessionId' in line && 'parentUuid' in line && 'uuid' in line) return 'claude-code';
-      // Codex rollout 特征：含 timestamp + type + payload
+      // Claude Code: every line carries `sessionId` (queue-operation, system,
+      // last-prompt, user, assistant, attachment, …). Codex rollout and
+      // codex-team logs do not. Tested against multiple real Claude Code
+      // sessions including ones whose first lines are queue-operation rows
+      // that lack uuid/parentUuid.
+      if ('sessionId' in line) return 'claude-code';
+      // Codex rollout: top-level { type, payload, timestamp }
       if ('type' in line && ('payload' in line || 'timestamp' in line)) return 'rollout';
-      // AgentWeb codex-team 特征：含 at + event
+      // AgentWeb codex-team status log: { event, at, status, payload }
       if ('event' in line && 'at' in line) return 'codex-team';
     }
   }
@@ -356,15 +360,15 @@ reducer 与组件错误边界（既有 `ItemErrorBoundary`）已覆盖渲染期�
 
 ## 10. 验收标准
 
-- [ ] `adapter.claude-code.test.mjs` 全部 case 通过
-- [ ] `pnpm test` 全绿（既有测试不受影响）
-- [ ] `pnpm typecheck` 通过
-- [ ] `pnpm playground` 启动后，文件列表能看到本机 `~/.claude/projects/` 下最近 100 个会话
-- [ ] 来源 chip 视觉可识别（claude-code / codex-cli 颜色不同）
-- [ ] 至少 5 个真实 Claude Code 会话能正确渲染（含 Bash / Edit / TodoWrite / mcp 工具）
-- [ ] subagents/ 子目录不出现在列表里
-- [ ] 加密 thinking 不显示乱码
-- [ ] adapter 不抛错（在 ≥20 个真实会话上 smoke 通过）
+- [x] `adapter.claude-code.test.mjs` 全部 case 通过
+- [x] `pnpm test` 全绿（既有测试不受影响）
+- [x] `pnpm typecheck` 通过
+- [x] `pnpm playground` 启动后，文件列表能看到本机 `~/.claude/projects/` 下最近 100 个会话
+- [x] 来源 chip 视觉可识别（claude-code / codex-cli 颜色不同）
+- [x] 至少 5 个真实 Claude Code 会话能正确渲染（含 Bash / Edit / TodoWrite / mcp 工具）
+- [x] subagents/ 子目录不出现在列表里
+- [x] 加密 thinking 不显示乱码
+- [x] adapter 不抛错（在 ≥20 个真实会话上 smoke 通过）
 
 ## 11. 开放问题与决策日志
 

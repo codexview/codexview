@@ -17,6 +17,7 @@ import { adapt, parseJsonl } from './adapter.mjs';
 const HOME = homedir();
 const ROLLOUT_ROOT = join(HOME, '.codex/sessions');
 const TEAM_ROOT = join(HOME, 'Projects/agentweb/.codex-team/runs');
+const CLAUDE_ROOT = join(HOME, '.claude/projects');
 
 let CACHE = { stamp: 0, files: [] };
 const CACHE_TTL_MS = 30_000;
@@ -226,6 +227,34 @@ function listFiles() {
     }
   } catch { /* not on this machine */ }
 
+  // Claude Code session JSONL (main session only; subagents/ excluded by maxdepth + path filter)
+  try {
+    const stdout = execFileSync(
+      'find',
+      [CLAUDE_ROOT, '-maxdepth', '2', '-name', '*.jsonl', '-type', 'f'],
+      { encoding: 'utf8', maxBuffer: 8 * 1024 * 1024 },
+    );
+    for (const path of stdout.split('\n').filter(Boolean)) {
+      if (path.includes('/subagents/')) continue;
+      try {
+        const st = statSync(path);
+        const segments = path.split('/');
+        const filename = segments[segments.length - 1] || '';
+        const parentDir = segments[segments.length - 2] || '';
+        // e.g. "a7d93eaf · projects-CodexView"
+        const sessionPrefix = filename.replace(/\.jsonl$/, '').slice(0, 8);
+        const projectTail = parentDir.replace(/^-+/, '').slice(-30);
+        out.push({
+          path,
+          source: 'claude-code',
+          name: `${sessionPrefix} · ${projectTail}`,
+          mtime: Math.floor(st.mtimeMs),
+          sizeKB: Math.round(st.size / 102.4) / 10,
+        });
+      } catch { /* skip unreadable */ }
+    }
+  } catch { /* CLAUDE_ROOT absent — fine */ }
+
   // Sort newest first, cap at 100
   out.sort((a, b) => b.mtime - a.mtime);
   const limited = out.slice(0, 100).map((f) => ({
@@ -259,7 +288,11 @@ function decodeId(id) {
 }
 
 function isAllowed(path) {
-  return path && (path.startsWith(ROLLOUT_ROOT) || path.startsWith(TEAM_ROOT));
+  return path && (
+    path.startsWith(ROLLOUT_ROOT) ||
+    path.startsWith(TEAM_ROOT) ||
+    path.startsWith(CLAUDE_ROOT)
+  );
 }
 
 function sendJson(res, status, body) {

@@ -41,7 +41,12 @@ const extractContentText = (content) => {
 const detectFormat = (lines) => {
   for (const line of lines) {
     if (line && typeof line === 'object') {
+      // Claude Code: every line carries `sessionId` (queue-operation, system, last-prompt,
+      // user, assistant, attachment, ...). Codex rollout and codex-team logs do not.
+      if ('sessionId' in line) return 'claude-code';
+      // Codex rollout
       if ('type' in line && ('payload' in line || 'timestamp' in line)) return 'rollout';
+      // AgentWeb codex-team status log
       if ('event' in line && 'at' in line) return 'codex-team';
     }
   }
@@ -661,7 +666,311 @@ export function parseJsonl(text) {
 
 export function adapt(rawLines) {
   const fmt = detectFormat(rawLines);
-  if (fmt === 'rollout') return { format: 'rollout', events: adaptRollout(rawLines) };
-  if (fmt === 'codex-team') return { format: 'codex-team', events: adaptCodexTeam(rawLines) };
+  if (fmt === 'rollout')     return { format: 'rollout',     events: adaptRollout(rawLines) };
+  if (fmt === 'codex-team')  return { format: 'codex-team',  events: adaptCodexTeam(rawLines) };
+  if (fmt === 'claude-code') return { format: 'claude-code', events: adaptClaudeCode(rawLines) };
   return { format: 'unknown', events: rawLines.map((p, i) => ({ type: 'raw', payload: p, at: Date.now() + i })) };
+}
+
+const ccPrefixLines = (text, prefix) => {
+  if (!text) return '';
+  return text.split('\n').map((line) => `${prefix}${line}`).join('\n');
+};
+
+const ccEditDiff = (oldStr, newStr) =>
+  `${ccPrefixLines(oldStr, '- ')}\n${ccPrefixLines(newStr, '+ ')}`;
+
+const ccWriteDiff = (content) => ccPrefixLines(content, '+ ');
+
+const ccMultiEditDiff = (edits) =>
+  edits.map((e) => `${ccPrefixLines(String(e?.old_string || ''), '- ')}\n${ccPrefixLines(String(e?.new_string || ''), '+ ')}`).join('\n\n');
+
+function adaptClaudeCode(lines) {
+  const out = [];
+  let threadStarted = false;
+  const skipTypes = new Set(['attachment', 'system', 'last-prompt', 'queue-operation']);
+
+  let currentTurnId = null;
+  let turnUsage = null; // { lastInput, sumOutput }
+  // In-flight tool calls keyed by tool_use.id. Drained when the matching
+  // tool_result arrives so we know the final ok/error state. Entries that
+  // survive EOF are intentionally not back-emitted — the reducer's
+  // turn_completed handler flips them to 'completed' anyway.
+  const pending = new Map();
+
+  const closeTurn = (at) => {
+    if (!currentTurnId) return;
+    const evt = { type: 'turn_completed', turnId: currentTurnId, at };
+    if (turnUsage) {
+      evt.usage = {
+        inputTokens: turnUsage.lastInput || 0,
+        outputTokens: turnUsage.sumOutput || 0,
+      };
+    }
+    out.push(evt);
+    currentTurnId = null;
+    turnUsage = null;
+  };
+
+  const isTextUser = (msg) => {
+    const content = msg?.content;
+    if (typeof content === 'string') return true;
+    if (!Array.isArray(content) || content.length === 0) return false;
+    return content.every((c) => c && c.type === 'text');
+  };
+
+  const toolResultText = (item) => {
+    const c = item?.content;
+    if (typeof c === 'string') return c;
+    if (Array.isArray(c)) {
+      return c.map((p) => (typeof p === 'string' ? p : (p && typeof p === 'object' && typeof p.text === 'string') ? p.text : JSON.stringify(p))).join('\n');
+    }
+    if (c == null) return '';
+    return JSON.stringify(c);
+  };
+
+  for (const line of lines) {
+    if (!line || typeof line !== 'object') continue;
+    if (line.isSidechain === true) continue;
+
+    const at = epoch(line.timestamp);
+
+    if (!threadStarted && typeof line.sessionId === 'string' && line.sessionId.length > 0) {
+      out.push({ type: 'thread_started', threadId: line.sessionId, at });
+      threadStarted = true;
+    }
+
+    // Filter runs AFTER the thread_started block: attachment-first or
+    // queue-operation-first sessions must still open a thread from their
+    // sessionId before being silently dropped from event emission.
+    if (skipTypes.has(line.type)) continue;
+
+    if (line.type === 'user' && line.message) {
+      if (isTextUser(line.message)) {
+        closeTurn(at);
+        currentTurnId = String(line.uuid || `cc-turn-${out.length}`);
+        turnUsage = { lastInput: 0, sumOutput: 0 };
+        out.push({ type: 'turn_started', turnId: currentTurnId, at });
+
+        const content = line.message.content;
+        if (typeof content === 'string') {
+          out.push({
+            type: 'user_message', turnId: currentTurnId, itemId: currentTurnId, text: content, at,
+          });
+        } else {
+          content.forEach((c, idx) => {
+            out.push({
+              type: 'user_message',
+              turnId: currentTurnId,
+              itemId: `${currentTurnId}:${idx}`,
+              text: String(c.text || ''),
+              at,
+            });
+          });
+        }
+        continue;
+      }
+      if (!currentTurnId) continue;
+      const content = line.message.content;
+      if (!Array.isArray(content)) continue;
+      for (const item of content) {
+        if (!item || item.type !== 'tool_result') continue;
+        const callId = String(item.tool_use_id || `cc-tr-${out.length}`);
+        const isError = item.is_error === true;
+        const text = toolResultText(item);
+        const p = pending.get(callId);
+
+        if (p?.kind === 'exec') {
+          out.push({
+            type: 'exec_command_end',
+            turnId: currentTurnId,
+            callId,
+            exit: isError ? 1 : 0,
+            stdout: isError ? '' : text,
+            stderr: isError ? text : '',
+            durationMs: 0,
+            at,
+          });
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'todo') {
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'patch') {
+          out.push({
+            type: 'patch_apply_end',
+            turnId: currentTurnId,
+            callId,
+            files: p.files,
+            ok: !isError,
+            at,
+          });
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'mcp') {
+          const evt = { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, at };
+          if (isError) evt.error = text; else evt.output = text;
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'function') {
+          const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
+          if (isError) evt.error = text; else evt.output = text;
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
+        // Unknown / orphan tool_result with no matching tool_use — surface as a function_call_output
+        // so the user can at least see it in the transcript.
+        const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
+        if (isError) evt.error = text; else evt.output = text;
+        out.push(evt);
+      }
+      continue;
+    }
+
+    if (line.type === 'assistant' && line.message) {
+      if (!currentTurnId) continue;
+      const usage = line.message.usage;
+      if (usage && turnUsage) {
+        if (typeof usage.input_tokens === 'number') turnUsage.lastInput = usage.input_tokens;
+        if (typeof usage.output_tokens === 'number') turnUsage.sumOutput = (turnUsage.sumOutput || 0) + usage.output_tokens;
+      }
+      const content = line.message.content;
+      if (!Array.isArray(content)) continue;
+      const asstUuid = String(line.uuid || `cc-a-${out.length}`);
+
+      content.forEach((c, idx) => {
+        if (!c || typeof c !== 'object') return;
+        const itemId = `${asstUuid}:${idx}`;
+        if (c.type === 'text') {
+          out.push({
+            type: 'agent_message',
+            turnId: currentTurnId,
+            itemId,
+            text: String(c.text || ''),
+            partial: false,
+            at,
+          });
+        }
+        if (c.type === 'thinking') {
+          const text = typeof c.thinking === 'string' ? c.thinking : '';
+          if (!text) return; // encrypted/empty — drop
+          out.push({
+            type: 'reasoning',
+            turnId: currentTurnId,
+            itemId,
+            text,
+            partial: false,
+            at,
+          });
+        }
+        if (c.type === 'tool_use') {
+          const callId = String(c.id || `cc-tu-${out.length}`);
+          const name = String(c.name || '');
+          const input = c.input ?? {};
+
+          if (name === 'Bash') {
+            pending.set(callId, { kind: 'exec' });
+            out.push({
+              type: 'exec_command_begin',
+              turnId: currentTurnId,
+              callId,
+              command: String(input.command || ''),
+              at,
+            });
+            return;
+          }
+          if (name === 'TodoWrite') {
+            pending.set(callId, { kind: 'todo' });
+            const todos = Array.isArray(input.todos) ? input.todos : [];
+            out.push({
+              type: 'todo_list',
+              turnId: currentTurnId,
+              itemId: callId,
+              items: todos.map((t) => ({
+                text: String(t?.content || ''),
+                completed: t?.status === 'completed',
+              })),
+              at,
+            });
+            return;
+          }
+          if (name === 'Edit') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'modified',
+                diff: ccEditDiff(String(input.old_string || ''), String(input.new_string || '')),
+              }],
+            });
+            return; // emission deferred to tool_result so we know `ok`
+          }
+          if (name === 'Write') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'added',
+                diff: ccWriteDiff(String(input.content || '')),
+              }],
+            });
+            return;
+          }
+          if (name === 'MultiEdit') {
+            const edits = Array.isArray(input.edits) ? input.edits : [];
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'modified',
+                diff: ccMultiEditDiff(edits),
+              }],
+            });
+            return;
+          }
+          if (name.startsWith('mcp__')) {
+            const parts = name.split('__');
+            const server = parts[1] || '';
+            const toolName = parts.slice(2).join('__') || name;
+            pending.set(callId, { kind: 'mcp' });
+            out.push({
+              type: 'mcp_tool_call',
+              turnId: currentTurnId,
+              callId,
+              server,
+              name: toolName,
+              args: input,
+              at,
+            });
+            return;
+          }
+          // Fallback: any other tool name (Read, Glob, Grep, Task, Skill, WebSearch, WebFetch, …)
+          pending.set(callId, { kind: 'function' });
+          out.push({
+            type: 'function_call',
+            turnId: currentTurnId,
+            callId,
+            name,
+            args: input,
+            at,
+          });
+          return;
+        }
+      });
+      continue;
+    }
+  }
+
+  if (currentTurnId) {
+    // currentTurnId is only set after pushing turn_started, so out is non-empty here.
+    closeTurn(out[out.length - 1].at);
+  }
+
+  return out;
 }

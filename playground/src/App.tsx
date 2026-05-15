@@ -6,7 +6,7 @@ import { NarrativeView } from './NarrativeView.js';
 interface FileEntry {
   id: string;
   path: string;
-  source: 'codex-cli' | 'agentweb-team';
+  source: 'codex-cli' | 'agentweb-team' | 'claude-code' | 'synthetic';
   name: string;
   mtime: number;
   sizeKB: number;
@@ -14,7 +14,7 @@ interface FileEntry {
 
 interface EventsResponse {
   file: string;
-  format: 'rollout' | 'codex-team' | 'unknown';
+  format: 'rollout' | 'codex-team' | 'claude-code' | 'synthetic' | 'unknown';
   count: number;
   events: ChatStreamEvent[];
 }
@@ -37,7 +37,7 @@ export function App(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('rendered');
   const [renderStyle, setRenderStyle] = useState<RenderStyle>('narrative');
-  const [filter, setFilter] = useState<'all' | 'codex-cli' | 'agentweb-team'>('all');
+  const [filter, setFilter] = useState<'all' | 'codex-cli' | 'agentweb-team' | 'claude-code'>('all');
   const [search, setSearch] = useState('');
 
   // Initial file list
@@ -118,6 +118,7 @@ export function App(): JSX.Element {
             <option value="all">全部来源 ({files.length})</option>
             <option value="codex-cli">Codex CLI rollout ({files.filter((f) => f.source === 'codex-cli').length})</option>
             <option value="agentweb-team">AgentWeb codex-team ({files.filter((f) => f.source === 'agentweb-team').length})</option>
+            <option value="claude-code">Claude Code ({files.filter((f) => f.source === 'claude-code').length})</option>
           </select>
         </div>
         {filesError && <div style={styles.error}>无法加载文件列表: {filesError}</div>}
@@ -134,7 +135,21 @@ export function App(): JSX.Element {
                 >
                   <div style={styles.fileTitle}>{f.name}</div>
                   <div style={styles.fileMeta}>
-                    <span style={styles.badge} data-source={f.source}>{f.source === 'codex-cli' ? 'CLI' : 'Team'}</span>
+                    <span
+                      style={{
+                        ...styles.badge,
+                        ...(f.source === 'codex-cli' ? styles.badgeCli
+                          : f.source === 'agentweb-team' ? styles.badgeTeam
+                          : f.source === 'claude-code' ? styles.badgeClaude
+                          : styles.badgeDemo),
+                      }}
+                      data-source={f.source}
+                    >
+                      {f.source === 'codex-cli' ? 'CLI'
+                        : f.source === 'agentweb-team' ? 'Team'
+                        : f.source === 'claude-code' ? 'Claude'
+                        : 'Demo'}
+                    </span>
                     <span>{f.sizeKB} KB</span>
                     <span>{formatTime(f.mtime)}</span>
                   </div>
@@ -317,6 +332,10 @@ const styles: Record<string, React.CSSProperties> = {
     fontSize: 10,
     background: '#eef2f5',
   },
+  badgeClaude: { background: '#f4e3ff', color: '#6b21a8' },
+  badgeCli: { background: '#e0f2fe', color: '#075985' },
+  badgeTeam: { background: '#fef3c7', color: '#92400e' },
+  badgeDemo: { background: '#f3f4f6', color: '#4b5563' },
   sidebarFooter: {
     padding: '8px 12px',
     borderTop: '1px solid #d0d7de',
