@@ -673,5 +673,20 @@ export function adapt(rawLines) {
 }
 
 function adaptClaudeCode(lines) {
-  return [];
+  const out = [];
+  let threadStarted = false;
+
+  for (const line of lines) {
+    if (!line || typeof line !== 'object') continue;
+    if (line.isSidechain === true) continue;
+
+    const at = epoch(line.timestamp);
+
+    if (!threadStarted && typeof line.sessionId === 'string' && line.sessionId.length > 0) {
+      out.push({ type: 'thread_started', threadId: line.sessionId, at });
+      threadStarted = true;
+    }
+  }
+
+  return out;
 }

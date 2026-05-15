@@ -36,3 +36,25 @@ describe('detectFormat (via adapt)', () => {
     expect(adapt([]).format).toBe('unknown');
   });
 });
+
+describe('adaptClaudeCode · thread', () => {
+  it('emits thread_started with sessionId from first line', () => {
+    const lines = [
+      { type: 'attachment', uuid: 'a1', sessionId: 'sess-abc', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', attachment: { type: 'hook_success' } },
+    ];
+    const { events } = adapt(lines);
+    expect(events[0]).toMatchObject({ type: 'thread_started', threadId: 'sess-abc' });
+    expect(typeof events[0].at).toBe('number');
+  });
+
+  it('emits thread_started only once even across many lines', () => {
+    const lines = [
+      { type: 'attachment', uuid: 'a1', sessionId: 'sess-X', parentUuid: null, timestamp: '2026-05-15T00:00:00Z', attachment: { type: 'hook_success' } },
+      { type: 'attachment', uuid: 'a2', sessionId: 'sess-X', parentUuid: 'a1', timestamp: '2026-05-15T00:00:01Z', attachment: { type: 'hook_success' } },
+    ];
+    const { events } = adapt(lines);
+    const threadStarts = events.filter((e) => e.type === 'thread_started');
+    expect(threadStarts).toHaveLength(1);
+  });
+});
