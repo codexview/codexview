@@ -692,7 +692,11 @@ function adaptClaudeCode(lines) {
 
   let currentTurnId = null;
   let turnUsage = null; // { lastInput, sumOutput }
-  const pending = new Map(); // tool_use.id -> { kind, ... }
+  // In-flight tool calls keyed by tool_use.id. Drained when the matching
+  // tool_result arrives so we know the final ok/error state. Entries that
+  // survive EOF are intentionally not back-emitted — the reducer's
+  // turn_completed handler flips them to 'completed' anyway.
+  const pending = new Map();
 
   const closeTurn = (at) => {
     if (!currentTurnId) return;
@@ -736,6 +740,9 @@ function adaptClaudeCode(lines) {
       threadStarted = true;
     }
 
+    // Filter runs AFTER the thread_started block: attachment-first or
+    // queue-operation-first sessions must still open a thread from their
+    // sessionId before being silently dropped from event emission.
     if (skipTypes.has(line.type)) continue;
 
     if (line.type === 'user' && line.message) {
@@ -961,8 +968,8 @@ function adaptClaudeCode(lines) {
   }
 
   if (currentTurnId) {
-    const lastAt = out.length > 0 ? out[out.length - 1].at : Date.now();
-    closeTurn(lastAt);
+    // currentTurnId is only set after pushing turn_started, so out is non-empty here.
+    closeTurn(out[out.length - 1].at);
   }
 
   return out;

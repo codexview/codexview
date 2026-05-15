@@ -542,3 +542,23 @@ describe('adaptClaudeCode · function_call fallback', () => {
     expect(out_.output).toBeUndefined();
   });
 });
+
+describe('adaptClaudeCode · dangling tool_use', () => {
+  it('emits begin but no end when tool_result never arrives before EOF', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-dangling', name: 'Bash', input: { command: 'sleep 99' } },
+        ] } },
+      // No tool_result line — session was interrupted before completion.
+    ];
+    const { events } = adapt(lines);
+    expect(events.find((e) => e.type === 'exec_command_begin')).toMatchObject({ callId: 'tu-dangling' });
+    expect(events.some((e) => e.type === 'exec_command_end')).toBe(false);
+    // The trailing turn_completed at EOF still fires so the UI's reducer can flip the item state.
+    expect(events[events.length - 1]).toMatchObject({ type: 'turn_completed' });
+  });
+});
