@@ -120,3 +120,24 @@ describe('adaptClaudeCode · text-user (turn boundary)', () => {
     expect(events.find((e) => e.type === 'user_message')).toBeUndefined();
   });
 });
+
+describe('adaptClaudeCode · multi-turn', () => {
+  it('closes the previous turn before opening a new one', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'first' } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:01:00Z', message: { role: 'user', content: 'second' } },
+    ];
+    const { events } = adapt(lines);
+    const types = events.map((e) => e.type);
+    expect(types).toEqual([
+      'thread_started',
+      'turn_started', 'user_message',     // first turn opens
+      'turn_completed',                    // first turn closes
+      'turn_started', 'user_message',     // second turn opens
+    ]);
+    expect(events[3]).toMatchObject({ type: 'turn_completed', turnId: 'u-1' });
+    expect(events[4]).toMatchObject({ type: 'turn_started', turnId: 'u-2' });
+  });
+});

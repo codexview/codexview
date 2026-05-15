@@ -717,7 +717,7 @@ function adaptClaudeCode(lines) {
 
     if (line.type === 'user' && line.message) {
       if (isTextUser(line.message)) {
-        // closeTurn intentionally NOT called here yet — Task 5 adds multi-turn closure.
+        closeTurn(at);
         currentTurnId = String(line.uuid || `cc-turn-${out.length}`);
         turnUsage = { lastInput: 0, sumOutput: 0 };
         out.push({ type: 'turn_started', turnId: currentTurnId, at });
