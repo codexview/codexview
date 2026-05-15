@@ -41,7 +41,11 @@ const extractContentText = (content) => {
 const detectFormat = (lines) => {
   for (const line of lines) {
     if (line && typeof line === 'object') {
+      // Claude Code: every line carries sessionId + uuid + (parentUuid|null) + type
+      if ('sessionId' in line && 'uuid' in line && 'parentUuid' in line && 'type' in line) return 'claude-code';
+      // Codex rollout
       if ('type' in line && ('payload' in line || 'timestamp' in line)) return 'rollout';
+      // AgentWeb codex-team status log
       if ('event' in line && 'at' in line) return 'codex-team';
     }
   }
@@ -661,7 +665,12 @@ export function parseJsonl(text) {
 
 export function adapt(rawLines) {
   const fmt = detectFormat(rawLines);
-  if (fmt === 'rollout') return { format: 'rollout', events: adaptRollout(rawLines) };
-  if (fmt === 'codex-team') return { format: 'codex-team', events: adaptCodexTeam(rawLines) };
+  if (fmt === 'rollout')     return { format: 'rollout',     events: adaptRollout(rawLines) };
+  if (fmt === 'codex-team')  return { format: 'codex-team',  events: adaptCodexTeam(rawLines) };
+  if (fmt === 'claude-code') return { format: 'claude-code', events: adaptClaudeCode(rawLines) }; // ← NEW
   return { format: 'unknown', events: rawLines.map((p, i) => ({ type: 'raw', payload: p, at: Date.now() + i })) };
+}
+
+function adaptClaudeCode(lines) {
+  return [];
 }
