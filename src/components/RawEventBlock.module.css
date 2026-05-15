@@ -1,0 +1,9 @@
+.block { border: 1px dashed var(--cv-border); border-radius: var(--cv-radius-sm); padding: var(--cv-spacing-xs) var(--cv-spacing-sm); background: var(--cv-bg-raised); }
+.summary { display: flex; align-items: center; gap: var(--cv-spacing-xs); cursor: pointer; color: var(--cv-text-muted); list-style: none; }
+.summary::-webkit-details-marker { display: none; }
+.code {
+  margin: var(--cv-spacing-xs) 0 0;
+  background: var(--cv-bg-code); color: var(--cv-fg-code);
+  padding: var(--cv-spacing-sm); border-radius: var(--cv-radius-sm);
+  font-family: var(--cv-font-mono); font-size: 0.8rem; white-space: pre-wrap;
+}

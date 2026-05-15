@@ -1,0 +1,12 @@
+.block { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); }
+.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); font-weight: 500; }
+.query { color: var(--cv-text); }
+.results { padding-left: var(--cv-spacing-md); margin: 0; }
+.results li { margin-bottom: var(--cv-spacing-xs); }
+.results a { color: var(--cv-status-running); text-decoration: underline; }
+.snippet { margin: 2px 0 0; color: var(--cv-text-muted); font-size: 0.85rem; }
+.more {
+  align-self: flex-start;
+  background: none; border: none; cursor: pointer;
+  color: var(--cv-status-running); padding: 0; font-size: 0.85rem;
+}

@@ -1,0 +1,15 @@
+.block { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); }
+.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); font-weight: 500; }
+.files { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.files summary { display: flex; align-items: center; gap: var(--cv-spacing-xs); cursor: pointer; padding: 2px 0; }
+.tag { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: var(--cv-bg-raised); color: var(--cv-text-muted); }
+.tag[data-kind='added']    { background: var(--cv-diff-add-bg); color: var(--cv-status-completed); }
+.tag[data-kind='deleted']  { background: var(--cv-diff-del-bg); color: var(--cv-status-failed); }
+.diff {
+  background: var(--cv-bg-code); color: var(--cv-fg-code);
+  padding: var(--cv-spacing-sm); border-radius: var(--cv-radius-sm);
+  font-family: var(--cv-font-mono); font-size: 0.8rem;
+  white-space: pre-wrap; overflow-x: auto;
+}
+.add { background: var(--cv-diff-add-bg); color: #032b14; }
+.del { background: var(--cv-diff-del-bg); color: #67060c; }
