@@ -702,6 +702,16 @@ function adaptClaudeCode(lines) {
     return content.every((c) => c && c.type === 'text');
   };
 
+  const toolResultText = (item) => {
+    const c = item?.content;
+    if (typeof c === 'string') return c;
+    if (Array.isArray(c)) {
+      return c.map((p) => (typeof p === 'string' ? p : (p && typeof p === 'object' && typeof p.text === 'string') ? p.text : JSON.stringify(p))).join('\n');
+    }
+    if (c == null) return '';
+    return JSON.stringify(c);
+  };
+
   for (const line of lines) {
     if (!line || typeof line !== 'object') continue;
     if (line.isSidechain === true) continue;
@@ -740,7 +750,32 @@ function adaptClaudeCode(lines) {
         }
         continue;
       }
-      // Non-text-user (tool_result) handled in a later task.
+      if (!currentTurnId) continue;
+      const content = line.message.content;
+      if (!Array.isArray(content)) continue;
+      for (const item of content) {
+        if (!item || item.type !== 'tool_result') continue;
+        const callId = String(item.tool_use_id || `cc-tr-${out.length}`);
+        const isError = item.is_error === true;
+        const text = toolResultText(item);
+        const p = pending.get(callId);
+
+        if (p?.kind === 'exec') {
+          out.push({
+            type: 'exec_command_end',
+            turnId: currentTurnId,
+            callId,
+            exit: isError ? 1 : 0,
+            stdout: isError ? '' : text,
+            stderr: isError ? text : '',
+            durationMs: 0,
+            at,
+          });
+          pending.delete(callId);
+          continue;
+        }
+        // other kinds handled in later tasks
+      }
       continue;
     }
 
@@ -780,7 +815,24 @@ function adaptClaudeCode(lines) {
             at,
           });
         }
-        // tool_use handled in later tasks
+        if (c.type === 'tool_use') {
+          const callId = String(c.id || `cc-tu-${out.length}`);
+          const name = String(c.name || '');
+          const input = c.input ?? {};
+
+          if (name === 'Bash') {
+            pending.set(callId, { kind: 'exec' });
+            out.push({
+              type: 'exec_command_begin',
+              turnId: currentTurnId,
+              callId,
+              command: String(input.command || ''),
+              at,
+            });
+            return;
+          }
+          // other tools handled in later tasks
+        }
       });
       continue;
     }

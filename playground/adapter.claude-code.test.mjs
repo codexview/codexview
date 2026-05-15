@@ -242,3 +242,48 @@ describe('adaptClaudeCode · usage', () => {
     expect(done.usage).toEqual({ inputTokens: 250, outputTokens: 100 });
   });
 });
+
+describe('adaptClaudeCode · Bash tool', () => {
+  it('maps tool_use(Bash) + tool_result(ok) to exec_command_begin + exec_command_end', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'Bash',
+            input: { command: 'ls -la', description: 'list' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'total 0\n', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const begin = events.find((e) => e.type === 'exec_command_begin');
+    const end = events.find((e) => e.type === 'exec_command_end');
+    expect(begin).toMatchObject({ callId: 'tu-1', command: 'ls -la' });
+    expect(end).toMatchObject({ callId: 'tu-1', exit: 0, stdout: 'total 0\n', stderr: '' });
+  });
+
+  it('maps tool_result(is_error=true) to exit=1 and routes content to stderr', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'Bash', input: { command: 'false' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'oh no', is_error: true },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const end = events.find((e) => e.type === 'exec_command_end');
+    expect(end).toMatchObject({ exit: 1, stdout: '', stderr: 'oh no' });
+  });
+});
