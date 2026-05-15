@@ -20,11 +20,11 @@
   "type": "module",
   "license": "MIT",
   "author": "Jay Liu (maxazure) <maxazure@gmail.com>",
-  "homepage": "https://github.com/maxazure/codexview#readme",
-  "bugs": "https://github.com/maxazure/codexview/issues",
+  "homepage": "https://github.com/codexview/codexview#readme",
+  "bugs": "https://github.com/codexview/codexview/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/maxazure/codexview.git"
+    "url": "git+https://github.com/codexview/codexview.git"
   },
   "exports": {
     ".": {
