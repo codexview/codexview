@@ -1,0 +1,5 @@
+{"type":"thread_started","threadId":"T-short","at":1000}
+{"type":"turn_started","turnId":"A","at":1010}
+{"type":"user_message","turnId":"A","itemId":"u1","text":"Hello, who are you?","at":1020}
+{"type":"agent_message","turnId":"A","itemId":"a1","text":"I'm Codex, your coding assistant.","partial":false,"at":1030}
+{"type":"turn_completed","turnId":"A","at":1040,"usage":{"inputTokens":12,"outputTokens":18}}

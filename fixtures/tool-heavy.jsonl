@@ -1,0 +1,10 @@
+{"type":"thread_started","threadId":"T-tool","at":2000}
+{"type":"turn_started","turnId":"A","at":2010}
+{"type":"user_message","turnId":"A","itemId":"u1","text":"List the files in src and run the tests.","at":2020}
+{"type":"reasoning","turnId":"A","itemId":"r1","text":"I should look at the project layout first, then run the test command.","partial":false,"at":2030}
+{"type":"function_call","turnId":"A","callId":"c1","name":"list_dir","args":{"path":"src"},"at":2040}
+{"type":"function_call_output","turnId":"A","callId":"c1","output":["index.ts","reducer/","components/"],"at":2050}
+{"type":"exec_command_begin","turnId":"A","callId":"e1","command":"pnpm test","at":2060}
+{"type":"exec_command_end","turnId":"A","callId":"e1","exit":0,"stdout":"All tests passed","stderr":"","durationMs":1234,"at":2080}
+{"type":"agent_message","turnId":"A","itemId":"a1","text":"Tests pass. The repo has index.ts, a reducer/ folder and a components/ folder.","partial":false,"at":2090}
+{"type":"turn_completed","turnId":"A","at":2100,"usage":{"inputTokens":50,"outputTokens":80}}

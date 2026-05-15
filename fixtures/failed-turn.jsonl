@@ -1,0 +1,5 @@
+{"type":"thread_started","threadId":"T-fail","at":4000}
+{"type":"turn_started","turnId":"A","at":4010}
+{"type":"user_message","turnId":"A","itemId":"u1","text":"Apply this patch.","at":4020}
+{"type":"patch_apply_end","turnId":"A","callId":"p1","files":[{"path":"src/missing.ts","status":"modified"}],"ok":false,"at":4040}
+{"type":"turn_failed","turnId":"A","at":4050,"error":{"message":"Patch did not apply cleanly","code":"PATCH_REJECTED"}}

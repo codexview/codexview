@@ -1,0 +1,5 @@
+{"type":"thread_started","threadId":"T-abort","at":5000}
+{"type":"turn_started","turnId":"A","at":5010}
+{"type":"user_message","turnId":"A","itemId":"u1","text":"Run a long script.","at":5020}
+{"type":"exec_command_begin","turnId":"A","callId":"e1","command":"sleep 60","at":5030}
+{"type":"turn_aborted","turnId":"A","at":5050,"reason":"user_cancel"}

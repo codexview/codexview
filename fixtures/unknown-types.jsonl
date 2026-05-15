@@ -1,0 +1,6 @@
+{"type":"thread_started","threadId":"T-raw","at":6000}
+{"type":"turn_started","turnId":"A","at":6010}
+{"type":"agent_message","turnId":"A","itemId":"a1","text":"Trying an unknown tool.","partial":false,"at":6020}
+{"type":"some_future_event","turnId":"A","callId":"x1","extra":{"hello":"world"},"at":6030}
+{"type":"raw","turnId":"A","payload":{"type":"explicit_raw","note":"this is intentional"},"at":6040}
+{"type":"turn_completed","turnId":"A","at":6050}

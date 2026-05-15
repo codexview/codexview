@@ -1,0 +1,9 @@
+{"type":"thread_started","threadId":"T-mcp","at":3000}
+{"type":"turn_started","turnId":"A","at":3010}
+{"type":"user_message","turnId":"A","itemId":"u1","text":"Find recent React 19 release notes.","at":3020}
+{"type":"web_search_call","turnId":"A","callId":"s1","query":"React 19 release notes","at":3030}
+{"type":"web_search_end","turnId":"A","callId":"s1","results":[{"title":"React 19 is now stable","url":"https://example.com/react-19","snippet":"Server components, actions, ..."},{"title":"React 19 migration guide","url":"https://example.com/react-19-migrate"}],"at":3050}
+{"type":"mcp_tool_call","turnId":"A","callId":"m1","server":"fs","name":"read_file","args":{"path":"NOTES.md"},"at":3060}
+{"type":"mcp_tool_call_output","turnId":"A","callId":"m1","output":"Last updated 2026-05-01","at":3080}
+{"type":"agent_message","turnId":"A","itemId":"a1","text":"React 19 is stable; key features are server components and actions.","partial":false,"at":3090}
+{"type":"turn_completed","turnId":"A","at":3100}
