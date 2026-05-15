@@ -134,6 +134,61 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
       });
     }
 
+    case 'function_call':
+    case 'mcp_tool_call':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.callId,
+          kind: 'tool_call',
+          status: 'pending',
+          startedAt: event.at,
+          updatedAt: event.at,
+          name: event.name,
+          ...(event.type === 'mcp_tool_call' ? { server: event.server } : {}),
+          args: event.args,
+        } as ItemView),
+      );
+
+    case 'function_call_output':
+    case 'mcp_tool_call_output':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        updateItem(t, event.callId, (it) => {
+          if (it.kind !== 'tool_call') return it;
+          if (event.error !== undefined) {
+            return { ...it, status: 'failed' as const, updatedAt: event.at, error: event.error };
+          }
+          return { ...it, status: 'completed' as const, updatedAt: event.at, result: event.output };
+        }),
+      );
+
+    case 'exec_command_begin':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.callId,
+          kind: 'exec',
+          status: 'running',
+          startedAt: event.at,
+          updatedAt: event.at,
+          command: event.command,
+        }),
+      );
+
+    case 'exec_command_end':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        updateItem(t, event.callId, (it) => {
+          if (it.kind !== 'exec') return it;
+          return {
+            ...it,
+            status: event.exit === 0 ? 'completed' : 'failed',
+            updatedAt: event.at,
+            exit: event.exit,
+            stdout: event.stdout,
+            stderr: event.stderr,
+            durationMs: event.durationMs,
+          };
+        }),
+      );
+
     default:
       return { ...prev, lastEventAt: event.at };
   }

@@ -104,3 +104,59 @@ describe('reduceTranscript / messages', () => {
     expect(m.turns[0]?.items[1]?.kind).toBe('assistant_text');
   });
 });
+
+describe('reduceTranscript / tool calls and exec', () => {
+  const start = () => reduceTranscript(EMPTY_MODEL, { type: 'turn_started', turnId: 'tn-1', at: 100 });
+
+  it('function_call creates pending tool_call', () => {
+    const m = reduceTranscript(start(), {
+      type: 'function_call',
+      turnId: 'tn-1',
+      callId: 'c1',
+      name: 'getWeather',
+      args: { city: 'NYC' },
+      at: 110,
+    });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'tool_call', id: 'c1', name: 'getWeather', status: 'pending' });
+  });
+
+  it('function_call_output completes the matching tool_call', () => {
+    let m = start();
+    m = reduceTranscript(m, { type: 'function_call', turnId: 'tn-1', callId: 'c1', name: 'x', args: {}, at: 110 });
+    m = reduceTranscript(m, { type: 'function_call_output', turnId: 'tn-1', callId: 'c1', output: { ok: true }, at: 120 });
+    expect(m.turns[0]?.items[0]).toMatchObject({ status: 'completed', result: { ok: true } });
+  });
+
+  it('function_call_output with error marks failed', () => {
+    let m = start();
+    m = reduceTranscript(m, { type: 'function_call', turnId: 'tn-1', callId: 'c1', name: 'x', args: {}, at: 110 });
+    m = reduceTranscript(m, { type: 'function_call_output', turnId: 'tn-1', callId: 'c1', error: 'boom', at: 120 });
+    expect(m.turns[0]?.items[0]).toMatchObject({ status: 'failed', error: 'boom' });
+  });
+
+  it('exec_command_begin creates a running exec', () => {
+    const m = reduceTranscript(start(), {
+      type: 'exec_command_begin',
+      turnId: 'tn-1',
+      callId: 'e1',
+      command: 'ls',
+      at: 110,
+    });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'exec', id: 'e1', command: 'ls', status: 'running' });
+  });
+
+  it('exec_command_end with exit=0 completes; non-zero fails', () => {
+    let m = reduceTranscript(start(), { type: 'exec_command_begin', turnId: 'tn-1', callId: 'e1', command: 'ls', at: 110 });
+    m = reduceTranscript(m, { type: 'exec_command_end', turnId: 'tn-1', callId: 'e1', exit: 0, stdout: 'a\nb', stderr: '', durationMs: 5, at: 120 });
+    expect(m.turns[0]?.items[0]).toMatchObject({ status: 'completed', exit: 0, stdout: 'a\nb', durationMs: 5 });
+
+    let m2 = reduceTranscript(start(), { type: 'exec_command_begin', turnId: 'tn-1', callId: 'e2', command: 'false', at: 110 });
+    m2 = reduceTranscript(m2, { type: 'exec_command_end', turnId: 'tn-1', callId: 'e2', exit: 1, stdout: '', stderr: 'no', durationMs: 1, at: 120 });
+    expect(m2.turns[0]?.items[0]).toMatchObject({ status: 'failed', exit: 1, stderr: 'no' });
+  });
+
+  it('output without prior call is ignored gracefully (no throw, no item added)', () => {
+    const m = reduceTranscript(start(), { type: 'function_call_output', turnId: 'tn-1', callId: 'missing', output: {}, at: 110 });
+    expect(m.turns[0]?.items).toHaveLength(0);
+  });
+});
