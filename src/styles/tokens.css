@@ -1,0 +1,35 @@
+:root,
+.codexview-root {
+  --cv-font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --cv-font-mono: ui-monospace, 'SF Mono', 'Cascadia Code', Menlo, monospace;
+  --cv-font-size: 14px;
+  --cv-line-height: 1.55;
+  --cv-radius: 12px;
+  --cv-radius-sm: 8px;
+  --cv-spacing-xs: 4px;
+  --cv-spacing-sm: 8px;
+  --cv-spacing-md: 12px;
+  --cv-spacing-lg: 16px;
+
+  --cv-text:           #1f2328;
+  --cv-text-muted:     #6e7781;
+  --cv-text-inverse:   #ffffff;
+  --cv-bg:             #ffffff;
+  --cv-bg-raised:      #f6f8fa;
+  --cv-bg-user-bubble: #2f6feb;
+  --cv-bg-assistant-bubble: #f6f8fa;
+  --cv-bg-code:        #0d1117;
+  --cv-fg-code:        #e6edf3;
+  --cv-border:         #d0d7de;
+  --cv-axis-color:     #d0d7de;
+  --cv-shimmer-color:  rgba(31, 35, 40, 0.08);
+
+  --cv-status-pending:   #6e7781;
+  --cv-status-running:   #2f6feb;
+  --cv-status-completed: #1a7f37;
+  --cv-status-failed:    #cf222e;
+  --cv-status-stopped:   #6e7781;
+
+  --cv-diff-add-bg: #ddf4e4;
+  --cv-diff-del-bg: #ffebe9;
+}

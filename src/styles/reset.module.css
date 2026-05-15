@@ -1,0 +1,15 @@
+.root {
+  all: initial;
+  display: block;
+  font-family: var(--cv-font-family);
+  font-size: var(--cv-font-size);
+  line-height: var(--cv-line-height);
+  color: var(--cv-text);
+  background: var(--cv-bg);
+  box-sizing: border-box;
+}
+.root *,
+.root *::before,
+.root *::after {
+  box-sizing: inherit;
+}
