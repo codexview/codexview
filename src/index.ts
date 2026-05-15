@@ -40,4 +40,4 @@ export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
 export { Markdown } from './components/Markdown.js';
 export type { MarkdownProps } from './components/Markdown.js';
 
-export const VERSION = '0.1.1';
+export const VERSION = '0.1.3';

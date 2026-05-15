@@ -2,6 +2,22 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.3] — 2026-05-16
+
+### Documentation
+
+- README now reflects multi-source support: the library renders `ChatStreamEvent[]` and reference adapters in `playground/adapter.mjs` cover OpenAI Codex CLI rollouts, AgentWeb codex-team status logs, and Claude Code main sessions (Bash / TodoWrite / Edit / Write / MultiEdit / `mcp__*`).
+- Fixed install snippet — package name is `@codexview/react`, not `codexview`.
+- Refined `package.json` description to match the new reality.
+
+### Fixed
+
+- `VERSION` export was stuck at `'0.1.1'`; now matches `package.json`.
+
+### Notes
+
+- No library API or runtime behavior changes. The Claude Code adapter ships as a reference implementation under `playground/` and is not yet exported from `@codexview/react`.
+
 ## [0.1.2] — 2026-05-15
 
 ### Changed
