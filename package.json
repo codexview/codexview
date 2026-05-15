@@ -1,9 +1,28 @@
 {
   "name": "codexview",
   "version": "0.1.1",
-  "description": "React components for rendering OpenAI Codex CLI chat streams.",
+  "description": "React components for rendering AI coding agent transcripts. First-class support for Codex CLI rollouts; Claude Code and OpenCode adapters planned.",
+  "keywords": [
+    "ai",
+    "agent",
+    "transcript",
+    "viewer",
+    "react",
+    "codex",
+    "claude-code",
+    "opencode",
+    "rollout",
+    "chat"
+  ],
   "type": "module",
   "license": "MIT",
+  "author": "Jay Liu (maxazure) <maxazure@gmail.com>",
+  "homepage": "https://github.com/maxazure/codexview#readme",
+  "bugs": "https://github.com/maxazure/codexview/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/maxazure/codexview.git"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
