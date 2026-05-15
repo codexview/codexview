@@ -35,6 +35,9 @@ jobs:
           cache: pnpm
           registry-url: 'https://registry.npmjs.org'
 
+      # npm 11.5+ is required for OIDC trusted publishing; node 22 ships with 10.x.
+      - run: npm install -g npm@latest
+
       - run: pnpm install --frozen-lockfile
 
       - name: Verify tag matches package.json version
