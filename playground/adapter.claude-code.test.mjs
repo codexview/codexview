@@ -336,3 +336,52 @@ describe('adaptClaudeCode · TodoWrite', () => {
     expect(events).toHaveLength(5);
   });
 });
+
+describe('adaptClaudeCode · Edit', () => {
+  it('synthesises patch_apply_end with -/+ diff on tool_result', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'Edit',
+            input: { file_path: '/p.ts', old_string: 'foo\nbar', new_string: 'baz\nqux' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'edited', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const patch = events.find((e) => e.type === 'patch_apply_end');
+    expect(patch).toBeDefined();
+    expect(patch).toMatchObject({
+      callId: 'tu-1',
+      ok: true,
+      files: [{ path: '/p.ts', status: 'modified' }],
+    });
+    expect(patch.files[0].diff).toBe('- foo\n- bar\n+ baz\n+ qux');
+  });
+
+  it('sets ok=false when tool_result.is_error is true', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'Edit',
+            input: { file_path: '/p.ts', old_string: 'x', new_string: 'y' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'not found', is_error: true },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.find((e) => e.type === 'patch_apply_end').ok).toBe(false);
+  });
+});

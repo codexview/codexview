@@ -672,6 +672,19 @@ export function adapt(rawLines) {
   return { format: 'unknown', events: rawLines.map((p, i) => ({ type: 'raw', payload: p, at: Date.now() + i })) };
 }
 
+const ccPrefixLines = (text, prefix) => {
+  if (!text) return '';
+  return text.split('\n').map((line) => `${prefix}${line}`).join('\n');
+};
+
+const ccEditDiff = (oldStr, newStr) =>
+  `${ccPrefixLines(oldStr, '- ')}\n${ccPrefixLines(newStr, '+ ')}`;
+
+const ccWriteDiff = (content) => ccPrefixLines(content, '+ ');
+
+const ccMultiEditDiff = (edits) =>
+  edits.map((e) => `${ccPrefixLines(String(e?.old_string || ''), '- ')}\n${ccPrefixLines(String(e?.new_string || ''), '+ ')}`).join('\n\n');
+
 function adaptClaudeCode(lines) {
   const out = [];
   let threadStarted = false;
@@ -778,6 +791,18 @@ function adaptClaudeCode(lines) {
           pending.delete(callId);
           continue;
         }
+        if (p?.kind === 'patch') {
+          out.push({
+            type: 'patch_apply_end',
+            turnId: currentTurnId,
+            callId,
+            files: p.files,
+            ok: !isError,
+            at,
+          });
+          pending.delete(callId);
+          continue;
+        }
         // other kinds handled in later tasks
       }
       continue;
@@ -849,6 +874,17 @@ function adaptClaudeCode(lines) {
               at,
             });
             return;
+          }
+          if (name === 'Edit') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'modified',
+                diff: ccEditDiff(String(input.old_string || ''), String(input.new_string || '')),
+              }],
+            });
+            return; // emission deferred to tool_result so we know `ok`
           }
           // other tools handled in later tasks
         }
