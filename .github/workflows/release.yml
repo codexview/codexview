@@ -1,0 +1,61 @@
+name: Release
+
+# Publishes @codexview/* packages to npm via OIDC trusted publishing
+# (no long-lived NPM_TOKEN secret required).
+#
+# Trigger: push a tag matching v*.*.* (e.g. v0.2.0).
+# To release:
+#   1. bump version in package.json
+#   2. commit; git tag v0.2.0; git push --follow-tags
+#
+# Set up trusted publishing on each package once at npmjs.com:
+#   Package → Settings → Trusted Publishers → Add → GitHub Actions
+#     repo:        codexview/codexview
+#     workflow:    release.yml
+#     environment: (leave blank)
+on:
+  push:
+    tags: ['v*.*.*']
+
+permissions:
+  contents: read
+  id-token: write   # required for OIDC token exchange with npm
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#v}"
+          PKG=$(jq -r .version package.json)
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match package.json version $PKG"
+            exit 1
+          fi
+
+      - run: pnpm typecheck
+
+      - run: pnpm test
+
+      - run: pnpm build
+
+      - name: Publish @codexview/react with provenance
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
