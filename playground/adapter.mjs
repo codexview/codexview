@@ -745,5 +745,10 @@ function adaptClaudeCode(lines) {
     }
   }
 
+  if (currentTurnId) {
+    const lastAt = out.length > 0 ? out[out.length - 1].at : Date.now();
+    closeTurn(lastAt);
+  }
+
   return out;
 }

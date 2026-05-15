@@ -92,7 +92,7 @@ describe('adaptClaudeCode · text-user (turn boundary)', () => {
         timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'hello' } },
     ];
     const { events } = adapt(lines);
-    expect(events.map((e) => e.type)).toEqual(['thread_started', 'turn_started', 'user_message']);
+    expect(events.map((e) => e.type)).toEqual(['thread_started', 'turn_started', 'user_message', 'turn_completed']);
     expect(events[1]).toMatchObject({ turnId: 'u-1' });
     expect(events[2]).toMatchObject({ turnId: 'u-1', itemId: 'u-1', text: 'hello' });
   });
@@ -136,8 +136,29 @@ describe('adaptClaudeCode · multi-turn', () => {
       'turn_started', 'user_message',     // first turn opens
       'turn_completed',                    // first turn closes
       'turn_started', 'user_message',     // second turn opens
+      'turn_completed',                    // second turn closes at EOF
     ]);
     expect(events[3]).toMatchObject({ type: 'turn_completed', turnId: 'u-1' });
     expect(events[4]).toMatchObject({ type: 'turn_started', turnId: 'u-2' });
+  });
+});
+
+describe('adaptClaudeCode · EOF closure', () => {
+  it('closes a dangling turn at end-of-file', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'only' } },
+    ];
+    const { events } = adapt(lines);
+    expect(events[events.length - 1]).toMatchObject({ type: 'turn_completed', turnId: 'u-1' });
+  });
+
+  it('does not emit a stray turn_completed when there were no turns', () => {
+    const lines = [
+      { type: 'attachment', uuid: 'a1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', attachment: { type: 'hook_success' } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.some((e) => e.type === 'turn_completed')).toBe(false);
   });
 });
