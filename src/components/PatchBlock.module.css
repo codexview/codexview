@@ -1,6 +1,23 @@
 .block { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); }
-.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); font-weight: 500; }
-.files { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 2px; }
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.header::-webkit-details-marker { display: none; }
+.header::before {
+  content: '›';
+  display: inline-block;
+  width: 12px;
+  color: var(--cv-text-muted);
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+.block[open] > .header::before { transform: rotate(90deg); }
+.files { list-style: none; padding: 0; margin: var(--cv-spacing-xs) 0 0; display: flex; flex-direction: column; gap: 2px; }
 .files summary { display: flex; align-items: center; gap: var(--cv-spacing-xs); cursor: pointer; padding: 2px 0; }
 .tag { font-size: 0.7rem; padding: 1px 6px; border-radius: 4px; background: var(--cv-bg-raised); color: var(--cv-text-muted); }
 .tag[data-kind='added']    { background: var(--cv-diff-add-bg); color: var(--cv-status-completed); }

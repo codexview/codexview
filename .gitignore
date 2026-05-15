@@ -8,3 +8,4 @@ dev-build/
 coverage/
 .tsbuildinfo
 *.tgz
+.claude/

@@ -1,0 +1,12 @@
+.block {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  padding: var(--cv-spacing-sm) var(--cv-spacing-md);
+  background: var(--cv-diff-del-bg);
+  color: var(--cv-status-failed);
+  border-radius: var(--cv-radius-sm);
+  border-left: 3px solid var(--cv-status-failed);
+  font-size: 0.9rem;
+}
+.message { white-space: pre-wrap; word-break: break-word; }

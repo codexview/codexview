@@ -4,9 +4,12 @@ import { MessageBubble } from './MessageBubble.js';
 
 describe('MessageBubble', () => {
   it('renders user message with role=user', () => {
-    render(<MessageBubble item={{ id: 'u', kind: 'user_message', status: 'completed', startedAt: 0, updatedAt: 0, text: 'hi' }} />);
-    const el = screen.getByText('hi').closest('div')!;
-    expect(el.dataset.role).toBe('user');
+    const { container } = render(
+      <MessageBubble item={{ id: 'u', kind: 'user_message', status: 'completed', startedAt: 0, updatedAt: 0, text: 'hi' }} />,
+    );
+    expect(screen.getByText('hi')).toBeInTheDocument();
+    const bubble = container.querySelector('[data-role]') as HTMLElement;
+    expect(bubble.dataset.role).toBe('user');
   });
 
   it('renders running assistant with caret', () => {

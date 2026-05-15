@@ -1,4 +1,4 @@
-import type { PatchFile, SearchResult, TokenUsage } from './events.js';
+import type { PatchFile, SearchResult, TodoEntry, TokenUsage } from './events.js';
 
 /** Item-level lifecycle status (5 states per spec §5.1). */
 export type ItemStatus = 'pending' | 'running' | 'completed' | 'failed' | 'stopped';
@@ -12,6 +12,8 @@ export type ItemKind =
   | 'exec'
   | 'search'
   | 'patch'
+  | 'todo_list'
+  | 'error'
   | 'raw';
 
 interface ItemViewBase {
@@ -30,6 +32,8 @@ export type ItemView =
   | (ItemViewBase & { kind: 'exec'; command: string; exit?: number; stdout?: string; stderr?: string; durationMs?: number })
   | (ItemViewBase & { kind: 'search'; query: string; results?: SearchResult[] })
   | (ItemViewBase & { kind: 'patch'; files: PatchFile[]; ok?: boolean })
+  | (ItemViewBase & { kind: 'todo_list'; items: TodoEntry[] })
+  | (ItemViewBase & { kind: 'error'; message: string })
   | (ItemViewBase & { kind: 'raw'; payload: unknown });
 
 export interface TurnView {

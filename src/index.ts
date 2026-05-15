@@ -1,6 +1,6 @@
 import './styles/tokens.css';
 
-export type { ChatStreamEvent, ChatStreamEventType, TokenUsage, SearchResult, PatchFile } from './types/events.js';
+export type { ChatStreamEvent, ChatStreamEventType, TokenUsage, SearchResult, PatchFile, TodoEntry } from './types/events.js';
 export type { TranscriptModel, TurnView, ItemView, ItemKind, ItemStatus, TranscriptStatus } from './types/model.js';
 export { EMPTY_MODEL } from './types/model.js';
 
@@ -29,9 +29,15 @@ export { SearchBlock } from './components/SearchBlock.js';
 export type { SearchBlockProps } from './components/SearchBlock.js';
 export { PatchBlock } from './components/PatchBlock.js';
 export type { PatchBlockProps } from './components/PatchBlock.js';
+export { TodoListBlock } from './components/TodoListBlock.js';
+export type { TodoListBlockProps } from './components/TodoListBlock.js';
+export { ErrorBlock } from './components/ErrorBlock.js';
+export type { ErrorBlockProps } from './components/ErrorBlock.js';
 export { RawEventBlock } from './components/RawEventBlock.js';
 export type { RawEventBlockProps } from './components/RawEventBlock.js';
 export { ItemErrorBoundary } from './components/ItemErrorBoundary.js';
 export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
+export { Markdown } from './components/Markdown.js';
+export type { MarkdownProps } from './components/Markdown.js';
 
-export const VERSION = '0.1.0';
+export const VERSION = '0.1.1';

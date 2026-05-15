@@ -1,6 +1,6 @@
 {
   "name": "codexview",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "React components for rendering OpenAI Codex CLI chat streams.",
   "type": "module",
   "license": "MIT",
@@ -24,6 +24,7 @@
   "scripts": {
     "build": "vite build",
     "dev": "vite --config dev/vite.config.ts",
+    "playground": "vite --config playground/vite.config.ts",
     "test": "vitest run",
     "test:watch": "vitest",
     "typecheck": "tsc -p tsconfig.json --noEmit",
@@ -53,5 +54,9 @@
   },
   "engines": {
     "node": ">=20"
+  },
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
   }
 }

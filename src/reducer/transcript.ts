@@ -222,6 +222,41 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
         }),
       );
 
+    case 'todo_list':
+      // Plan / TODO list — itemId-keyed so subsequent updates replace in place.
+      return withinTurn(prev, event.turnId, event.at, (t) => {
+        const exists = t.items.some((it) => it.id === event.itemId && it.kind === 'todo_list');
+        const allDone = event.items.length > 0 && event.items.every((e) => e.completed);
+        const status: ItemStatus = allDone ? 'completed' : 'running';
+        if (exists) {
+          return updateItem(t, event.itemId, (it) => {
+            if (it.kind !== 'todo_list') return it;
+            return { ...it, items: event.items, updatedAt: event.at, status };
+          });
+        }
+        return appendItem(t, {
+          id: event.itemId,
+          kind: 'todo_list',
+          status,
+          startedAt: event.at,
+          updatedAt: event.at,
+          items: event.items,
+        });
+      });
+
+    case 'error_item':
+      // Non-fatal item-level error (separate from turn_failed).
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.itemId,
+          kind: 'error',
+          status: 'failed',
+          startedAt: event.at,
+          updatedAt: event.at,
+          message: event.message,
+        }),
+      );
+
     case 'raw': {
       if (!event.turnId) return { ...prev, lastEventAt: event.at };
       return withinTurn(prev, event.turnId, event.at, (t) =>

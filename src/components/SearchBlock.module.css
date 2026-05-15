@@ -1,5 +1,23 @@
 .block { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); }
-.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); font-weight: 500; }
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  font-weight: 500;
+  cursor: pointer;
+  list-style: none;
+}
+.header::-webkit-details-marker { display: none; }
+.header::before {
+  content: '›';
+  display: inline-block;
+  width: 12px;
+  color: var(--cv-text-muted);
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+.block[open] > .header::before { transform: rotate(90deg); }
+.body { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); margin-top: var(--cv-spacing-xs); }
 .query { color: var(--cv-text); }
 .results { padding-left: var(--cv-spacing-md); margin: 0; }
 .results li { margin-bottom: var(--cv-spacing-xs); }

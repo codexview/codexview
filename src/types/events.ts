@@ -62,8 +62,20 @@ export type ChatStreamEvent =
   // Patch apply
   | { type: 'patch_apply_end'; turnId: string; callId: string; files: PatchFile[]; ok: boolean; at: number }
 
+  // Plan / TODO list (mirrors Codex SDK 'todo_list' item)
+  | { type: 'todo_list'; turnId: string; itemId: string; items: TodoEntry[]; at: number }
+
+  // Non-fatal item-level error (mirrors Codex SDK 'error' item; distinct from turn_failed which is terminal)
+  | { type: 'error_item'; turnId: string; itemId: string; message: string; at: number }
+
   // Fallback
   | { type: 'raw'; turnId?: string; itemId?: string; payload: unknown; at: number };
+
+/** A single entry in a plan / todo list. */
+export interface TodoEntry {
+  text: string;
+  completed: boolean;
+}
 
 /** Helpful narrowing alias. */
 export type ChatStreamEventType = ChatStreamEvent['type'];

@@ -13,10 +13,32 @@
 .block[data-status='failed']    { border-left: 3px solid var(--cv-status-failed); }
 .block[data-status='stopped']   { border-left: 3px solid var(--cv-status-stopped); }
 
-.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); }
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  cursor: pointer;
+  list-style: none;
+}
+.header::-webkit-details-marker { display: none; }
+.header::before {
+  content: '›';
+  display: inline-block;
+  width: 12px;
+  color: var(--cv-text-muted);
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+.block[open] > .header::before { transform: rotate(90deg); }
 .title { font-weight: 600; }
 .statusChip { margin-left: auto; font-size: 0.75rem; color: var(--cv-text-muted); }
 .label { font-size: 0.75rem; color: var(--cv-text-muted); }
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cv-spacing-xs);
+  margin-top: var(--cv-spacing-xs);
+}
 .code {
   background: var(--cv-bg-code); color: var(--cv-fg-code);
   padding: var(--cv-spacing-sm); border-radius: var(--cv-radius-sm);

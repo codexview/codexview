@@ -7,7 +7,24 @@
   font-family: var(--cv-font-mono); font-size: 0.85rem;
   overflow: hidden;
 }
-.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); }
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  cursor: pointer;
+  list-style: none;
+}
+.header::-webkit-details-marker { display: none; }
+.header::before {
+  content: '›';
+  display: inline-block;
+  width: 12px;
+  color: var(--cv-text-muted);
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+.block[open] > .header::before { transform: rotate(90deg); }
+.body { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); margin-top: var(--cv-spacing-xs); }
 .cmd { white-space: pre-wrap; word-break: break-word; flex: 1; }
 .exit { font-size: 0.75rem; opacity: 0.7; }
 .stdout { white-space: pre-wrap; word-break: break-word; }

@@ -4,6 +4,8 @@ import styles from './PatchBlock.module.css';
 
 export interface PatchBlockProps {
   item: Extract<ItemView, { kind: 'patch' }>;
+  /** Open by default? Defaults to false (collapsed). */
+  defaultOpen?: boolean;
 }
 
 function colorLines(diff: string): JSX.Element[] {
@@ -15,14 +17,14 @@ function colorLines(diff: string): JSX.Element[] {
   });
 }
 
-export function PatchBlock({ item }: PatchBlockProps): JSX.Element {
+export function PatchBlock({ item, defaultOpen = false }: PatchBlockProps): JSX.Element {
   const Icon = ICONS.patch;
   return (
-    <div className={styles.block} data-status={item.status}>
-      <header className={styles.header}>
+    <details className={styles.block} data-status={item.status} open={defaultOpen}>
+      <summary className={styles.header}>
         <Icon size={14} aria-hidden />
         <span>{item.files.length} 个文件 ({item.ok ? '成功' : '失败'})</span>
-      </header>
+      </summary>
       <ul className={styles.files}>
         {item.files.map((f) => (
           <li key={f.path}>
@@ -36,6 +38,6 @@ export function PatchBlock({ item }: PatchBlockProps): JSX.Element {
           </li>
         ))}
       </ul>
-    </div>
+    </details>
   );
 }

@@ -10,6 +10,8 @@ import { ToolCallBlock, type ToolCallBlockProps } from './ToolCallBlock.js';
 import { ExecBlock, type ExecBlockProps } from './ExecBlock.js';
 import { SearchBlock, type SearchBlockProps } from './SearchBlock.js';
 import { PatchBlock, type PatchBlockProps } from './PatchBlock.js';
+import { TodoListBlock, type TodoListBlockProps } from './TodoListBlock.js';
+import { ErrorBlock, type ErrorBlockProps } from './ErrorBlock.js';
 import { RawEventBlock, type RawEventBlockProps } from './RawEventBlock.js';
 import { StatusBar, type StatusBarProps } from './StatusBar.js';
 import resetStyles from '../styles/reset.module.css';
@@ -23,6 +25,8 @@ export interface CodexTranscriptComponents {
   ExecBlock: ComponentType<ExecBlockProps>;
   SearchBlock: ComponentType<SearchBlockProps>;
   PatchBlock: ComponentType<PatchBlockProps>;
+  TodoListBlock: ComponentType<TodoListBlockProps>;
+  ErrorBlock: ComponentType<ErrorBlockProps>;
   RawEventBlock: ComponentType<RawEventBlockProps>;
 }
 
@@ -47,6 +51,8 @@ const DEFAULTS: CodexTranscriptComponents = {
   ExecBlock,
   SearchBlock,
   PatchBlock,
+  TodoListBlock,
+  ErrorBlock,
   RawEventBlock,
 };
 
@@ -133,6 +139,10 @@ function renderItem(item: ItemView, c: CodexTranscriptComponents, disableSmoothS
       return <c.SearchBlock item={item} />;
     case 'patch':
       return <c.PatchBlock item={item} />;
+    case 'todo_list':
+      return <c.TodoListBlock item={item} />;
+    case 'error':
+      return <c.ErrorBlock item={item} />;
     case 'raw':
       return <c.RawEventBlock item={item} />;
   }
