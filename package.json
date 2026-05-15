@@ -1,6 +1,9 @@
 {
-  "name": "codexview",
+  "name": "@codexview/react",
   "version": "0.1.1",
+  "publishConfig": {
+    "access": "public"
+  },
   "description": "React components for rendering AI coding agent transcripts. First-class support for Codex CLI rollouts; Claude Code and OpenCode adapters planned.",
   "keywords": [
     "ai",
