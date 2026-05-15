@@ -1,3 +1,5 @@
+import './styles/tokens.css';
+
 export type { ChatStreamEvent, ChatStreamEventType, TokenUsage, SearchResult, PatchFile } from './types/events.js';
 export type { TranscriptModel, TurnView, ItemView, ItemKind, ItemStatus, TranscriptStatus } from './types/model.js';
 export { EMPTY_MODEL } from './types/model.js';

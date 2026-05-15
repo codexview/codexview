@@ -1,6 +1,10 @@
 # Integrating CodexView into agentweb
 
-This is a drop-in replacement for `frontend/src/codex/components/MessageBubble.tsx`, `StreamingBubble.tsx`, and `ToolUseBlock.tsx`. The agentweb backend (`backend/src/codex/eventMap.ts`) already produces a normalized event stream that maps 1:1 onto `ChatStreamEvent`.
+This is a drop-in replacement for `frontend/src/codex/components/MessageBubble.tsx`, `StreamingBubble.tsx`, and `ToolUseBlock.tsx`. The agentweb backend (`backend/src/codex/eventMap.ts`) produces a normalized event stream that is conceptually equivalent to `ChatStreamEvent`, but uses different field names.
+
+## Adapter required
+
+The agentweb backend's `NormalizedEvent` and CodexView's `ChatStreamEvent` are conceptually equivalent but use different field names (e.g., agentweb uses `kind: 'text_delta'`, CodexView uses `type: 'agent_message'`). A small adapter function in agentweb (`frontend/src/codex/adapters/codexview.ts`) is needed to map between them. The Step 3 code example below is illustrative — replace `adapter(stream)` with the adapter-produced array and `stream.connected` with whatever connection-state field your `streamingAtomFamily` actually exposes.
 
 ## Step 1 — install (development)
 
@@ -43,20 +47,21 @@ In `frontend/src/codex/styles/tokens.css` (append):
 import { useAtomValue } from 'jotai';
 import { CodexTranscript } from 'codexview';
 import { streamingAtomFamily } from '../atoms/streaming';
+import { adaptStreamEvents } from '../adapters/codexview'; // adapter required — see "Adapter required" section above
 
 export function ChatThread({ sessionId }: { sessionId: string }) {
   const stream = useAtomValue(streamingAtomFamily(sessionId));
   return (
     <CodexTranscript
-      events={stream.list}
-      status={stream.connected ? undefined : 'stopped'}
+      events={adaptStreamEvents(stream)} // replace with adapter-produced ChatStreamEvent[]
+      status={stream.connected ? undefined : 'stopped'} // replace stream.connected with actual field name
       className="aw-codex-transcript"
     />
   );
 }
 ```
 
-Adjust the property names (`stream.list`, `stream.connected`) to match the actual `streamingAtomFamily` shape.
+The adapter maps agentweb's `NormalizedEvent` (with `kind` field) to CodexView's `ChatStreamEvent` (with `type` field). Adjust all property names to match the actual `streamingAtomFamily` shape.
 
 ## Step 4 — clean up + handle approval
 
