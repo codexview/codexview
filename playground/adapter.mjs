@@ -675,6 +675,7 @@ export function adapt(rawLines) {
 function adaptClaudeCode(lines) {
   const out = [];
   let threadStarted = false;
+  const skipTypes = new Set(['attachment', 'system', 'last-prompt', 'queue-operation']);
 
   for (const line of lines) {
     if (!line || typeof line !== 'object') continue;
@@ -686,6 +687,8 @@ function adaptClaudeCode(lines) {
       out.push({ type: 'thread_started', threadId: line.sessionId, at });
       threadStarted = true;
     }
+
+    if (skipTypes.has(line.type)) continue;
   }
 
   return out;

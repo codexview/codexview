@@ -58,3 +58,29 @@ describe('adaptClaudeCode · thread', () => {
     expect(threadStarts).toHaveLength(1);
   });
 });
+
+describe('adaptClaudeCode · filtering', () => {
+  it('drops attachment / system / last-prompt / queue-operation (only thread_started emits)', () => {
+    const base = { uuid: 'u1', sessionId: 'sess', parentUuid: null, timestamp: '2026-05-15T00:00:00Z' };
+    const lines = [
+      { ...base, type: 'attachment', attachment: { type: 'hook_success' } },
+      { ...base, type: 'system', uuid: 'u2', content: 'whatever' },
+      { ...base, type: 'last-prompt', uuid: 'u3', lastPrompt: 'draft' },
+      { ...base, type: 'queue-operation', uuid: 'u4', operation: 'enqueue', content: 'queued' },
+    ];
+    const { events } = adapt(lines);
+    expect(events.map((e) => e.type)).toEqual(['thread_started']);
+  });
+
+  it('drops lines where isSidechain === true entirely (even the first one)', () => {
+    const lines = [
+      { type: 'user', uuid: 'u1', sessionId: 'sess', parentUuid: null, isSidechain: true,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'side' } },
+      { type: 'attachment', uuid: 'a1', sessionId: 'sess', parentUuid: null, isSidechain: false,
+        timestamp: '2026-05-15T00:00:01Z', attachment: { type: 'hook_success' } },
+    ];
+    const { events } = adapt(lines);
+    expect(events).toHaveLength(1);
+    expect(events[0]).toMatchObject({ type: 'thread_started', threadId: 'sess' });
+  });
+});
