@@ -13,10 +13,16 @@
   },
   "main": "./dist/index.js",
   "types": "./dist/index.d.ts",
-  "files": ["dist", "README.md", "docs"],
-  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist",
+    "README.md",
+    "docs"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
-    "build": "tsup",
+    "build": "vite build",
     "dev": "vite --config dev/vite.config.ts",
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
@@ -24,9 +30,9 @@
     "prepublishOnly": "pnpm build"
   },
   "peerDependencies": {
+    "lucide-react": "^0.400.0",
     "react": "^18.3.0",
-    "react-dom": "^18.3.0",
-    "lucide-react": "^0.400.0"
+    "react-dom": "^18.3.0"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.4.6",
@@ -40,10 +46,12 @@
     "lucide-react": "^0.400.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "tsup": "^8.1.0",
     "typescript": "^5.5.4",
     "vite": "^5.4.0",
+    "vite-plugin-dts": "^5.0.0",
     "vitest": "^2.0.0"
   },
-  "engines": { "node": ">=20" }
+  "engines": {
+    "node": ">=20"
+  }
 }
