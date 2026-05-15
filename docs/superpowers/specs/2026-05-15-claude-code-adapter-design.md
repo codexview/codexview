@@ -230,11 +230,15 @@ function isAllowed(path) {
 const detectFormat = (lines) => {
   for (const line of lines) {
     if (line && typeof line === 'object') {
-      // Claude Code 特征：含 sessionId + parentUuid + type='user'/'assistant'/'attachment'/...
-      if ('sessionId' in line && 'parentUuid' in line && 'uuid' in line) return 'claude-code';
-      // Codex rollout 特征：含 timestamp + type + payload
+      // Claude Code: every line carries `sessionId` (queue-operation, system,
+      // last-prompt, user, assistant, attachment, …). Codex rollout and
+      // codex-team logs do not. Tested against multiple real Claude Code
+      // sessions including ones whose first lines are queue-operation rows
+      // that lack uuid/parentUuid.
+      if ('sessionId' in line) return 'claude-code';
+      // Codex rollout: top-level { type, payload, timestamp }
       if ('type' in line && ('payload' in line || 'timestamp' in line)) return 'rollout';
-      // AgentWeb codex-team 特征：含 at + event
+      // AgentWeb codex-team status log: { event, at, status, payload }
       if ('event' in line && 'at' in line) return 'codex-team';
     }
   }
