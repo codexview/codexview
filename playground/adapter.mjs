@@ -886,6 +886,17 @@ function adaptClaudeCode(lines) {
             });
             return; // emission deferred to tool_result so we know `ok`
           }
+          if (name === 'Write') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'added',
+                diff: ccWriteDiff(String(input.content || '')),
+              }],
+            });
+            return;
+          }
           // other tools handled in later tasks
         }
       });

@@ -385,3 +385,27 @@ describe('adaptClaudeCode · Edit', () => {
     expect(events.find((e) => e.type === 'patch_apply_end').ok).toBe(false);
   });
 });
+
+describe('adaptClaudeCode · Write', () => {
+  it('emits patch_apply_end with status="added" and +-prefixed diff', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'Write',
+            input: { file_path: '/new.ts', content: 'line1\nline2' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'written', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const patch = events.find((e) => e.type === 'patch_apply_end');
+    expect(patch.files[0]).toMatchObject({ path: '/new.ts', status: 'added' });
+    expect(patch.files[0].diff).toBe('+ line1\n+ line2');
+  });
+});
