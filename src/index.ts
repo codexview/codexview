@@ -1,8 +1,18 @@
-export const VERSION = '0.1.0';
+export type { ChatStreamEvent, ChatStreamEventType, TokenUsage, SearchResult, PatchFile } from './types/events.js';
+export type { TranscriptModel, TurnView, ItemView, ItemKind, ItemStatus, TranscriptStatus } from './types/model.js';
+export { EMPTY_MODEL } from './types/model.js';
+
+export { reduceTranscript } from './reducer/transcript.js';
+export { inferStatus } from './reducer/status.js';
+export { useCodexTranscript } from './hooks/useCodexTranscript.js';
+export type { UseCodexTranscriptOptions } from './hooks/useCodexTranscript.js';
+export { useSmoothStream } from './hooks/useSmoothStream.js';
+export type { UseSmoothStreamOptions } from './hooks/useSmoothStream.js';
+
+export { CodexTranscript } from './components/CodexTranscript.js';
+export type { CodexTranscriptProps, CodexTranscriptComponents } from './components/CodexTranscript.js';
 export { StatusBar } from './components/StatusBar.js';
 export type { StatusBarProps } from './components/StatusBar.js';
-export { ItemErrorBoundary } from './components/ItemErrorBoundary.js';
-export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
 export { TurnContainer } from './components/TurnContainer.js';
 export type { TurnContainerProps } from './components/TurnContainer.js';
 export { MessageBubble } from './components/MessageBubble.js';
@@ -19,3 +29,7 @@ export { PatchBlock } from './components/PatchBlock.js';
 export type { PatchBlockProps } from './components/PatchBlock.js';
 export { RawEventBlock } from './components/RawEventBlock.js';
 export type { RawEventBlockProps } from './components/RawEventBlock.js';
+export { ItemErrorBoundary } from './components/ItemErrorBoundary.js';
+export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
+
+export const VERSION = '0.1.0';
