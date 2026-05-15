@@ -2,6 +2,13 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.2] — 2026-05-15
+
+### Changed
+
+- First release published via GitHub Actions OIDC trusted publishing (no
+  long-lived NPM token; provenance attestation included).
+
 ## [0.1.1] — 2026-05-15
 
 ### Added
