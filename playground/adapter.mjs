@@ -810,7 +810,18 @@ function adaptClaudeCode(lines) {
           pending.delete(callId);
           continue;
         }
-        // other kinds handled in later tasks
+        if (p?.kind === 'function') {
+          const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
+          if (isError) evt.error = text; else evt.output = text;
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
+        // Unknown / orphan tool_result with no matching tool_use — surface as a function_call_output
+        // so the user can at least see it in the transcript.
+        const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
+        if (isError) evt.error = text; else evt.output = text;
+        out.push(evt);
       }
       continue;
     }
@@ -932,7 +943,17 @@ function adaptClaudeCode(lines) {
             });
             return;
           }
-          // other tools handled in later tasks
+          // Fallback: any other tool name (Read, Glob, Grep, Task, Skill, WebSearch, WebFetch, …)
+          pending.set(callId, { kind: 'function' });
+          out.push({
+            type: 'function_call',
+            turnId: currentTurnId,
+            callId,
+            name,
+            args: input,
+            at,
+          });
+          return;
         }
       });
       continue;
