@@ -677,6 +677,31 @@ function adaptClaudeCode(lines) {
   let threadStarted = false;
   const skipTypes = new Set(['attachment', 'system', 'last-prompt', 'queue-operation']);
 
+  let currentTurnId = null;
+  let turnUsage = null; // { lastInput, sumOutput }
+  const pending = new Map(); // tool_use.id -> { kind, ... }
+
+  const closeTurn = (at) => {
+    if (!currentTurnId) return;
+    const evt = { type: 'turn_completed', turnId: currentTurnId, at };
+    if (turnUsage) {
+      evt.usage = {
+        inputTokens: turnUsage.lastInput || 0,
+        outputTokens: turnUsage.sumOutput || 0,
+      };
+    }
+    out.push(evt);
+    currentTurnId = null;
+    turnUsage = null;
+  };
+
+  const isTextUser = (msg) => {
+    const content = msg?.content;
+    if (typeof content === 'string') return true;
+    if (!Array.isArray(content) || content.length === 0) return false;
+    return content.every((c) => c && c.type === 'text');
+  };
+
   for (const line of lines) {
     if (!line || typeof line !== 'object') continue;
     if (line.isSidechain === true) continue;
@@ -689,6 +714,35 @@ function adaptClaudeCode(lines) {
     }
 
     if (skipTypes.has(line.type)) continue;
+
+    if (line.type === 'user' && line.message) {
+      if (isTextUser(line.message)) {
+        // closeTurn intentionally NOT called here yet — Task 5 adds multi-turn closure.
+        currentTurnId = String(line.uuid || `cc-turn-${out.length}`);
+        turnUsage = { lastInput: 0, sumOutput: 0 };
+        out.push({ type: 'turn_started', turnId: currentTurnId, at });
+
+        const content = line.message.content;
+        if (typeof content === 'string') {
+          out.push({
+            type: 'user_message', turnId: currentTurnId, itemId: currentTurnId, text: content, at,
+          });
+        } else {
+          content.forEach((c, idx) => {
+            out.push({
+              type: 'user_message',
+              turnId: currentTurnId,
+              itemId: `${currentTurnId}:${idx}`,
+              text: String(c.text || ''),
+              at,
+            });
+          });
+        }
+        continue;
+      }
+      // Non-text-user (tool_result) handled in a later task.
+      continue;
+    }
   }
 
   return out;

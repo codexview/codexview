@@ -84,3 +84,39 @@ describe('adaptClaudeCode · filtering', () => {
     expect(events[0]).toMatchObject({ type: 'thread_started', threadId: 'sess' });
   });
 });
+
+describe('adaptClaudeCode · text-user (turn boundary)', () => {
+  it('emits turn_started + user_message for a string-content user message', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'hello' } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.map((e) => e.type)).toEqual(['thread_started', 'turn_started', 'user_message']);
+    expect(events[1]).toMatchObject({ turnId: 'u-1' });
+    expect(events[2]).toMatchObject({ turnId: 'u-1', itemId: 'u-1', text: 'hello' });
+  });
+
+  it('treats user with content[]={type:"text",text:...} as a text-user too', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z',
+        message: { role: 'user', content: [{ type: 'text', text: 'multiline' }] } },
+    ];
+    const { events } = adapt(lines);
+    const userMsgs = events.filter((e) => e.type === 'user_message');
+    expect(userMsgs).toHaveLength(1);
+    expect(userMsgs[0]).toMatchObject({ text: 'multiline', itemId: 'u-1:0' });
+  });
+
+  it('does NOT open a new turn for user content that is a tool_result', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z',
+        message: { role: 'user', content: [{ type: 'tool_result', tool_use_id: 't1', content: 'ok' }] } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.find((e) => e.type === 'turn_started')).toBeUndefined();
+    expect(events.find((e) => e.type === 'user_message')).toBeUndefined();
+  });
+});
