@@ -1,0 +1,17 @@
+.turn {
+  padding: var(--cv-spacing-md) var(--cv-spacing-lg);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cv-spacing-sm);
+}
+.axis {
+  position: relative;
+  padding-left: var(--cv-spacing-lg);
+  border-left: 2px solid var(--cv-axis-color);
+  display: flex;
+  flex-direction: column;
+  gap: var(--cv-spacing-sm);
+}
+.turn[data-turn-status='running'] .axis { border-left-color: var(--cv-status-running); }
+.turn[data-turn-status='failed']  .axis { border-left-color: var(--cv-status-failed); }
+.turn[data-turn-status='aborted'] .axis { border-left-color: var(--cv-status-stopped); }
