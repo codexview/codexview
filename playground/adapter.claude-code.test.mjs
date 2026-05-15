@@ -162,3 +162,32 @@ describe('adaptClaudeCode · EOF closure', () => {
     expect(events.some((e) => e.type === 'turn_completed')).toBe(false);
   });
 });
+
+describe('adaptClaudeCode · assistant text', () => {
+  it('emits agent_message for each text block in assistant content[]', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', model: 'claude-opus-4-7',
+          content: [{ type: 'text', text: 'answer1' }, { type: 'text', text: 'answer2' }],
+          usage: { input_tokens: 0, output_tokens: 0 } } },
+    ];
+    const { events } = adapt(lines);
+    const am = events.filter((e) => e.type === 'agent_message');
+    expect(am).toHaveLength(2);
+    expect(am[0]).toMatchObject({ turnId: 'u-1', itemId: 'a-1:0', text: 'answer1', partial: false });
+    expect(am[1]).toMatchObject({ turnId: 'u-1', itemId: 'a-1:1', text: 'answer2', partial: false });
+  });
+
+  it('ignores assistant messages that arrive without an open turn', () => {
+    const lines = [
+      { type: 'assistant', uuid: 'a-orphan', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z',
+        message: { role: 'assistant', content: [{ type: 'text', text: 'orphan' }] } },
+    ];
+    const { events } = adapt(lines);
+    expect(events.some((e) => e.type === 'agent_message')).toBe(false);
+  });
+});

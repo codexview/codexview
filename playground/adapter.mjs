@@ -743,6 +743,30 @@ function adaptClaudeCode(lines) {
       // Non-text-user (tool_result) handled in a later task.
       continue;
     }
+
+    if (line.type === 'assistant' && line.message) {
+      if (!currentTurnId) continue;
+      const content = line.message.content;
+      if (!Array.isArray(content)) continue;
+      const asstUuid = String(line.uuid || `cc-a-${out.length}`);
+
+      content.forEach((c, idx) => {
+        if (!c || typeof c !== 'object') return;
+        const itemId = `${asstUuid}:${idx}`;
+        if (c.type === 'text') {
+          out.push({
+            type: 'agent_message',
+            turnId: currentTurnId,
+            itemId,
+            text: String(c.text || ''),
+            partial: false,
+            at,
+          });
+        }
+        // thinking & tool_use handled in later tasks
+      });
+      continue;
+    }
   }
 
   if (currentTurnId) {
