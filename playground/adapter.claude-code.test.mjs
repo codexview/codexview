@@ -436,3 +436,64 @@ describe('adaptClaudeCode · MultiEdit', () => {
     expect(patch.files[0].diff).toBe('- a\n+ A\n\n- b\n+ B');
   });
 });
+
+describe('adaptClaudeCode · MCP', () => {
+  it('parses mcp__server__name into server + name', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'mcp__weather__get_forecast', input: { city: 'AKL' } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'rain', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const call = events.find((e) => e.type === 'mcp_tool_call');
+    const output = events.find((e) => e.type === 'mcp_tool_call_output');
+    expect(call).toMatchObject({ callId: 'tu-1', server: 'weather', name: 'get_forecast', args: { city: 'AKL' } });
+    expect(output).toMatchObject({ callId: 'tu-1', output: 'rain' });
+    expect(output.error).toBeUndefined();
+  });
+
+  it('handles names with three+ segments by treating extras as part of name', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'mcp__foo__bar__baz', input: {} },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const call = events.find((e) => e.type === 'mcp_tool_call');
+    expect(call).toMatchObject({ server: 'foo', name: 'bar__baz' });
+  });
+
+  it('routes tool_result with is_error=true into mcp_tool_call_output.error', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'mcp__svc__op', input: {} },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'boom', is_error: true },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const output = events.find((e) => e.type === 'mcp_tool_call_output');
+    expect(output).toMatchObject({ error: 'boom' });
+    expect(output.output).toBeUndefined();
+  });
+});

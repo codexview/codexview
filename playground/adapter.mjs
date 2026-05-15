@@ -803,6 +803,13 @@ function adaptClaudeCode(lines) {
           pending.delete(callId);
           continue;
         }
+        if (p?.kind === 'mcp') {
+          const evt = { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, at };
+          if (isError) evt.error = text; else evt.output = text;
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
         // other kinds handled in later tasks
       }
       continue;
@@ -906,6 +913,22 @@ function adaptClaudeCode(lines) {
                 status: 'modified',
                 diff: ccMultiEditDiff(edits),
               }],
+            });
+            return;
+          }
+          if (name.startsWith('mcp__')) {
+            const parts = name.split('__');
+            const server = parts[1] || '';
+            const toolName = parts.slice(2).join('__') || name;
+            pending.set(callId, { kind: 'mcp' });
+            out.push({
+              type: 'mcp_tool_call',
+              turnId: currentTurnId,
+              callId,
+              server,
+              name: toolName,
+              args: input,
+              at,
             });
             return;
           }
