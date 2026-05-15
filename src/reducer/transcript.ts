@@ -21,6 +21,31 @@ function flipUnfinished(items: ItemView[], next: ItemStatus): ItemView[] {
   );
 }
 
+function withinTurn(
+  prev: TranscriptModel,
+  turnId: string,
+  at: number,
+  mut: (turn: TurnView) => TurnView,
+): TranscriptModel {
+  const i = findTurnIndex(prev, turnId);
+  if (i < 0) return { ...prev, lastEventAt: at };
+  return replaceTurn(prev, i, mut(prev.turns[i]!), at);
+}
+
+function appendItem(turn: TurnView, item: ItemView): TurnView {
+  return { ...turn, items: [...turn.items, item] };
+}
+
+function updateItem(turn: TurnView, id: string, mut: (item: ItemView) => ItemView): TurnView {
+  let touched = false;
+  const items = turn.items.map((it) => {
+    if (it.id !== id) return it;
+    touched = true;
+    return mut(it);
+  });
+  return touched ? { ...turn, items } : turn;
+}
+
 export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent): TranscriptModel {
   switch (event.type) {
     case 'thread_started':
@@ -73,6 +98,40 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
         completedAt: event.at,
         items: flipUnfinished(t.items, 'stopped'),
       }, event.at);
+    }
+
+    case 'user_message':
+      return withinTurn(prev, event.turnId, event.at, (t) =>
+        appendItem(t, {
+          id: event.itemId,
+          kind: 'user_message',
+          status: 'completed',
+          startedAt: event.at,
+          updatedAt: event.at,
+          text: event.text,
+        }),
+      );
+
+    case 'agent_message':
+    case 'reasoning': {
+      const kind = event.type === 'reasoning' ? 'reasoning' : 'assistant_text';
+      return withinTurn(prev, event.turnId, event.at, (t) => {
+        const exists = t.items.some((it) => it.id === event.itemId && it.kind === kind);
+        if (exists) {
+          return updateItem(t, event.itemId, (it) => {
+            if (it.kind !== kind) return it;
+            return { ...it, text: event.text, status: event.partial ? 'running' : 'completed', updatedAt: event.at };
+          });
+        }
+        return appendItem(t, {
+          id: event.itemId,
+          kind,
+          status: event.partial ? 'running' : 'completed',
+          startedAt: event.at,
+          updatedAt: event.at,
+          text: event.text,
+        } as ItemView);
+      });
     }
 
     default:

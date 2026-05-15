@@ -57,3 +57,50 @@ describe('reduceTranscript / lifecycle', () => {
     expect(JSON.stringify(EMPTY_MODEL)).toBe(before);
   });
 });
+
+describe('reduceTranscript / messages', () => {
+  function startedTurn() {
+    return reduceTranscript(EMPTY_MODEL, { type: 'turn_started', turnId: 'tn-1', at: 100 });
+  }
+
+  it('user_message appends a completed user item', () => {
+    const m = reduceTranscript(startedTurn(), {
+      type: 'user_message',
+      turnId: 'tn-1',
+      itemId: 'u1',
+      text: 'hi',
+      at: 110,
+    });
+    const item = m.turns[0]?.items[0];
+    expect(item).toMatchObject({ kind: 'user_message', id: 'u1', text: 'hi', status: 'completed' });
+  });
+
+  it('agent_message partial creates a running assistant_text item', () => {
+    const m = reduceTranscript(startedTurn(), {
+      type: 'agent_message',
+      turnId: 'tn-1',
+      itemId: 'a1',
+      text: 'hel',
+      partial: true,
+      at: 120,
+    });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'assistant_text', id: 'a1', text: 'hel', status: 'running' });
+  });
+
+  it('agent_message updates same itemId and flips to completed when partial=false', () => {
+    let m = startedTurn();
+    m = reduceTranscript(m, { type: 'agent_message', turnId: 'tn-1', itemId: 'a1', text: 'hel', partial: true, at: 120 });
+    m = reduceTranscript(m, { type: 'agent_message', turnId: 'tn-1', itemId: 'a1', text: 'hello', partial: false, at: 130 });
+    expect(m.turns[0]?.items).toHaveLength(1);
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'assistant_text', text: 'hello', status: 'completed' });
+  });
+
+  it('reasoning is independent from agent_message (not merged)', () => {
+    let m = startedTurn();
+    m = reduceTranscript(m, { type: 'reasoning', turnId: 'tn-1', itemId: 'r1', text: 'think', partial: false, at: 115 });
+    m = reduceTranscript(m, { type: 'agent_message', turnId: 'tn-1', itemId: 'a1', text: 'answer', partial: false, at: 120 });
+    expect(m.turns[0]?.items).toHaveLength(2);
+    expect(m.turns[0]?.items[0]?.kind).toBe('reasoning');
+    expect(m.turns[0]?.items[1]?.kind).toBe('assistant_text');
+  });
+});
