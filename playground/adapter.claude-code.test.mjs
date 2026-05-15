@@ -409,3 +409,30 @@ describe('adaptClaudeCode · Write', () => {
     expect(patch.files[0].diff).toBe('+ line1\n+ line2');
   });
 });
+
+describe('adaptClaudeCode · MultiEdit', () => {
+  it('joins multiple edits with blank lines and labels them as modified', () => {
+    const lines = [
+      { type: 'user', uuid: 'u-1', sessionId: 'sess', parentUuid: null,
+        timestamp: '2026-05-15T00:00:00Z', message: { role: 'user', content: 'q' } },
+      { type: 'assistant', uuid: 'a-1', sessionId: 'sess', parentUuid: 'u-1',
+        timestamp: '2026-05-15T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'tu-1', name: 'MultiEdit',
+            input: { file_path: '/p.ts', edits: [
+              { old_string: 'a', new_string: 'A' },
+              { old_string: 'b', new_string: 'B' },
+            ] } },
+        ] } },
+      { type: 'user', uuid: 'u-2', sessionId: 'sess', parentUuid: 'a-1',
+        timestamp: '2026-05-15T00:00:02Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'tu-1', content: 'done', is_error: false },
+        ] } },
+    ];
+    const { events } = adapt(lines);
+    const patch = events.find((e) => e.type === 'patch_apply_end');
+    expect(patch.files[0].status).toBe('modified');
+    expect(patch.files[0].diff).toBe('- a\n+ A\n\n- b\n+ B');
+  });
+});

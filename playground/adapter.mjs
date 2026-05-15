@@ -897,6 +897,18 @@ function adaptClaudeCode(lines) {
             });
             return;
           }
+          if (name === 'MultiEdit') {
+            const edits = Array.isArray(input.edits) ? input.edits : [];
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path || ''),
+                status: 'modified',
+                diff: ccMultiEditDiff(edits),
+              }],
+            });
+            return;
+          }
           // other tools handled in later tasks
         }
       });
