@@ -1,0 +1,25 @@
+.block {
+  background: var(--cv-bg-code);
+  color: var(--cv-fg-code);
+  border-radius: var(--cv-radius-sm);
+  padding: var(--cv-spacing-sm);
+  display: flex; flex-direction: column; gap: var(--cv-spacing-xs);
+  font-family: var(--cv-font-mono); font-size: 0.85rem;
+  overflow: hidden;
+}
+.header { display: flex; align-items: center; gap: var(--cv-spacing-xs); }
+.cmd { white-space: pre-wrap; word-break: break-word; flex: 1; }
+.exit { font-size: 0.75rem; opacity: 0.7; }
+.stdout { white-space: pre-wrap; word-break: break-word; }
+.stderr { white-space: pre-wrap; word-break: break-word; color: var(--cv-status-failed); }
+.shimmer {
+  height: 4px; border-radius: 2px;
+  background: linear-gradient(90deg, transparent, var(--cv-shimmer-color), transparent);
+  background-size: 200% 100%;
+  animation: cv-shimmer 1.4s linear infinite;
+}
+@keyframes cv-shimmer {
+  from { background-position: -100% 0; }
+  to   { background-position:  100% 0; }
+}
+@media (prefers-reduced-motion: reduce) { .shimmer { animation: none; } }
