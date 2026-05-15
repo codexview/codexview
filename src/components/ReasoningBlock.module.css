@@ -1,0 +1,20 @@
+.block {
+  border-left: 2px solid var(--cv-border);
+  padding-left: var(--cv-spacing-sm);
+}
+.summary {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  cursor: pointer;
+  color: var(--cv-text-muted);
+  font-style: italic;
+  list-style: none;
+}
+.summary::-webkit-details-marker { display: none; }
+.body {
+  margin-top: var(--cv-spacing-xs);
+  color: var(--cv-text-muted);
+  font-style: italic;
+  white-space: pre-wrap;
+}
