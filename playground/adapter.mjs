@@ -685,6 +685,52 @@ const ccWriteDiff = (content) => ccPrefixLines(content, '+ ');
 const ccMultiEditDiff = (edits) =>
   edits.map((e) => `${ccPrefixLines(String(e?.old_string || ''), '- ')}\n${ccPrefixLines(String(e?.new_string || ''), '+ ')}`).join('\n\n');
 
+function formatSubagentSummary(sub) {
+  const lines = [];
+  const desc = sub.meta?.description ?? '(no description)';
+  const type = sub.meta?.agentType ?? 'unknown';
+  lines.push(`### ${desc}`);
+  lines.push(`*agent_type:* \`${type}\` · *agent_id:* \`${sub.agentId}\``);
+  lines.push('');
+
+  let finalText = '';
+  let totalInput = 0;
+  let totalOutput = 0;
+  const toolCounts = new Map();
+  for (const ln of sub.lines) {
+    if (ln.type === 'assistant') {
+      const content = ln.message?.content ?? [];
+      for (const c of content) {
+        if (c.type === 'text' && typeof c.text === 'string') finalText = c.text;
+        if (c.type === 'tool_use') {
+          toolCounts.set(c.name, (toolCounts.get(c.name) ?? 0) + 1);
+        }
+      }
+      const u = ln.message?.usage;
+      if (u) {
+        if (typeof u.input_tokens === 'number') totalInput = Math.max(totalInput, u.input_tokens);
+        if (typeof u.output_tokens === 'number') totalOutput += u.output_tokens;
+      }
+    }
+  }
+
+  if (toolCounts.size > 0) {
+    const summary = [...toolCounts.entries()].map(([n, c]) => `\`${n}\` × ${c}`).join(', ');
+    lines.push(`**Tools used:** ${summary}`);
+    lines.push('');
+  }
+  if (totalInput || totalOutput) {
+    lines.push(`**Tokens:** ${totalInput.toLocaleString()} in / ${totalOutput.toLocaleString()} out`);
+    lines.push('');
+  }
+  if (finalText) {
+    lines.push('**Final reply:**');
+    lines.push('');
+    lines.push('> ' + finalText.split('\n').join('\n> '));
+  }
+  return lines.join('\n');
+}
+
 function adaptClaudeCode(lines, subagents = []) {
   const out = [];
   let threadStarted = false;
@@ -697,6 +743,14 @@ function adaptClaudeCode(lines, subagents = []) {
   // survive EOF are intentionally not back-emitted — the reducer's
   // turn_completed handler flips them to 'completed' anyway.
   const pending = new Map();
+
+  // Subagent pairing state (Task A4):
+  //   Primary: lookup by toolUseResult.agentId on the user-type tool_result line.
+  //   Fallback: FIFO over remaining unconsumed subagents (handles missing/legacy agentId).
+  const subagentList = Array.isArray(subagents) ? subagents : [];
+  const agentIdToSubagent = new Map(subagentList.map((s) => [s.agentId, s]));
+  const subagentQueue = [...subagentList];
+  const consumedAgentIds = new Set();
 
   const closeTurn = (at) => {
     if (!currentTurnId) return;
@@ -813,6 +867,31 @@ function adaptClaudeCode(lines, subagents = []) {
         if (p?.kind === 'mcp') {
           const evt = { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, at };
           if (isError) evt.error = text; else evt.output = text;
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'agent') {
+          // Try agentId-primary lookup first
+          let sub = null;
+          const agentId = line.toolUseResult?.agentId;
+          if (agentId && agentIdToSubagent.has(agentId) && !consumedAgentIds.has(agentId)) {
+            sub = agentIdToSubagent.get(agentId);
+            consumedAgentIds.add(agentId);
+          } else {
+            // FIFO fallback: pop next subagent that hasn't been consumed by lookup
+            while (subagentQueue.length > 0) {
+              const candidate = subagentQueue.shift();
+              if (!consumedAgentIds.has(candidate.agentId)) {
+                sub = candidate;
+                consumedAgentIds.add(candidate.agentId);
+                break;
+              }
+            }
+          }
+          const output = sub ? formatSubagentSummary(sub) : text;
+          const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
+          if (isError) evt.error = output; else evt.output = output;
           out.push(evt);
           pending.delete(callId);
           continue;
@@ -950,7 +1029,19 @@ function adaptClaudeCode(lines, subagents = []) {
             });
             return;
           }
-          // Fallback: any other tool name (Read, Glob, Grep, Task, Skill, WebSearch, WebFetch, …)
+          if (name === 'Agent') {
+            pending.set(callId, { kind: 'agent' });
+            out.push({
+              type: 'function_call',
+              turnId: currentTurnId,
+              callId,
+              name: 'Agent',
+              args: input,
+              at,
+            });
+            return;
+          }
+          // Fallback: any other tool name (Read, Glob, Grep, Skill, WebSearch, WebFetch, …)
           pending.set(callId, { kind: 'function' });
           out.push({
             type: 'function_call',

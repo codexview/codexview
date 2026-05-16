@@ -581,3 +581,104 @@ describe('adapt() options.subagents', () => {
     expect(format).toBe('claude-code');
   });
 });
+
+describe('Agent tool with subagent', () => {
+  it('embeds subagent summary as Markdown in the Agent tool_result output (agentId lookup)', () => {
+    const parentLines = [
+      // user prompt — opens a turn
+      { type: 'user', uuid: 'p1', sessionId: 's1', timestamp: '2026-05-16T00:00:00Z',
+        message: { role: 'user', content: 'review the PR' } },
+      // assistant Agent tool_use
+      { type: 'assistant', uuid: 'a1', sessionId: 's1', timestamp: '2026-05-16T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'toolu_AGENT1', name: 'Agent',
+            input: { description: 'Final PR review', prompt: 'review carefully', subagent_type: 'general-purpose' } },
+        ] } },
+      // tool_result — carries toolUseResult.agentId at top level (NOT inside message.content)
+      { type: 'user', uuid: 'p2', sessionId: 's1', timestamp: '2026-05-16T00:00:50Z',
+        toolUseResult: { agentId: 'a0cd8f421e4818b08', agentType: 'general-purpose', status: 'completed' },
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'toolu_AGENT1',
+            content: 'Done. PR looks safe to merge.' },
+        ] } },
+    ];
+
+    const subagent = {
+      agentId: 'a0cd8f421e4818b08',
+      meta: { agentType: 'general-purpose', description: 'Final PR review' },
+      lines: [
+        { type: 'user', uuid: 's1u1', parentUuid: null, isSidechain: true,
+          promptId: 'prompt-1', agentId: 'a0cd8f421e4818b08',
+          timestamp: '2026-05-16T00:00:02Z',
+          message: { role: 'user', content: 'review carefully' } },
+        { type: 'assistant', uuid: 's1a1', isSidechain: true,
+          timestamp: '2026-05-16T00:00:40Z',
+          message: { role: 'assistant', content: [
+            { type: 'text', text: 'No issues found. 6 commits, all coherent.' },
+          ], usage: { input_tokens: 1234, output_tokens: 567 } } },
+      ],
+    };
+
+    const { events } = adapt(parentLines, { subagents: [subagent] });
+    const out = events.find((e) => e.type === 'function_call_output' && e.callId === 'toolu_AGENT1');
+    expect(out).toBeTruthy();
+    expect(out.output).toContain('Final PR review');
+    expect(out.output).toContain('general-purpose');
+    expect(out.output).toContain('No issues found');
+    expect(out.output).toContain('1,234');
+  });
+
+  it('falls back to plain tool_result when no matching subagent is found', () => {
+    const parentLines = [
+      { type: 'user', uuid: 'p1', sessionId: 's1', timestamp: '2026-05-16T00:00:00Z',
+        message: { role: 'user', content: 'go' } },
+      { type: 'assistant', uuid: 'a1', sessionId: 's1', timestamp: '2026-05-16T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'toolu_AGENT2', name: 'Agent',
+            input: { description: 'x', prompt: 'y', subagent_type: 'z' } },
+        ] } },
+      // No toolUseResult on this line — and subagents array is empty → fallback to plain text
+      { type: 'user', uuid: 'p2', sessionId: 's1', timestamp: '2026-05-16T00:00:50Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'toolu_AGENT2', content: 'plain result' },
+        ] } },
+    ];
+    const { events } = adapt(parentLines, { subagents: [] });
+    const out = events.find((e) => e.type === 'function_call_output' && e.callId === 'toolu_AGENT2');
+    expect(out).toBeTruthy();
+    expect(out.output).toBe('plain result');
+  });
+
+  it('falls back to FIFO when toolUseResult.agentId is missing but a subagent exists', () => {
+    const parentLines = [
+      { type: 'user', uuid: 'p1', sessionId: 's1', timestamp: '2026-05-16T00:00:00Z',
+        message: { role: 'user', content: 'go' } },
+      { type: 'assistant', uuid: 'a1', sessionId: 's1', timestamp: '2026-05-16T00:00:01Z',
+        message: { role: 'assistant', content: [
+          { type: 'tool_use', id: 'toolu_AGENT3', name: 'Agent',
+            input: { description: 'Legacy', prompt: 'old-format', subagent_type: 'general-purpose' } },
+        ] } },
+      // No toolUseResult.agentId on the user line — simulates older sessions or format drift.
+      { type: 'user', uuid: 'p2', sessionId: 's1', timestamp: '2026-05-16T00:00:50Z',
+        message: { role: 'user', content: [
+          { type: 'tool_result', tool_use_id: 'toolu_AGENT3', content: 'raw output' },
+        ] } },
+    ];
+    const subagent = {
+      agentId: 'legacy123',
+      meta: { agentType: 'general-purpose', description: 'Legacy' },
+      lines: [
+        { type: 'assistant', uuid: 's1', isSidechain: true,
+          timestamp: '2026-05-16T00:00:40Z',
+          message: { role: 'assistant', content: [
+            { type: 'text', text: 'Done via FIFO.' },
+          ] } },
+      ],
+    };
+    const { events } = adapt(parentLines, { subagents: [subagent] });
+    const out = events.find((e) => e.type === 'function_call_output' && e.callId === 'toolu_AGENT3');
+    expect(out).toBeTruthy();
+    expect(out.output).toContain('Done via FIFO');
+    expect(out.output).toContain('Legacy');
+  });
+});
