@@ -1,6 +1,6 @@
 {
   "name": "@codexview/cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "CLI that renders AI coding agent jsonl logs (Codex CLI, codex-team, Claude Code) as compact plaintext markdown — suitable as compressed context.",
   "keywords": [
     "ai",

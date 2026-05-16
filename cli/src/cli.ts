@@ -4,7 +4,7 @@ import { adapt } from './adapter/index.js';
 import { render } from './render/markdown.js';
 import type { DetectedFormat } from './types.js';
 
-const VERSION = '0.1.0';
+const VERSION = '0.1.1';
 
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 
