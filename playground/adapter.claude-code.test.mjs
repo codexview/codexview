@@ -562,3 +562,22 @@ describe('adaptClaudeCode · dangling tool_use', () => {
     expect(events[events.length - 1]).toMatchObject({ type: 'turn_completed' });
   });
 });
+
+describe('adapt() options.subagents', () => {
+  it('passes subagents into adaptClaudeCode only for claude-code format', () => {
+    const claudeLines = [
+      { type: 'user', uuid: 'u1', sessionId: 's1', timestamp: '2026-05-16T00:00:00Z',
+        message: { role: 'user', content: 'hi' } },
+    ];
+    // The subagents argument should be accepted without throwing even when no Task is present.
+    const { format, events } = adapt(claudeLines, { subagents: [{ agentId: 'x', meta: null, lines: [] }] });
+    expect(format).toBe('claude-code');
+    expect(Array.isArray(events)).toBe(true);
+  });
+
+  it('is backward-compatible: adapt(lines) still works without options', () => {
+    const { format } = adapt([{ type: 'user', sessionId: 's', uuid: 'u', timestamp: '2026-05-16T00:00:00Z',
+      message: { role: 'user', content: 'hi' } }]);
+    expect(format).toBe('claude-code');
+  });
+});

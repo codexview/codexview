@@ -664,11 +664,11 @@ export function parseJsonl(text) {
   return lines;
 }
 
-export function adapt(rawLines) {
+export function adapt(rawLines, options = {}) {
   const fmt = detectFormat(rawLines);
   if (fmt === 'rollout')     return { format: 'rollout',     events: adaptRollout(rawLines) };
   if (fmt === 'codex-team')  return { format: 'codex-team',  events: adaptCodexTeam(rawLines) };
-  if (fmt === 'claude-code') return { format: 'claude-code', events: adaptClaudeCode(rawLines) };
+  if (fmt === 'claude-code') return { format: 'claude-code', events: adaptClaudeCode(rawLines, options.subagents) };
   return { format: 'unknown', events: rawLines.map((p, i) => ({ type: 'raw', payload: p, at: Date.now() + i })) };
 }
 
@@ -685,7 +685,7 @@ const ccWriteDiff = (content) => ccPrefixLines(content, '+ ');
 const ccMultiEditDiff = (edits) =>
   edits.map((e) => `${ccPrefixLines(String(e?.old_string || ''), '- ')}\n${ccPrefixLines(String(e?.new_string || ''), '+ ')}`).join('\n\n');
 
-function adaptClaudeCode(lines) {
+function adaptClaudeCode(lines, subagents = []) {
   const out = [];
   let threadStarted = false;
   const skipTypes = new Set(['attachment', 'system', 'last-prompt', 'queue-operation']);
