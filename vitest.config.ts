@@ -8,6 +8,7 @@ export default defineConfig({
     globals: true,
     setupFiles: ['src/test-setup.ts'],
     css: { modules: { classNameStrategy: 'non-scoped' } },
+    exclude: ['node_modules', 'dist', 'cli/**'],
     coverage: {
       provider: 'v8',
       include: ['src/**/*.{ts,tsx}'],
