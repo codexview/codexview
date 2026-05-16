@@ -24,10 +24,11 @@ describe('adaptClaudeCode', () => {
     const out = adaptClaudeCode(lines);
     expect(out.some((e) => e.type === 'exec_command_begin')).toBe(true);
   });
-  it('emits patch_apply_end for Edit tool', () => {
+  it('emits function_call for Edit / Write / MultiEdit (no patch_apply_end)', () => {
     const lines = readFixture('fixtures/claude-code/tool-heavy.jsonl');
     const out = adaptClaudeCode(lines);
-    expect(out.some((e) => e.type === 'patch_apply_end')).toBe(true);
+    expect(out.some((e) => e.type === 'function_call' && /^(Edit|Write|MultiEdit)$/.test(e.name))).toBe(true);
+    expect(out.some((e) => e.type === 'patch_apply_end')).toBe(false);
   });
   it('drops empty (encrypted) thinking blocks', () => {
     const lines = readFixture('fixtures/claude-code/thinking-mixed.jsonl');

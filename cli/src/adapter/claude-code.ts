@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, PatchFile, RawLine } from '../types.js';
+import type { ChatStreamEvent, RawLine } from '../types.js';
 
 const epoch = (iso: unknown): number => {
   if (typeof iso === 'number') return iso;
@@ -7,25 +7,9 @@ const epoch = (iso: unknown): number => {
   return Number.isNaN(ms) ? Date.now() : ms;
 };
 
-const ccPrefixLines = (text: string, prefix: string): string => {
-  if (!text) return '';
-  return text.split('\n').map((line) => `${prefix}${line}`).join('\n');
-};
-
-const ccEditDiff = (oldStr: string, newStr: string): string =>
-  `${ccPrefixLines(oldStr, '- ')}\n${ccPrefixLines(newStr, '+ ')}`;
-
-const ccWriteDiff = (content: string): string => ccPrefixLines(content, '+ ');
-
-const ccMultiEditDiff = (edits: Array<Record<string, unknown>>): string =>
-  edits
-    .map((e) => `${ccPrefixLines(String(e?.old_string || ''), '- ')}\n${ccPrefixLines(String(e?.new_string || ''), '+ ')}`)
-    .join('\n\n');
-
-type PendingKind = 'exec' | 'todo' | 'patch' | 'mcp' | 'agent' | 'function';
+type PendingKind = 'exec' | 'todo' | 'mcp' | 'agent' | 'function';
 interface PendingEntry {
   kind: PendingKind;
-  files?: PatchFile[];
 }
 
 interface UsageBucket { lastInput: number; sumOutput: number }
@@ -154,18 +138,6 @@ export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
           pending.delete(callId);
           continue;
         }
-        if (p?.kind === 'patch') {
-          out.push({
-            type: 'patch_apply_end',
-            turnId: currentTurnId,
-            callId,
-            files: p.files || [],
-            ok: !isError,
-            at,
-          });
-          pending.delete(callId);
-          continue;
-        }
         if (p?.kind === 'mcp') {
           const evt: ChatStreamEvent = isError
             ? { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, error: text, at }
@@ -259,40 +231,6 @@ export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
                 completed: t?.status === 'completed',
               })),
               at,
-            });
-            return;
-          }
-          if (name === 'Edit') {
-            pending.set(callId, {
-              kind: 'patch',
-              files: [{
-                path: String(input.file_path || ''),
-                status: 'modified',
-                diff: ccEditDiff(String(input.old_string || ''), String(input.new_string || '')),
-              }],
-            });
-            return;
-          }
-          if (name === 'Write') {
-            pending.set(callId, {
-              kind: 'patch',
-              files: [{
-                path: String(input.file_path || ''),
-                status: 'added',
-                diff: ccWriteDiff(String(input.content || '')),
-              }],
-            });
-            return;
-          }
-          if (name === 'MultiEdit') {
-            const edits = Array.isArray(input.edits) ? input.edits as Record<string, unknown>[] : [];
-            pending.set(callId, {
-              kind: 'patch',
-              files: [{
-                path: String(input.file_path || ''),
-                status: 'modified',
-                diff: ccMultiEditDiff(edits),
-              }],
             });
             return;
           }

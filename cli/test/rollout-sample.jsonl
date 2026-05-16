@@ -1,0 +1,6 @@
+{"type":"session_meta","timestamp":"2026-05-17T00:00:00Z","payload":{"id":"R1"}}
+{"type":"event_msg","timestamp":"2026-05-17T00:00:01Z","payload":{"type":"task_started","turn_id":"t1"}}
+{"type":"response_item","timestamp":"2026-05-17T00:00:02Z","payload":{"type":"message","role":"user","content":[{"type":"input_text","text":"please run tests"}]}}
+{"type":"event_msg","timestamp":"2026-05-17T00:00:03Z","payload":{"type":"exec_command_end","call_id":"c1","command":["npm","test"],"exit_code":0,"stdout":"OK","stderr":"","duration_ms":1500}}
+{"type":"event_msg","timestamp":"2026-05-17T00:00:04Z","payload":{"type":"agent_message","message":"All passing."}}
+{"type":"event_msg","timestamp":"2026-05-17T00:00:05Z","payload":{"type":"task_complete"}}
