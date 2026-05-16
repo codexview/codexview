@@ -7,7 +7,7 @@ import { adapt } from '../src/adapter/index.js';
 import { render } from '../src/render/markdown.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, '../..');
+const repoRoot = resolve(here, '../../..');
 
 const readFixture = (rel: string) => readFileSync(resolve(repoRoot, rel), 'utf8');
 

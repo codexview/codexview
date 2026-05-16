@@ -6,7 +6,21 @@ settings:
 
 importers:
 
-  .:
+  .: {}
+
+  packages/cli:
+    devDependencies:
+      '@types/node':
+        specifier: ^20.14.0
+        version: 20.19.41
+      typescript:
+        specifier: ^5.5.4
+        version: 5.9.3
+      vitest:
+        specifier: ^2.0.0
+        version: 2.1.9(@types/node@20.19.41)(jsdom@25.0.1)
+
+  packages/react:
     dependencies:
       react-markdown:
         specifier: ^10.1.0
@@ -57,18 +71,6 @@ importers:
       vite-plugin-dts:
         specifier: ^5.0.0
         version: 5.0.0(esbuild@0.27.7)(rollup@4.60.4)(typescript@5.9.3)(vite@5.4.21(@types/node@20.19.41))
-      vitest:
-        specifier: ^2.0.0
-        version: 2.1.9(@types/node@20.19.41)(jsdom@25.0.1)
-
-  cli:
-    devDependencies:
-      '@types/node':
-        specifier: ^20.14.0
-        version: 20.19.41
-      typescript:
-        specifier: ^5.5.4
-        version: 5.9.3
       vitest:
         specifier: ^2.0.0
         version: 2.1.9(@types/node@20.19.41)(jsdom@25.0.1)

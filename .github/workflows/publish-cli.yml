@@ -38,29 +38,29 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
-      - name: Verify tag matches cli/package.json version
+      - name: Verify tag matches packages/cli/package.json version
         run: |
           TAG="${GITHUB_REF_NAME#cli-v}"
-          PKG=$(jq -r .version cli/package.json)
+          PKG=$(jq -r .version packages/cli/package.json)
           if [ "$TAG" != "$PKG" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match cli/package.json version $PKG"
+            echo "::error::tag $GITHUB_REF_NAME does not match packages/cli/package.json version $PKG"
             exit 1
           fi
 
       - name: Typecheck cli
-        working-directory: cli
+        working-directory: packages/cli
         run: pnpm typecheck
 
       - name: Test cli
-        working-directory: cli
+        working-directory: packages/cli
         run: pnpm test
 
       - name: Build cli
-        working-directory: cli
+        working-directory: packages/cli
         run: pnpm build
 
       - name: Publish @codexview/cli with provenance
-        working-directory: cli
+        working-directory: packages/cli
         run: npm publish --provenance --access public
 
       - name: Create GitHub release

@@ -6,7 +6,7 @@ import { fileURLToPath } from 'node:url';
 import { tmpdir } from 'node:os';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, '../..');
+const repoRoot = resolve(here, '../../..');
 const bin = resolve(here, '..', 'bin', 'codexview-md.mjs');
 const fixture = resolve(repoRoot, 'fixtures', 'claude-code', 'short.jsonl');
 

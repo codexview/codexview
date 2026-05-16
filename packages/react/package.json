@@ -1,0 +1,84 @@
+{
+  "name": "@codexview/react",
+  "version": "0.2.0",
+  "publishConfig": {
+    "access": "public"
+  },
+  "description": "React components for rendering AI coding agent transcripts. Reference adapters for Codex CLI, AgentWeb codex-team, and Claude Code; OpenCode planned.",
+  "keywords": [
+    "ai",
+    "agent",
+    "transcript",
+    "viewer",
+    "react",
+    "codex",
+    "claude-code",
+    "opencode",
+    "rollout",
+    "chat"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "author": "Jay Liu (maxazure) <maxazure@gmail.com>",
+  "homepage": "https://github.com/codexview/codexview#readme",
+  "bugs": "https://github.com/codexview/codexview/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codexview/codexview.git"
+  },
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./styles.css": "./dist/styles.css"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "files": [
+    "dist",
+    "README.md",
+    "docs"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
+  "scripts": {
+    "build": "vite build",
+    "dev": "vite --config dev/vite.config.ts",
+    "playground": "vite --config playground/vite.config.ts",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "peerDependencies": {
+    "lucide-react": ">=0.400.0",
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0"
+  },
+  "devDependencies": {
+    "@testing-library/jest-dom": "^6.4.6",
+    "@testing-library/react": "^16.0.0",
+    "@testing-library/user-event": "^14.5.2",
+    "@types/node": "^20.14.0",
+    "@types/react": "^18.3.3",
+    "@types/react-dom": "^18.3.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "jsdom": "^25.0.0",
+    "lucide-react": "^0.400.0",
+    "react": "^18.3.1",
+    "react-dom": "^18.3.1",
+    "typescript": "^5.5.4",
+    "vite": "^5.4.0",
+    "vite-plugin-dts": "^5.0.0",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "react-markdown": "^10.1.0",
+    "remark-gfm": "^4.0.1"
+  }
+}

@@ -6,7 +6,7 @@ import { adaptClaudeCode } from './claude-code.js';
 import type { RawLine } from '../types.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, '../../..');
+const repoRoot = resolve(here, '../../../..');
 
 const readFixture = (rel: string): RawLine[] =>
   readFileSync(resolve(repoRoot, rel), 'utf8')

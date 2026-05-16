@@ -5,7 +5,7 @@ import { describe, it, expect } from 'vitest';
 import { adapt } from './adapter.mjs';
 
 const here = dirname(fileURLToPath(import.meta.url));
-const repoRoot = resolve(here, '..');
+const repoRoot = resolve(here, '../../..');
 const readFixture = (rel) => readFileSync(resolve(repoRoot, rel), 'utf8')
   .split('\n').filter(Boolean).map((l) => JSON.parse(l));
 const readMeta = (rel) => JSON.parse(readFileSync(resolve(repoRoot, rel), 'utf8'));
