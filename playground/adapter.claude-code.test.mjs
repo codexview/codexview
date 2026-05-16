@@ -692,21 +692,25 @@ describe('Agent tool with subagent', () => {
   });
 });
 
-it('replays the subagent fixture end-to-end', () => {
-  const parentLines = readFixture('fixtures/claude-code/subagent-parent.jsonl');
-  const childLines = readFixture('fixtures/claude-code/subagent-child.jsonl');
-  const meta = readMeta('fixtures/claude-code/subagent-child.meta.json');
-  const subagents = [{
-    agentId: 'test-agent-id',
-    meta,
-    lines: childLines,
-  }];
-  const { format, events } = adapt(parentLines, { subagents });
-  expect(format).toBe('claude-code');
-  const out = events.find((e) => e.type === 'function_call_output');
-  expect(out).toBeTruthy();
-  expect(out.output).toContain(meta.description);
-  // The fixture's terminal assistant text was added in A5 to make this assertion meaningful —
-  // verifies the formatSubagentSummary pipeline actually carries the subagent's final reply through.
-  expect(out.output).toContain('调研完成');
+describe('subagent fixture replay', () => {
+  it('replays the subagent fixture end-to-end', () => {
+    const parentLines = readFixture('fixtures/claude-code/subagent-parent.jsonl');
+    const childLines = readFixture('fixtures/claude-code/subagent-child.jsonl');
+    const meta = readMeta('fixtures/claude-code/subagent-child.meta.json');
+    const subagents = [{
+      agentId: 'test-agent-id',
+      meta,
+      lines: childLines,
+    }];
+    const { format, events } = adapt(parentLines, { subagents });
+    expect(format).toBe('claude-code');
+    const out = events.find(
+      (e) => e.type === 'function_call_output' && e.callId === 'toolu_015x6sDGNVScP6yU4es5hysA'
+    );
+    expect(out).toBeTruthy();
+    expect(out.output).toContain(meta.description);
+    // The fixture's terminal assistant text was added in A5 to make this assertion meaningful —
+    // verifies the formatSubagentSummary pipeline actually carries the subagent's final reply through.
+    expect(out.output).toContain('调研完成');
+  });
 });
