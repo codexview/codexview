@@ -697,7 +697,7 @@ function formatSubagentSummary(sub) {
   let totalInput = 0;
   let totalOutput = 0;
   const toolCounts = new Map();
-  for (const ln of sub.lines) {
+  for (const ln of (sub.lines ?? [])) {
     if (ln.type === 'assistant') {
       const content = ln.message?.content ?? [];
       for (const c of content) {
@@ -889,7 +889,7 @@ function adaptClaudeCode(lines, subagents = []) {
               }
             }
           }
-          const output = sub ? formatSubagentSummary(sub) : text;
+          const output = (sub && !isError) ? formatSubagentSummary(sub) : text;
           const evt = { type: 'function_call_output', turnId: currentTurnId, callId, at };
           if (isError) evt.error = output; else evt.output = output;
           out.push(evt);

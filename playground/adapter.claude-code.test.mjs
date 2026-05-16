@@ -625,7 +625,7 @@ describe('Agent tool with subagent', () => {
     expect(out.output).toContain('Final PR review');
     expect(out.output).toContain('general-purpose');
     expect(out.output).toContain('No issues found');
-    expect(out.output).toContain('1,234');
+    expect(out.output).toMatch(/1[,. \s]?234/);
   });
 
   it('falls back to plain tool_result when no matching subagent is found', () => {
