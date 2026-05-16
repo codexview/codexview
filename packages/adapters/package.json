@@ -1,0 +1,66 @@
+{
+  "name": "@codexview/adapters",
+  "version": "0.1.0",
+  "description": "Stateless adapters that convert AI coding agent transcript logs (Codex CLI rollouts, AgentWeb codex-team status, Claude Code main sessions) into the CodexView ChatStreamEvent schema. Zero runtime dependencies, ESM only.",
+  "keywords": [
+    "codexview",
+    "ai",
+    "agent",
+    "transcript",
+    "claude-code",
+    "codex",
+    "adapter"
+  ],
+  "type": "module",
+  "license": "MIT",
+  "author": "Jay Liu (maxazure) <maxazure@gmail.com>",
+  "homepage": "https://github.com/codexview/codexview/tree/main/packages/adapters#readme",
+  "bugs": "https://github.com/codexview/codexview/issues",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/codexview/codexview.git",
+    "directory": "packages/adapters"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.js"
+    },
+    "./claude-code": {
+      "types": "./dist/adapter/claude-code.d.ts",
+      "import": "./dist/adapter/claude-code.js"
+    },
+    "./rollout": {
+      "types": "./dist/adapter/rollout.d.ts",
+      "import": "./dist/adapter/rollout.js"
+    },
+    "./codex-team": {
+      "types": "./dist/adapter/codex-team.d.ts",
+      "import": "./dist/adapter/codex-team.js"
+    }
+  },
+  "files": [
+    "dist",
+    "README.md"
+  ],
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "prepublishOnly": "pnpm build"
+  },
+  "devDependencies": {
+    "@types/node": "^20.14.0",
+    "typescript": "^5.5.4",
+    "vitest": "^2.0.0"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}
