@@ -303,6 +303,33 @@ function sendJson(res, status, body) {
   res.end(json);
 }
 
+function loadSubagents(parentJsonlPath) {
+  // parentJsonlPath: .../<repo>/<sessionId>.jsonl
+  // subagents live at: .../<repo>/<sessionId>/subagents/agent-<agentId>.jsonl
+  const m = parentJsonlPath.match(/^(.*\/[^/]+)\/([0-9a-f-]+)\.jsonl$/);
+  if (!m) return [];
+  const subagentsDir = join(m[1], m[2], 'subagents');
+  let names;
+  try {
+    names = execFileSync('ls', [subagentsDir], { encoding: 'utf8' }).split('\n').filter(Boolean);
+  } catch {
+    return [];   // no subagents/ directory — fine
+  }
+  const out = [];
+  for (const name of names) {
+    if (!name.startsWith('agent-') || !name.endsWith('.jsonl')) continue;
+    const agentId = name.replace(/^agent-/, '').replace(/\.jsonl$/, '');
+    const jsonlPath = join(subagentsDir, name);
+    const metaPath = join(subagentsDir, `agent-${agentId}.meta.json`);
+    let text;
+    try { text = readFileSync(jsonlPath, 'utf8'); } catch { continue; }
+    let meta = null;
+    try { meta = JSON.parse(readFileSync(metaPath, 'utf8')); } catch { /* meta optional */ }
+    out.push({ agentId, meta, lines: parseJsonl(text) });
+  }
+  return out;
+}
+
 export function apiPlugin() {
   return {
     name: 'codexview-playground-api',
@@ -338,7 +365,11 @@ export function apiPlugin() {
             catch (err) { return sendJson(res, 404, { error: String(err.message || err) }); }
             const lines = parseJsonl(text);
             if (kind === 'raw') return sendJson(res, 200, { file, count: lines.length, lines });
-            const { format, events } = adapt(lines);
+            // For Claude Code main sessions, also load subagent transcripts so adapter can embed them.
+            const subagents = file.includes('/.claude/projects/') && !file.includes('/subagents/')
+              ? loadSubagents(file)
+              : [];
+            const { format, events } = adapt(lines, { subagents });
             return sendJson(res, 200, { file, format, count: events.length, events });
           }
 
