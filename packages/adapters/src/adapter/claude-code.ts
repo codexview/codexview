@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, RawLine } from '../types.js';
+import type { ChatStreamEvent, PatchFile, RawLine } from '../types.js';
 
 const epoch = (iso: unknown): number => {
   if (typeof iso === 'number') return iso;
@@ -7,9 +7,103 @@ const epoch = (iso: unknown): number => {
   return Number.isNaN(ms) ? Date.now() : ms;
 };
 
-type PendingKind = 'exec' | 'todo' | 'mcp' | 'agent' | 'function';
-interface PendingEntry {
-  kind: PendingKind;
+export interface SubagentInput {
+  agentId: string;
+  meta?: { agentType?: string; description?: string } | null;
+  lines: unknown[];
+}
+
+export interface AdaptClaudeCodeOptions {
+  /**
+   * How to render Edit / Write / MultiEdit tool calls.
+   * - 'function_call' (default): emit them as opaque `function_call`
+   *   entries — matches the compact output the cli ships.
+   * - 'patch_apply_end': defer emission until the matching tool_result,
+   *   then emit a `patch_apply_end` with a synthesized PatchFile[]
+   *   containing diff text. Used by the playground to render diffs.
+   */
+  patchMode?: 'function_call' | 'patch_apply_end';
+  /**
+   * Optional Claude Code subagent transcripts to associate with this
+   * session's `Agent` tool calls. When supplied, each `Agent` tool's
+   * tool_result is rewritten to embed a Markdown summary of the matching
+   * subagent (primary lookup by `toolUseResult.agentId` on the parent's
+   * user-type tool_result line, fallback to FIFO over the supplied list).
+   */
+  subagents?: SubagentInput[];
+}
+
+type PendingEntry =
+  | { kind: 'exec' | 'todo' | 'mcp' | 'agent' | 'function' }
+  | { kind: 'patch'; files: PatchFile[] };
+
+const ccPrefixLines = (text: string, prefix: string): string => {
+  if (!text) return '';
+  return text.split('\n').map((l) => `${prefix}${l}`).join('\n');
+};
+
+const ccEditDiff = (oldStr: string, newStr: string): string =>
+  `${ccPrefixLines(oldStr, '- ')}\n${ccPrefixLines(newStr, '+ ')}`;
+
+const ccWriteDiff = (content: string): string => ccPrefixLines(content, '+ ');
+
+const ccMultiEditDiff = (edits: Array<Record<string, unknown>>): string =>
+  edits
+    .map((e) =>
+      `${ccPrefixLines(String(e?.old_string ?? ''), '- ')}\n${ccPrefixLines(String(e?.new_string ?? ''), '+ ')}`,
+    )
+    .join('\n\n');
+
+function formatSubagentSummary(sub: SubagentInput): string {
+  const lines: string[] = [];
+  const desc = sub.meta?.description ?? '(no description)';
+  const type = sub.meta?.agentType ?? 'unknown';
+  lines.push(`### ${desc}`);
+  lines.push(`*agent_type:* \`${type}\` · *agent_id:* \`${sub.agentId}\``);
+  lines.push('');
+
+  let finalText = '';
+  let totalInput = 0;
+  let totalOutput = 0;
+  const toolCounts = new Map<string, number>();
+  for (const ln of sub.lines ?? []) {
+    if (!ln || typeof ln !== 'object') continue;
+    const lr = ln as Record<string, unknown>;
+    if (lr.type !== 'assistant') continue;
+    const message = lr.message as Record<string, unknown> | undefined;
+    const content = message?.content;
+    if (Array.isArray(content)) {
+      for (const c of content) {
+        if (!c || typeof c !== 'object') continue;
+        const cr = c as Record<string, unknown>;
+        if (cr.type === 'text' && typeof cr.text === 'string') finalText = cr.text;
+        if (cr.type === 'tool_use' && typeof cr.name === 'string') {
+          toolCounts.set(cr.name, (toolCounts.get(cr.name) ?? 0) + 1);
+        }
+      }
+    }
+    const u = message?.usage as Record<string, unknown> | undefined;
+    if (u) {
+      if (typeof u.input_tokens === 'number') totalInput = Math.max(totalInput, u.input_tokens);
+      if (typeof u.output_tokens === 'number') totalOutput += u.output_tokens;
+    }
+  }
+
+  if (toolCounts.size > 0) {
+    const summary = [...toolCounts.entries()].map(([n, c]) => `\`${n}\` × ${c}`).join(', ');
+    lines.push(`**Tools used:** ${summary}`);
+    lines.push('');
+  }
+  if (totalInput || totalOutput) {
+    lines.push(`**Tokens:** ${totalInput.toLocaleString()} in / ${totalOutput.toLocaleString()} out`);
+    lines.push('');
+  }
+  if (finalText) {
+    lines.push('**Final reply:**');
+    lines.push('');
+    lines.push('> ' + finalText.split('\n').join('\n> '));
+  }
+  return lines.join('\n');
 }
 
 interface UsageBucket { lastInput: number; sumOutput: number }
@@ -42,7 +136,16 @@ function toolResultText(item: Record<string, unknown>): string {
   return JSON.stringify(c);
 }
 
-export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
+export function adaptClaudeCode(
+  lines: RawLine[],
+  options: AdaptClaudeCodeOptions = {},
+): ChatStreamEvent[] {
+  const patchMode = options.patchMode ?? 'function_call';
+  const subagentList = options.subagents ?? [];
+  const agentIdToSubagent = new Map(subagentList.map((s) => [s.agentId, s]));
+  const subagentQueue = [...subagentList];
+  const consumedAgentIds = new Set<string>();
+
   const out: ChatStreamEvent[] = [];
   let threadStarted = false;
   const skipTypes = new Set(['attachment', 'system', 'last-prompt', 'queue-operation']);
@@ -138,6 +241,18 @@ export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
           pending.delete(callId);
           continue;
         }
+        if (p?.kind === 'patch') {
+          out.push({
+            type: 'patch_apply_end',
+            turnId: currentTurnId,
+            callId,
+            files: p.files,
+            ok: !isError,
+            at,
+          });
+          pending.delete(callId);
+          continue;
+        }
         if (p?.kind === 'mcp') {
           const evt: ChatStreamEvent = isError
             ? { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, error: text, at }
@@ -146,7 +261,32 @@ export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
           pending.delete(callId);
           continue;
         }
-        if (p?.kind === 'agent' || p?.kind === 'function') {
+        if (p?.kind === 'agent') {
+          let sub: SubagentInput | null = null;
+          const toolUseResult = (line as RawLine).toolUseResult as { agentId?: unknown } | undefined;
+          const agentId = typeof toolUseResult?.agentId === 'string' ? toolUseResult.agentId : null;
+          if (agentId && agentIdToSubagent.has(agentId) && !consumedAgentIds.has(agentId)) {
+            sub = agentIdToSubagent.get(agentId) ?? null;
+            consumedAgentIds.add(agentId);
+          } else if (subagentList.length > 0) {
+            while (subagentQueue.length > 0) {
+              const candidate = subagentQueue.shift();
+              if (candidate && !consumedAgentIds.has(candidate.agentId)) {
+                sub = candidate;
+                consumedAgentIds.add(candidate.agentId);
+                break;
+              }
+            }
+          }
+          const output = sub && !isError ? formatSubagentSummary(sub) : text;
+          const evt: ChatStreamEvent = isError
+            ? { type: 'function_call_output', turnId: currentTurnId, callId, error: output, at }
+            : { type: 'function_call_output', turnId: currentTurnId, callId, output, at };
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
+        if (p?.kind === 'function') {
           const evt: ChatStreamEvent = isError
             ? { type: 'function_call_output', turnId: currentTurnId, callId, error: text, at }
             : { type: 'function_call_output', turnId: currentTurnId, callId, output: text, at };
@@ -231,6 +371,42 @@ export function adaptClaudeCode(lines: RawLine[]): ChatStreamEvent[] {
                 completed: t?.status === 'completed',
               })),
               at,
+            });
+            return;
+          }
+          if (patchMode === 'patch_apply_end' && name === 'Edit') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path ?? ''),
+                status: 'modified',
+                diff: ccEditDiff(String(input.old_string ?? ''), String(input.new_string ?? '')),
+              }],
+            });
+            return;
+          }
+          if (patchMode === 'patch_apply_end' && name === 'Write') {
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path ?? ''),
+                status: 'added',
+                diff: ccWriteDiff(String(input.content ?? '')),
+              }],
+            });
+            return;
+          }
+          if (patchMode === 'patch_apply_end' && name === 'MultiEdit') {
+            const edits = Array.isArray(input.edits)
+              ? (input.edits as Record<string, unknown>[])
+              : [];
+            pending.set(callId, {
+              kind: 'patch',
+              files: [{
+                path: String(input.file_path ?? ''),
+                status: 'modified',
+                diff: ccMultiEditDiff(edits),
+              }],
             });
             return;
           }

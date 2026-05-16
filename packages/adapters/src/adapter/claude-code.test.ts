@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { adaptClaudeCode } from './claude-code.js';
+import { adaptClaudeCode, type SubagentInput } from './claude-code.js';
 import type { RawLine } from '../types.js';
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -11,6 +11,9 @@ const repoRoot = resolve(here, '../../../..');
 const readFixture = (rel: string): RawLine[] =>
   readFileSync(resolve(repoRoot, rel), 'utf8')
     .split('\n').filter(Boolean).map((l) => JSON.parse(l) as RawLine);
+
+const readMeta = (rel: string): SubagentInput['meta'] =>
+  JSON.parse(readFileSync(resolve(repoRoot, rel), 'utf8'));
 
 describe('adaptClaudeCode', () => {
   it('emits thread_started from sessionId', () => {
@@ -45,5 +48,70 @@ describe('adaptClaudeCode', () => {
     expect(json).not.toContain('agent_type:');
     expect(json).not.toContain('Tools used:');
     expect(json).not.toContain('Final reply:');
+  });
+});
+
+describe('adaptClaudeCode · patchMode option', () => {
+  it("default ('function_call') emits Edit/Write/MultiEdit as opaque function_call", () => {
+    const lines = readFixture('fixtures/claude-code/tool-heavy.jsonl');
+    const out = adaptClaudeCode(lines);
+    expect(out.some((e) => e.type === 'patch_apply_end')).toBe(false);
+    expect(out.some((e) => e.type === 'function_call' && /^(Edit|Write|MultiEdit)$/.test(e.name))).toBe(true);
+  });
+
+  it("'patch_apply_end' emits patch_apply_end with diff for Edit/Write/MultiEdit", () => {
+    const lines = readFixture('fixtures/claude-code/tool-heavy.jsonl');
+    const out = adaptClaudeCode(lines, { patchMode: 'patch_apply_end' });
+    const patchEnds = out.filter((e) => e.type === 'patch_apply_end');
+    expect(patchEnds.length).toBeGreaterThan(0);
+    for (const evt of patchEnds) {
+      const pe = evt as { files: Array<{ path: string; diff?: string; status: string }>; ok: boolean };
+      expect(pe.files.length).toBe(1);
+      expect(typeof pe.files[0]?.path).toBe('string');
+      expect(typeof pe.files[0]?.diff).toBe('string');
+      expect(['added', 'modified', 'deleted']).toContain(pe.files[0]?.status);
+    }
+    // none of those names should appear as bare function_call any more
+    expect(out.some((e) => e.type === 'function_call' && /^(Edit|Write|MultiEdit)$/.test(e.name))).toBe(false);
+  });
+});
+
+describe('adaptClaudeCode · subagents option', () => {
+  const parentLines = (): RawLine[] => readFixture('fixtures/claude-code/subagent-parent.jsonl');
+  const subagent = (): SubagentInput => ({
+    agentId: 'test-agent-id',
+    meta: readMeta('fixtures/claude-code/subagent-child.meta.json'),
+    lines: readFixture('fixtures/claude-code/subagent-child.jsonl'),
+  });
+
+  it('matches subagent by toolUseResult.agentId and embeds Markdown summary', () => {
+    const out = adaptClaudeCode(parentLines(), { subagents: [subagent()] });
+    const agentOutput = out.find(
+      (e) => e.type === 'function_call_output' && typeof (e as { output?: unknown }).output === 'string',
+    ) as { output: string } | undefined;
+    expect(agentOutput).toBeTruthy();
+    expect(agentOutput!.output).toContain('agent_type:');
+    expect(agentOutput!.output).toContain('test-agent-id');
+    expect(agentOutput!.output).toContain('DeepSeek V4 capabilities research');
+  });
+
+  it('falls back to FIFO when agentId is not present in the supplied list', () => {
+    const sub = subagent();
+    const out = adaptClaudeCode(parentLines(), {
+      subagents: [{ ...sub, agentId: 'mismatched-id' }],
+    });
+    const agentOutput = out.find(
+      (e) => e.type === 'function_call_output' && typeof (e as { output?: unknown }).output === 'string',
+    ) as { output: string } | undefined;
+    expect(agentOutput).toBeTruthy();
+    expect(agentOutput!.output).toContain('mismatched-id');
+    expect(agentOutput!.output).toContain('DeepSeek V4 capabilities research');
+  });
+
+  it('empty list preserves default behavior (no embedding)', () => {
+    const out = adaptClaudeCode(parentLines(), { subagents: [] });
+    const json = JSON.stringify(out);
+    expect(json).not.toContain('agent_type:');
+    expect(json).not.toContain('Tools used:');
   });
 });
