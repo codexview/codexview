@@ -3,7 +3,7 @@ import {
   summarizeFunctionCall, summarizeExec, summarizeMcpCall,
   summarizePatch, summarizeWebSearch, summarizeTodoList, truncate,
 } from './tool-summary.js';
-import type { PatchFile } from '../types.js';
+import type { PatchFile } from '@codexview/adapters';
 
 describe('truncate', () => {
   it('keeps short strings as-is', () => {

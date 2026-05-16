@@ -2,8 +2,7 @@ import { describe, it, expect } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { resolve, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { parseJsonl } from '../src/parse.js';
-import { adapt } from '../src/adapter/index.js';
+import { parseJsonl, adapt } from '@codexview/adapters';
 import { render } from '../src/render/markdown.js';
 
 const here = dirname(fileURLToPath(import.meta.url));

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { render } from './markdown.js';
-import type { ChatStreamEvent } from '../types.js';
+import type { ChatStreamEvent } from '@codexview/adapters';
 
 describe('render', () => {
   it('emits a session heading from thread_started', () => {

@@ -1,4 +1,4 @@
-import type { ChatStreamEvent } from '../types.js';
+import type { ChatStreamEvent } from '@codexview/adapters';
 import {
   summarizeFunctionCall, summarizeExec, summarizeMcpCall,
   summarizePatch, summarizeWebSearch, summarizeTodoList,

@@ -1,8 +1,6 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { parseJsonl } from './parse.js';
-import { adapt } from './adapter/index.js';
+import { adapt, parseJsonl, type DetectedFormat } from '@codexview/adapters';
 import { render } from './render/markdown.js';
-import type { DetectedFormat } from './types.js';
 
 const VERSION = '0.1.1';
 
@@ -110,7 +108,7 @@ export async function main(argv: string[]): Promise<void> {
   }
 
   const lines = parseJsonl(text);
-  const { format, events } = adapt(lines, args.format ?? undefined);
+  const { format, events } = adapt(lines, args.format ? { format: args.format } : {});
 
   if (format === 'unknown') {
     process.stderr.write(`error: could not detect input format (use --format to override)\n`);

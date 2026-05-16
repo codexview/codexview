@@ -2,7 +2,7 @@ import type { ChatStreamEvent, DetectedFormat, RawLine } from '../types.js';
 import { detectFormat } from './detect.js';
 import { adaptRollout } from './rollout.js';
 import { adaptCodexTeam } from './codex-team.js';
-import { adaptClaudeCode } from './claude-code.js';
+import { adaptClaudeCode, type AdaptClaudeCodeOptions } from './claude-code.js';
 
 export { detectFormat };
 
@@ -11,12 +11,17 @@ export interface AdaptResult {
   events: ChatStreamEvent[];
 }
 
-export function adapt(lines: RawLine[], formatOverride?: DetectedFormat): AdaptResult {
-  const format = formatOverride ?? detectFormat(lines);
+export interface AdaptOptions extends AdaptClaudeCodeOptions {
+  /** Skip detectFormat and use this format directly. */
+  format?: DetectedFormat;
+}
+
+export function adapt(lines: RawLine[], options: AdaptOptions = {}): AdaptResult {
+  const format = options.format ?? detectFormat(lines);
   switch (format) {
     case 'rollout':     return { format, events: adaptRollout(lines) };
     case 'codex-team':  return { format, events: adaptCodexTeam(lines) };
-    case 'claude-code': return { format, events: adaptClaudeCode(lines) };
+    case 'claude-code': return { format, events: adaptClaudeCode(lines, options) };
     default:            return { format: 'unknown', events: [] };
   }
 }

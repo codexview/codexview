@@ -19,10 +19,13 @@
   "repository": {
     "type": "git",
     "url": "git+https://github.com/codexview/codexview.git",
-    "directory": "cli"
+    "directory": "packages/cli"
   },
   "publishConfig": {
     "access": "public"
+  },
+  "dependencies": {
+    "@codexview/adapters": "workspace:*"
   },
   "bin": {
     "codexview-md": "./bin/codexview-md.mjs"

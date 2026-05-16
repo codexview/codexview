@@ -21,6 +21,10 @@ importers:
         version: 2.1.9(@types/node@20.19.41)(jsdom@25.0.1)
 
   packages/cli:
+    dependencies:
+      '@codexview/adapters':
+        specifier: workspace:*
+        version: link:../adapters
     devDependencies:
       '@types/node':
         specifier: ^20.14.0
@@ -41,6 +45,9 @@ importers:
         specifier: ^4.0.1
         version: 4.0.1
     devDependencies:
+      '@codexview/adapters':
+        specifier: workspace:*
+        version: link:../adapters
       '@testing-library/jest-dom':
         specifier: ^6.4.6
         version: 6.9.1

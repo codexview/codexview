@@ -1,4 +1,4 @@
-import type { PatchFile, TodoEntry } from '../types.js';
+import type { PatchFile, TodoEntry } from '@codexview/adapters';
 
 export const MAX_SUMMARY = 80;
 
