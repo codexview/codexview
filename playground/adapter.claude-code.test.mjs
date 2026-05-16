@@ -1,5 +1,14 @@
+import { readFileSync } from 'node:fs';
+import { resolve, dirname } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { describe, it, expect } from 'vitest';
 import { adapt } from './adapter.mjs';
+
+const here = dirname(fileURLToPath(import.meta.url));
+const repoRoot = resolve(here, '..');
+const readFixture = (rel) => readFileSync(resolve(repoRoot, rel), 'utf8')
+  .split('\n').filter(Boolean).map((l) => JSON.parse(l));
+const readMeta = (rel) => JSON.parse(readFileSync(resolve(repoRoot, rel), 'utf8'));
 
 describe('detectFormat (via adapt)', () => {
   it("returns format='claude-code' for Claude Code JSONL", () => {
@@ -681,4 +690,23 @@ describe('Agent tool with subagent', () => {
     expect(out.output).toContain('Done via FIFO');
     expect(out.output).toContain('Legacy');
   });
+});
+
+it('replays the subagent fixture end-to-end', () => {
+  const parentLines = readFixture('fixtures/claude-code/subagent-parent.jsonl');
+  const childLines = readFixture('fixtures/claude-code/subagent-child.jsonl');
+  const meta = readMeta('fixtures/claude-code/subagent-child.meta.json');
+  const subagents = [{
+    agentId: 'test-agent-id',
+    meta,
+    lines: childLines,
+  }];
+  const { format, events } = adapt(parentLines, { subagents });
+  expect(format).toBe('claude-code');
+  const out = events.find((e) => e.type === 'function_call_output');
+  expect(out).toBeTruthy();
+  expect(out.output).toContain(meta.description);
+  // The fixture's terminal assistant text was added in A5 to make this assertion meaningful —
+  // verifies the formatSubagentSummary pipeline actually carries the subagent's final reply through.
+  expect(out.output).toContain('调研完成');
 });
