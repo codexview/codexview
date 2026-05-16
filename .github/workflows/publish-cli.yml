@@ -1,0 +1,69 @@
+name: Publish @codexview/cli
+
+# Publishes @codexview/cli to npm via OIDC trusted publishing
+# (no long-lived NPM_TOKEN secret required).
+#
+# Trigger: push a tag matching cli-v*.*.* (e.g. cli-v0.1.1).
+# To release:
+#   1. bump version in cli/package.json
+#   2. commit; git tag cli-v0.1.1; git push --follow-tags
+#
+# Set up trusted publishing once at npmjs.com:
+#   Package @codexview/cli → Settings → Trusted Publishers → Add → GitHub Actions
+#     repo:        codexview/codexview
+#     workflow:    publish-cli.yml
+#     environment: (leave blank)
+
+on:
+  push:
+    tags: ['cli-v*.*.*']
+
+permissions:
+  contents: write   # for softprops/action-gh-release to create the GitHub release
+  id-token: write   # required for OIDC token exchange with npm
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24    # ships with npm 11+ — required for OIDC trusted publishing
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches cli/package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#cli-v}"
+          PKG=$(jq -r .version cli/package.json)
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match cli/package.json version $PKG"
+            exit 1
+          fi
+
+      - name: Typecheck cli
+        working-directory: cli
+        run: pnpm typecheck
+
+      - name: Test cli
+        working-directory: cli
+        run: pnpm test
+
+      - name: Build cli
+        working-directory: cli
+        run: pnpm build
+
+      - name: Publish @codexview/cli with provenance
+        working-directory: cli
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
