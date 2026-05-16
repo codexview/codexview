@@ -315,9 +315,20 @@ function loadSubagents(parentJsonlPath) {
   } catch {
     return [];   // no subagents/ directory — fine
   }
-  const out = [];
+  // Sort by .jsonl mtime ascending so the FIFO fallback in the adapter consumes subagents
+  // in their actual invocation order (filenames are random UUIDs and don't sort temporally).
+  const sortable = [];
   for (const name of names) {
     if (!name.startsWith('agent-') || !name.endsWith('.jsonl')) continue;
+    const jsonlPath = join(subagentsDir, name);
+    let mtime;
+    try { mtime = statSync(jsonlPath).mtimeMs; } catch { continue; }
+    sortable.push({ name, mtime });
+  }
+  sortable.sort((a, b) => a.mtime - b.mtime);
+
+  const out = [];
+  for (const { name } of sortable) {
     const agentId = name.replace(/^agent-/, '').replace(/\.jsonl$/, '');
     const jsonlPath = join(subagentsDir, name);
     const metaPath = join(subagentsDir, `agent-${agentId}.meta.json`);
