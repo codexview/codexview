@@ -43,9 +43,8 @@ CodexView itself only renders `ChatStreamEvent[]`. Hosts convert their raw logs 
 
 - ✅ **OpenAI Codex CLI** rollouts (`~/.codex/sessions/.../rollout-*.jsonl`)
 - ✅ **AgentWeb codex-team** status logs (`~/Projects/agentweb/.codex-team/runs/*/events.jsonl`)
-- ✅ **Claude Code** main sessions (`~/.claude/projects/<repo>/<sessionId>.jsonl`) — Bash / TodoWrite / Edit / Write / MultiEdit / `mcp__*` tools, with sensible fallbacks for unknown tools
+- ✅ **Claude Code** main sessions (`~/.claude/projects/<repo>/<sessionId>.jsonl`) — Bash / TodoWrite / Edit / Write / MultiEdit / `mcp__*` / `Agent` tools; subagent transcripts are loaded from the `subagents/` subfolder and embedded as a Markdown summary under each `Agent` tool call
 - 🔲 **OpenCode** — planned
-- 🔲 **Claude Code subagents** (`subagents/agent-*.jsonl`) — planned (will link to the parent `Task` tool call)
 
 These adapters are not published as part of `@codexview/react` yet. To try them locally, clone the repo and run `pnpm playground` — it scans your home directory for sessions across all three supported formats.
 

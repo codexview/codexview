@@ -2,6 +2,17 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.4] — 2026-05-17
+
+### Changed
+
+- Reference Claude Code adapter (`playground/adapter.mjs`) now associates `Agent` tool calls with their subagent transcripts (`~/.claude/projects/<repo>/<sessionId>/subagents/agent-*.jsonl`). The subagent's description, agent type, tool-use counts, token totals, and final reply are embedded as Markdown in the parent `Agent` tool's `function_call_output` panel.
+
+### Notes
+
+- No library API or runtime change in `@codexview/react`. The feature lives entirely in the playground reference adapter.
+- Pairing strategy: primary key is the parent's `toolUseResult.agentId`; secondary fallback is FIFO over subagent files in mtime order (covers legacy/format-drift cases).
+
 ## [0.1.3] — 2026-05-16
 
 ### Documentation
