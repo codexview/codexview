@@ -1,70 +1,53 @@
 # codexview
 
-React components for rendering AI coding agent transcripts. The library consumes a normalized `ChatStreamEvent` stream and is host-agnostic — any source that produces compatible events renders identically.
+A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, AgentWeb codex-team) as either React UI or compact plaintext markdown.
 
-Reference adapters for several real-world agent log formats live in [`playground/adapter.mjs`](playground/adapter.mjs); see [Supported sources](#supported-sources) below.
+## Packages
 
-## Install
+| Package | Purpose | npm |
+|---|---|---|
+| [`@codexview/react`](packages/react) | React components that render a `ChatStreamEvent[]` stream into a chat transcript UI | [![npm](https://img.shields.io/npm/v/@codexview/react)](https://www.npmjs.com/package/@codexview/react) |
+| [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert raw JSONL from Codex CLI / codex-team / Claude Code into `ChatStreamEvent[]`. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
+| [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
+
+## Typical use
+
+Install the two libraries side-by-side:
 
 ```bash
-pnpm add @codexview/react lucide-react react react-dom
+pnpm add @codexview/react @codexview/adapters lucide-react react react-dom
 ```
-
-Import the stylesheet once in your app entrypoint:
-
-```ts
-import '@codexview/react/styles.css';
-```
-
-## 60-second quick start
 
 ```tsx
-import { CodexTranscript, type ChatStreamEvent } from '@codexview/react';
+import { CodexTranscript } from '@codexview/react';
+import { adapt, parseJsonl } from '@codexview/adapters';
 import '@codexview/react/styles.css';
 
-const events: ChatStreamEvent[] = [
-  { type: 'thread_started', threadId: 'T', at: Date.now() },
-  { type: 'turn_started', turnId: 'A', at: Date.now() },
-  { type: 'user_message', turnId: 'A', itemId: 'u1', text: 'Hello!', at: Date.now() },
-  { type: 'agent_message', turnId: 'A', itemId: 'a1', text: 'Hi.', partial: false, at: Date.now() },
-  { type: 'turn_completed', turnId: 'A', at: Date.now() },
-];
-
-export function App() {
-  return <CodexTranscript events={events} />;
-}
+const { format, events } = adapt(parseJsonl(rawJsonl));
+return <CodexTranscript events={events} />;
 ```
 
-`events` is a plain array. Append new events as they arrive (typically via SSE) and pass the same array reference back; CodexView reduces incrementally.
+Or invoke the cli for one-shot transcript compression:
 
-## Supported sources
+```bash
+npx -y @codexview/cli ~/.claude/projects/<repo>/<sessionId>.jsonl > transcript.md
+```
 
-CodexView itself only renders `ChatStreamEvent[]`. Hosts convert their raw logs to that shape — either inline or by reusing the reference adapters in [`playground/adapter.mjs`](playground/adapter.mjs):
+## Development
 
-- ✅ **OpenAI Codex CLI** rollouts (`~/.codex/sessions/.../rollout-*.jsonl`)
-- ✅ **AgentWeb codex-team** status logs (`~/Projects/agentweb/.codex-team/runs/*/events.jsonl`)
-- ✅ **Claude Code** main sessions (`~/.claude/projects/<repo>/<sessionId>.jsonl`) — Bash / TodoWrite / Edit / Write / MultiEdit / `mcp__*` / `Agent` tools; subagent transcripts are loaded from the `subagents/` subfolder and embedded as a Markdown summary under each `Agent` tool call
-- 🔲 **OpenCode** — planned
+```bash
+pnpm install
+pnpm -r build
+pnpm -r test
+pnpm playground    # interactive viewer scanning ~/.codex, ~/.claude, ~/Projects/agentweb
+```
 
-These adapters are not published as part of `@codexview/react` yet. To try them locally, clone the repo and run `pnpm playground` — it scans your home directory for sessions across all three supported formats.
+The repo is a pnpm workspace under `packages/*`.
 
-## Status
+## Skills
 
-Session-level status (`idle | working | completed | stopped | failed`) is inferred automatically. Override via the `status` prop (e.g. when SSE drops, set `status="stopped"`).
-
-## Customizing
-
-- Swap any block via `components` prop: `<CodexTranscript components={{ ToolCallBlock: MyToolUI }} />`
-- Theme via CSS variables — see [docs/styling.md](docs/styling.md) for the full list.
-
-## More docs
-
-- [docs/api.md](docs/api.md) — every public API
-- [docs/events.md](docs/events.md) — `ChatStreamEvent` contract
-- [docs/styling.md](docs/styling.md) — CSS variables
-- [docs/integration-agentweb.md](docs/integration-agentweb.md) — drop-in for agentweb
-- [docs/changelog.md](docs/changelog.md) — version history
+This repo also ships a Claude Code skill at [`skills/codexview-cli/`](skills/codexview-cli) so agents can self-install the cli. See [`skills/README.md`](skills/README.md) for human install instructions.
 
 ## License
 
-MIT.
+MIT for all three packages.

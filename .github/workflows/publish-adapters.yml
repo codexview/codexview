@@ -1,0 +1,69 @@
+name: Publish @codexview/adapters
+
+# Publishes @codexview/adapters to npm via OIDC trusted publishing
+# (no long-lived NPM_TOKEN secret required).
+#
+# Trigger: push a tag matching adapters-v*.*.* (e.g. adapters-v0.1.0).
+# To release:
+#   1. bump version in packages/adapters/package.json
+#   2. commit; git tag adapters-v0.1.0; git push --follow-tags
+#
+# Set up trusted publishing once at npmjs.com:
+#   Package @codexview/adapters → Settings → Trusted Publishers → Add → GitHub Actions
+#     repo:        codexview/codexview
+#     workflow:    publish-adapters.yml
+#     environment: (leave blank)
+
+on:
+  push:
+    tags: ['adapters-v*.*.*']
+
+permissions:
+  contents: write   # for softprops/action-gh-release to create the GitHub release
+  id-token: write   # required for OIDC token exchange with npm
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24    # ships with npm 11+ — required for OIDC trusted publishing
+          cache: pnpm
+          registry-url: 'https://registry.npmjs.org'
+
+      - run: pnpm install --frozen-lockfile
+
+      - name: Verify tag matches packages/adapters/package.json version
+        run: |
+          TAG="${GITHUB_REF_NAME#adapters-v}"
+          PKG=$(jq -r .version packages/adapters/package.json)
+          if [ "$TAG" != "$PKG" ]; then
+            echo "::error::tag $GITHUB_REF_NAME does not match packages/adapters/package.json version $PKG"
+            exit 1
+          fi
+
+      - name: Typecheck adapters
+        working-directory: packages/adapters
+        run: pnpm typecheck
+
+      - name: Test adapters
+        working-directory: packages/adapters
+        run: pnpm test
+
+      - name: Build adapters
+        working-directory: packages/adapters
+        run: pnpm build
+
+      - name: Publish @codexview/adapters with provenance
+        working-directory: packages/adapters
+        run: npm publish --provenance --access public
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v2
+        with:
+          generate_release_notes: true
