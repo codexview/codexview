@@ -35,9 +35,11 @@ export { ErrorBlock } from './components/ErrorBlock.js';
 export type { ErrorBlockProps } from './components/ErrorBlock.js';
 export { RawEventBlock } from './components/RawEventBlock.js';
 export type { RawEventBlockProps } from './components/RawEventBlock.js';
+export { ToolGroup, partitionForGrouping, summarize as summarizeToolGroup, isGroupableKind } from './components/ToolGroup.js';
+export type { ToolGroupProps, Slice as ToolGroupSlice } from './components/ToolGroup.js';
 export { ItemErrorBoundary } from './components/ItemErrorBoundary.js';
 export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
 export { Markdown } from './components/Markdown.js';
 export type { MarkdownProps } from './components/Markdown.js';
 
-export const VERSION = '0.1.4';
+export const VERSION = '0.3.0';

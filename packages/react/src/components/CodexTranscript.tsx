@@ -14,6 +14,7 @@ import { TodoListBlock, type TodoListBlockProps } from './TodoListBlock.js';
 import { ErrorBlock, type ErrorBlockProps } from './ErrorBlock.js';
 import { RawEventBlock, type RawEventBlockProps } from './RawEventBlock.js';
 import { StatusBar, type StatusBarProps } from './StatusBar.js';
+import { ToolGroup, type ToolGroupProps, partitionForGrouping } from './ToolGroup.js';
 import resetStyles from '../styles/reset.module.css';
 import styles from './CodexTranscript.module.css';
 
@@ -28,6 +29,7 @@ export interface CodexTranscriptComponents {
   TodoListBlock: ComponentType<TodoListBlockProps>;
   ErrorBlock: ComponentType<ErrorBlockProps>;
   RawEventBlock: ComponentType<RawEventBlockProps>;
+  ToolGroup: ComponentType<ToolGroupProps>;
 }
 
 export interface CodexTranscriptProps {
@@ -54,6 +56,7 @@ const DEFAULTS: CodexTranscriptComponents = {
   TodoListBlock,
   ErrorBlock,
   RawEventBlock,
+  ToolGroup,
 };
 
 function flatItems(turns: TurnView[]): { turn: TurnView; item: ItemView }[] {
@@ -106,15 +109,33 @@ export function CodexTranscript(props: CodexTranscriptProps): JSX.Element {
         {turnsToRender.map((turn) => (
           <li key={turn.turnId}>
             <TurnContainer turn={turn}>
-              {(byTurn.get(turn.turnId) ?? []).map((item) => (
-                <Fragment key={item.id}>
-                  <ItemErrorBoundary fallback={<components.RawEventBlock item={{ id: item.id, kind: 'raw', status: item.status, startedAt: item.startedAt, updatedAt: item.updatedAt, payload: item }} />}>
-                    <div onClick={handleClick(item.id)}>
-                      {renderItem(item, components, props.disableSmoothStream)}
-                    </div>
-                  </ItemErrorBoundary>
-                </Fragment>
-              ))}
+              {partitionForGrouping(byTurn.get(turn.turnId) ?? []).map((slice, idx) => {
+                if (slice.kind === 'single') {
+                  const item = slice.item;
+                  return (
+                    <Fragment key={item.id}>
+                      <ItemErrorBoundary fallback={<components.RawEventBlock item={{ id: item.id, kind: 'raw', status: item.status, startedAt: item.startedAt, updatedAt: item.updatedAt, payload: item }} />}>
+                        <div onClick={handleClick(item.id)}>
+                          {renderItem(item, components, props.disableSmoothStream)}
+                        </div>
+                      </ItemErrorBoundary>
+                    </Fragment>
+                  );
+                }
+                return (
+                  <components.ToolGroup key={`group-${idx}-${slice.items[0]?.id ?? ''}`} items={slice.items}>
+                    {slice.items.map((item) => (
+                      <Fragment key={item.id}>
+                        <ItemErrorBoundary fallback={<components.RawEventBlock item={{ id: item.id, kind: 'raw', status: item.status, startedAt: item.startedAt, updatedAt: item.updatedAt, payload: item }} />}>
+                          <div onClick={handleClick(item.id)}>
+                            {renderItem(item, components, props.disableSmoothStream)}
+                          </div>
+                        </ItemErrorBoundary>
+                      </Fragment>
+                    ))}
+                  </components.ToolGroup>
+                );
+              })}
             </TurnContainer>
           </li>
         ))}

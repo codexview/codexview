@@ -1,0 +1,31 @@
+.group {
+  display: flex;
+  flex-direction: column;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: var(--cv-spacing-xs);
+  cursor: pointer;
+  color: var(--cv-text-muted);
+  list-style: none;
+  font-size: 0.9rem;
+}
+.header::-webkit-details-marker { display: none; }
+.header::before {
+  content: '›';
+  display: inline-block;
+  width: 12px;
+  color: var(--cv-text-muted);
+  transform: rotate(0deg);
+  transition: transform 120ms ease;
+}
+.group[open] > .header::before { transform: rotate(90deg); }
+.title { font-weight: 500; }
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--cv-spacing-xs);
+  margin-top: var(--cv-spacing-xs);
+  padding-left: var(--cv-spacing-md);
+}
