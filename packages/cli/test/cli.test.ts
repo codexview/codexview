@@ -57,6 +57,16 @@ describe('cli smoke', () => {
     expect(r.stderr).toMatch(/could not detect input format/);
   });
 
+  it('renders an opencode export (single-JSON file)', () => {
+    const ocFixture = resolve(repoRoot, 'fixtures', 'opencode', 'session-short.json');
+    const r = spawnSync('node', [bin, ocFixture], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('# Session ses_fixture_short_001');
+    expect(r.stdout).toContain('## User');
+    expect(r.stdout).toMatch(/🔧 `Bash`/);
+    expect(r.stdout).toMatch(/🔧 `read`/);
+  });
+
   it('exits 3 on bad flag', () => {
     const r = spawnSync('node', [bin, '--nope'], { encoding: 'utf8' });
     expect(r.status).toBe(3);

@@ -1,6 +1,25 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { adapt, parseJsonl, type DetectedFormat } from '@codexview/adapters';
+import { adapt, parseJsonl, type DetectedFormat, type RawLine } from '@codexview/adapters';
 import { render } from './render/markdown.js';
+
+// parseJsonl handles newline-delimited JSON. OpenCode session exports are a
+// single JSON document (`opencode export <id>` produces one object). Try
+// whole-text parse first — if the input is a valid top-level object/array,
+// use it; otherwise fall through to per-line parseJsonl. (Doing parseJsonl
+// first would mis-handle pretty-printed multi-line JSON whose internal lines
+// occasionally happen to be valid JSON objects on their own — e.g. compact
+// inline tool-result objects.)
+function parseInput(text: string): RawLine[] {
+  const trimmed = text.trim();
+  if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
+    try {
+      const parsed = JSON.parse(trimmed);
+      if (Array.isArray(parsed)) return parsed as RawLine[];
+      if (parsed && typeof parsed === 'object') return [parsed as RawLine];
+    } catch { /* not a single JSON document; fall through to jsonl */ }
+  }
+  return parseJsonl(text);
+}
 
 const VERSION = '0.2.0';
 
@@ -107,7 +126,7 @@ export async function main(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
-  const lines = parseJsonl(text);
+  const lines = parseInput(text);
   const { format, events } = adapt(lines, args.format ? { format: args.format } : {});
 
   if (format === 'unknown') {

@@ -8,7 +8,7 @@
 //
 // IDs are URL-safe slugs derived from the absolute path (base64url + sha-ish hash).
 
-import { readFileSync, statSync } from 'node:fs';
+import { readFileSync, statSync, openSync, closeSync, unlinkSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -18,6 +18,69 @@ const HOME = homedir();
 const ROLLOUT_ROOT = join(HOME, '.codex/sessions');
 const TEAM_ROOT = join(HOME, 'Projects/agentweb/.codex-team/runs');
 const CLAUDE_ROOT = join(HOME, '.claude/projects');
+const OPENCODE_PREFIX = 'opencode-session://';
+
+// vite spawns its workers with a stripped-down PATH that may not contain
+// user-local bins like ~/.opencode/bin. Probe known install locations directly.
+import { existsSync } from 'node:fs';
+
+const OPENCODE_BIN = (() => {
+  const candidates = [
+    join(HOME, '.opencode/bin/opencode'),
+    join(HOME, '.local/bin/opencode'),
+    '/usr/local/bin/opencode',
+    '/opt/homebrew/bin/opencode',
+  ];
+  for (const p of candidates) {
+    if (existsSync(p)) return p;
+  }
+  return null;
+})();
+
+function hasOpencodeCli() {
+  return OPENCODE_BIN !== null;
+}
+
+function listOpencodeSessions() {
+  // `opencode session list --format json` is project-scoped to cwd. Run from /tmp
+  // (a neutral location) so we get sessions across all projects in one call.
+  try {
+    const stdout = execFileSync(
+      OPENCODE_BIN,
+      ['session', 'list', '--format', 'json'],
+      { encoding: 'utf8', cwd: '/tmp', stdio: ['ignore', 'pipe', 'ignore'], maxBuffer: 16 * 1024 * 1024 },
+    );
+    const sessions = JSON.parse(stdout || '[]');
+    if (!Array.isArray(sessions)) return [];
+    return sessions;
+  } catch {
+    return [];
+  }
+}
+
+function exportOpencodeSession(sessionId) {
+  // Returns the raw export JSON text (single object). Routed through a
+  // temp file because execFileSync's stdout pipe corrupts large UTF-8
+  // payloads (Unterminated string mid-document) — likely a node
+  // child_process pipe encoding race; writing to disk via stdout-redirect
+  // (fd from openSync) avoids it.
+  const tmp = `/tmp/codexview-oc-${Date.now()}-${Math.random().toString(36).slice(2, 8)}.json`;
+  const fd = openSync(tmp, 'w');
+  try {
+    execFileSync(
+      OPENCODE_BIN,
+      ['export', sessionId],
+      { stdio: ['ignore', fd, 'ignore'] },
+    );
+  } finally {
+    closeSync(fd);
+  }
+  try {
+    return readFileSync(tmp, 'utf8');
+  } finally {
+    try { unlinkSync(tmp); } catch { /* best-effort cleanup */ }
+  }
+}
 
 let CACHE = { stamp: 0, files: [] };
 const CACHE_TTL_MS = 30_000;
@@ -255,9 +318,28 @@ function listFiles() {
     }
   } catch { /* CLAUDE_ROOT absent — fine */ }
 
-  // Sort newest first, cap at 100
+  // OpenCode (sst/opencode) — only if the CLI is installed.
+  if (hasOpencodeCli()) {
+    for (const s of listOpencodeSessions()) {
+      const id = String(s?.id ?? '');
+      if (!id.startsWith('ses_')) continue;
+      const dir = String(s?.directory ?? '');
+      const projectTail = dir ? dir.replace(/^.*\//, '').slice(-30) : 'global';
+      const slug = String(s?.title || s?.id).slice(0, 40);
+      const updated = typeof s?.updated === 'number' ? s.updated : Date.now();
+      out.push({
+        path: `${OPENCODE_PREFIX}${id}`,
+        source: 'opencode',
+        name: `${slug} · ${projectTail}`,
+        mtime: updated,
+        sizeKB: 0, // unknown without exporting; cheap to leave at 0
+      });
+    }
+  }
+
+  // Sort newest first, cap at 200
   out.sort((a, b) => b.mtime - a.mtime);
-  const limited = out.slice(0, 100).map((f) => ({
+  const limited = out.slice(0, 200).map((f) => ({
     ...f,
     id: encodeURIComponent(Buffer.from(f.path).toString('base64url')),
   }));
@@ -291,7 +373,8 @@ function isAllowed(path) {
   return path && (
     path.startsWith(ROLLOUT_ROOT) ||
     path.startsWith(TEAM_ROOT) ||
-    path.startsWith(CLAUDE_ROOT)
+    path.startsWith(CLAUDE_ROOT) ||
+    path.startsWith(OPENCODE_PREFIX)
   );
 }
 
@@ -371,6 +454,21 @@ export function apiPlugin() {
             if (!file || !isAllowed(file)) {
               return sendJson(res, 404, { error: 'unknown id' });
             }
+
+            // OpenCode sessions: shell out to `opencode export <sessionID>` instead
+            // of reading a file from disk.
+            if (file.startsWith(OPENCODE_PREFIX)) {
+              const sessionId = file.slice(OPENCODE_PREFIX.length);
+              let text;
+              try { text = exportOpencodeSession(sessionId); }
+              catch (err) { return sendJson(res, 404, { error: String(err.message || err) }); }
+              const root = JSON.parse(text);
+              const lines = [root];
+              if (kind === 'raw') return sendJson(res, 200, { file, count: lines.length, lines });
+              const { format, events } = adapt(lines);
+              return sendJson(res, 200, { file, format, count: events.length, events });
+            }
+
             let text;
             try { text = readFileSync(file, 'utf8'); }
             catch (err) { return sendJson(res, 404, { error: String(err.message || err) }); }
