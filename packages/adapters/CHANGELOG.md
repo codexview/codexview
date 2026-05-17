@@ -2,6 +2,28 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.1.1] — 2026-05-17
+
+### Added
+
+- Claude Code `WebSearch` tool is now parsed structurally:
+  - `tool_use` → `web_search_call` event with the query and callId.
+  - `tool_result` → `Links: [...]` JSON array is extracted and emitted
+    as a `web_search_end` event with a typed `SearchResult[]` (title +
+    url). The free-form summary paragraph that follows `Links:` is
+    dropped — the structured list is what consumer UIs use.
+
+### Notes
+
+- Failure-safe: if `Links:` parse fails, the line is missing, or
+  `is_error: true`, the adapter falls through to the existing
+  `function_call_output` path — no regression for sessions without
+  WebSearch.
+- No API change. Sessions that don't use WebSearch produce
+  bit-for-bit identical output to 0.1.0.
+- cli's `"@codexview/adapters": "^0.1.0"` dependency range picks this
+  patch up automatically on next install; no cli/react bump needed.
+
 ## [0.1.0] — 2026-05-17
 
 ### Added
