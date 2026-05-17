@@ -1,9 +1,9 @@
 # @codexview/cli
 
 CLI that renders AI coding agent session logs (Codex CLI rollouts, AgentWeb
-codex-team status logs, Claude Code sessions, OpenCode exports) as compact
-plaintext markdown — suitable as compressed context to hand to another LLM,
-or as a quick human-readable session summary.
+codex-team status logs, Claude Code sessions, OpenCode exports, GitHub Copilot
+Chat sessions) as compact plaintext markdown — suitable as compressed context
+to hand to another LLM, or as a quick human-readable session summary.
 
 ## Install
 
@@ -30,8 +30,11 @@ codexview-md parent.json --subagent child.json           # embed an OpenCode sub
 - **Claude Code** sessions — `~/.claude/projects/<repo>/<sessionId>.jsonl`
 - **OpenCode** session exports — single JSON document, output of
   `opencode export <sessionID>`
+- **GitHub Copilot Chat** sessions — single JSON document at
+  `~/Library/Application Support/Code/User/workspaceStorage/<hash>/chatSessions/<uuid>.json`
+  (macOS); `~/.config/Code/User/workspaceStorage/...` on Linux; `Code - Insiders` for Insiders builds.
 
-Auto-detected by content; override with `--format rollout|codex-team|claude-code|opencode`.
+Auto-detected by content; override with `--format rollout|codex-team|claude-code|opencode|github-copilot`.
 
 ## Embedding OpenCode subagents
 
@@ -51,6 +54,8 @@ stderr and the parent's `task` line falls back to a one-line placeholder.
 
 Claude Code subagent summaries (the `Agent` tool) are rendered inline
 automatically when present in the parent jsonl — no flag needed.
+
+GitHub Copilot sessions have no subagent model; `--subagent` is not applicable.
 
 ## What's in the output
 

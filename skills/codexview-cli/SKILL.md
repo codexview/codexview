@@ -1,13 +1,13 @@
 ---
 name: codexview-cli
-description: Read or compress an AI coding agent session log (Codex CLI, AgentWeb codex-team, Claude Code, or OpenCode) into compact plaintext markdown using the `codexview-md` CLI. Keeps conversation text, plaintext reasoning, and subagent summaries (Claude Code `Agent` inline; OpenCode `task` via `--subagent`); drops tool outputs, diffs, encrypted reasoning. Use whenever the user wants to read, summarize, or compress an agent session log; mentions paths like `~/.codex/sessions/.../rollout-*.jsonl`, `~/.claude/projects/<repo>/<sessionId>.jsonl`, `.codex-team/runs/*/events.jsonl`, or OpenCode at `~/.local/share/opencode/`; wants a past agent conversation as compressed context for another LLM; or is debugging earlier runs. Also triggers on "turn this jsonl into readable text", "summarize this Claude Code session", "export this OpenCode session", "看 session 内容", "压缩 jsonl 当上下文", "把这个 jsonl 转成 markdown", or any time the user pipes/cats a multi-megabyte agent session file into the conversation.
+description: Read or compress an AI coding agent session log (Codex CLI, AgentWeb codex-team, Claude Code, OpenCode, or GitHub Copilot) into compact plaintext markdown using the `codexview-md` CLI. Keeps conversation text, plaintext reasoning, and subagent summaries (Claude Code `Agent` inline; OpenCode `task` via `--subagent`); drops tool outputs, diffs, encrypted reasoning. Use whenever the user wants to read, summarize, or compress an agent session log; mentions paths like `~/.codex/sessions/.../rollout-*.jsonl`, `~/.claude/projects/<repo>/<sessionId>.jsonl`, `.codex-team/runs/*/events.jsonl`, OpenCode at `~/.local/share/opencode/`, or GitHub Copilot `chatSessions/*.json`; wants a past agent conversation as compressed context for another LLM; or is debugging earlier runs. Also triggers on "summarize this Claude Code session", "export this OpenCode session", "summarize my Copilot session", or any time the user pipes/cats a multi-megabyte agent session file into the conversation.
 ---
 
 # codexview-cli — render agent session logs to compact markdown
 
 `codexview-md` is a one-shot CLI that converts an AI coding agent session log into plaintext markdown. The output is small (typically ~5% of the raw input) and structured for both human skim-reading and feeding to another LLM as compressed context.
 
-Accepts both **line-delimited jsonl** (Codex CLI, codex-team, Claude Code) and **single-document JSON** (OpenCode exports) — auto-detected.
+Accepts both **line-delimited jsonl** (Codex CLI, codex-team, Claude Code) and **single-document JSON** (OpenCode exports, GitHub Copilot Chat sessions) — auto-detected.
 
 ## When you should reach for this skill
 
@@ -53,7 +53,7 @@ cat <jsonl> | npx -y @codexview/cli@latest -
 npx -y @codexview/cli@latest <jsonl> --format rollout
 ```
 
-Valid `--format` values: `rollout` (Codex CLI), `codex-team` (AgentWeb status log), `claude-code` (Claude Code session), `opencode` (OpenCode export).
+Valid `--format` values: `rollout` (Codex CLI), `codex-team` (AgentWeb status log), `claude-code` (Claude Code session), `opencode` (OpenCode export), `github-copilot` (GitHub Copilot Chat session).
 
 **OpenCode (live, no saved file):**
 ```bash
@@ -144,6 +144,7 @@ If the user needs raw tool output (stdout, diffs, MCP results), the CLI is the w
 - **Claude Code sessions:** `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl` (the directory is the project's working-directory path with `/` replaced by `-`)
 - **AgentWeb codex-team:** `<project>/.codex-team/runs/<runId>/events.jsonl`
 - **OpenCode:** real data lives at `~/.local/share/opencode/` (the `~/.opencode/` dir is the install, not the data). List sessions with `opencode session list --format json` (project-scoped to cwd; `cd /tmp` first for cross-project listing); export one with `opencode export <sessionID>` (single JSON document). Subagent children share the same store; pair via `parent.task.state.metadata.sessionId == child.info.id`.
+- **GitHub Copilot Chat:** single JSON files at `~/Library/Application Support/Code/User/workspaceStorage/<hash>/chatSessions/<uuid>.json` (macOS); `~/.config/Code/User/workspaceStorage/...` (Linux); use `Code - Insiders` instead of `Code` for Insiders builds. Filter to Copilot sessions by checking `agent.extensionId.value === 'GitHub.copilot-chat'` or sniff for `"copilot"` in the first 2 KB. GitHub Copilot has no subagent model; `--subagent` is not applicable.
 
 When the user gestures vaguely at "my last session" without a path, `ls -t ~/.claude/projects/<...>/` to find the most recently modified file is usually the right move (Claude Code). For OpenCode, `opencode session list --format json | jq '.[0]'` from `/tmp` gets the latest across all projects.
 
