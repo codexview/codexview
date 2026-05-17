@@ -7,7 +7,7 @@
   "initialLocation": "panel",
   "requests": [
     {
-      "requestId": "request_aaaaaaaa-0000-0000-0000-6c6b3ab23629",
+      "requestId": "request_aaaaaaaa-0000-0000-0000-000000000001",
       "message": {
         "parts": [
           {
@@ -50,8 +50,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "mogrify -resize 50% -quality 70 screenshots/ContactUs.png",
-              "toolEdited": " mogrify -resize 50% -quality 70 screenshots/ContactUs.png"
+              "original": "echo hello",
+              "toolEdited": " echo hello"
             },
             "language": "sh",
             "terminalCommandState": {
@@ -63,7 +63,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-74a49515-acb0-4693-9f4b-9e71817dc877"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000001"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -97,8 +97,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "which convert",
-              "toolEdited": " which convert"
+              "original": "ls -la",
+              "toolEdited": " ls -la"
             },
             "language": "sh",
             "autoApproveInfo": {
@@ -121,7 +121,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-33c6e8e1-0d4e-4a2a-aab8-0270a9adeda1"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000002"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -155,8 +155,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "which sips",
-              "toolEdited": " which sips"
+              "original": "cat README.md",
+              "toolEdited": " cat README.md"
             },
             "language": "sh",
             "autoApproveInfo": {
@@ -179,7 +179,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-360a3e56-51d2-4169-8a60-7e5d76f7f79e"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000003"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -214,8 +214,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "sips -Z 800 screenshots/ContactUs.png --out screenshots/ContactUs_compressed.png",
-              "toolEdited": " sips -Z 800 screenshots/ContactUs.png --out screenshots/ContactUs_compressed.png"
+              "original": "pwd",
+              "toolEdited": " pwd"
             },
             "language": "sh",
             "terminalCommandState": {
@@ -227,7 +227,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-24af4660-7d88-4c21-962e-1349c897cb73"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000004"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -261,8 +261,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "ls -lh screenshots/ContactUs.png screenshots/ContactUs_compressed.png",
-              "toolEdited": " ls -lh screenshots/ContactUs.png screenshots/ContactUs_compressed.png"
+              "original": "date",
+              "toolEdited": " date"
             },
             "language": "sh",
             "autoApproveInfo": {
@@ -285,7 +285,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-84431ced-f645-4620-8bec-977ae11f27be"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000005"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -343,7 +343,7 @@
       },
       "timestamp": 1769731178601,
       "modelId": "copilot/gpt-4.1",
-      "responseId": "response_aaaaaaaa-0000-0000-0000-eccdc0d18108",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-000000000001",
       "result": {
         "timings": {
           "firstProgress": 2720,
@@ -365,7 +365,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "9623f964-4261-46de-b780-8890c6b0dcaa"
+              "id": "msg-aaaa-0000-0000-0000-000000000001"
             },
             {
               "response": "",
@@ -377,7 +377,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "c3d7a275-b904-48e3-b8aa-0a14933e3d9e"
+              "id": "msg-aaaa-0000-0000-0000-000000000002"
             },
             {
               "response": "",
@@ -389,7 +389,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "5d304841-b922-4e8b-ad08-b62ab837c5bb"
+              "id": "msg-aaaa-0000-0000-0000-000000000003"
             },
             {
               "response": "",
@@ -401,7 +401,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "f0312089-4637-4821-bc82-7d512d6725ca"
+              "id": "msg-aaaa-0000-0000-0000-000000000004"
             },
             {
               "response": "",
@@ -413,13 +413,13 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "e916c9fb-2a72-4e5a-a96f-3801b0719f66"
+              "id": "msg-aaaa-0000-0000-0000-000000000005"
             },
             {
               "response": "Task completed successfully.",
               "toolCalls": [],
               "toolInputRetry": 0,
-              "id": "887a360d-e63f-4903-acef-3c2c2eb5d5ac"
+              "id": "msg-aaaa-0000-0000-0000-000000000006"
             }
           ],
           "toolCallResults": {},
@@ -441,7 +441,7 @@
       "timeSpentWaiting": 0
     },
     {
-      "requestId": "request_aaaaaaaa-0000-0000-0000-a5dbef08e6a4",
+      "requestId": "request_aaaaaaaa-0000-0000-0000-000000000002",
       "message": {
         "parts": [
           {
@@ -484,8 +484,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "sips -s format jpeg screenshots/ContactUs.png --out screenshots/ContactUs_converted.jpg",
-              "toolEdited": " sips -s format jpeg screenshots/ContactUs.png --out screenshots/ContactUs_converted.jpg"
+              "original": "npm test",
+              "toolEdited": " npm test"
             },
             "language": "sh",
             "terminalCommandState": {
@@ -497,7 +497,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-2d28662f-ac8e-45cb-abea-e13ba4984525"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000006"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -531,8 +531,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "ls -lh screenshots/ContactUs.png screenshots/ContactUs_converted.jpg",
-              "toolEdited": " ls -lh screenshots/ContactUs.png screenshots/ContactUs_converted.jpg"
+              "original": "git status",
+              "toolEdited": " git status"
             },
             "language": "sh",
             "autoApproveInfo": {
@@ -555,7 +555,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-847fdf3e-0cc4-4ecc-b278-671172ca6799"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000007"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -613,7 +613,7 @@
       },
       "timestamp": 1769731217915,
       "modelId": "copilot/gpt-4.1",
-      "responseId": "response_aaaaaaaa-0000-0000-0000-fc425f693a8f",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-000000000002",
       "result": {
         "timings": {
           "firstProgress": 2160,
@@ -633,7 +633,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "0880af13-95c2-4f65-9955-067dfceaddcd"
+              "id": "msg-aaaa-0000-0000-0000-000000000007"
             },
             {
               "response": "",
@@ -645,13 +645,13 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "ce67c518-fdb9-499e-bd7b-c7676e07582c"
+              "id": "msg-aaaa-0000-0000-0000-000000000008"
             },
             {
               "response": "Task completed successfully.",
               "toolCalls": [],
               "toolInputRetry": 0,
-              "id": "2af71bec-588e-4e5a-82ad-3fb39a9fae90"
+              "id": "msg-aaaa-0000-0000-0000-000000000009"
             }
           ],
           "toolCallResults": {},
@@ -675,7 +675,7 @@
       "timeSpentWaiting": 0
     },
     {
-      "requestId": "request_aaaaaaaa-0000-0000-0000-3f18b7e68a0b",
+      "requestId": "request_aaaaaaaa-0000-0000-0000-000000000003",
       "message": {
         "parts": [
           {
@@ -718,8 +718,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "sips -Z 8000 screenshots/ContactUs_converted.jpg --out screenshots/ContactUs_converted_resized.jpg",
-              "toolEdited": " sips -Z 8000 screenshots/ContactUs_converted.jpg --out screenshots/ContactUs_converted_resized.jpg"
+              "original": "node -v",
+              "toolEdited": " node -v"
             },
             "language": "sh",
             "terminalCommandState": {
@@ -731,7 +731,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-4f58f25e-26df-4fb9-8cc1-ca73d7713fea"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000008"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -766,8 +766,8 @@
             "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
             "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
             "commandLine": {
-              "original": "sips -g pixelWidth -g pixelHeight screenshots/ContactUs_converted_resized.jpg",
-              "toolEdited": " sips -g pixelWidth -g pixelHeight screenshots/ContactUs_converted_resized.jpg"
+              "original": "echo done",
+              "toolEdited": " echo done"
             },
             "language": "sh",
             "terminalCommandState": {
@@ -779,7 +779,7 @@
               "$mid": 1,
               "path": "/anon/1",
               "scheme": "vscode-terminal",
-              "query": "command=tool-323d99bc-c89b-441b-80db-9500d540eae8"
+              "query": "command=tool-aaaa-0000-0000-0000-000000000009"
             },
             "terminalCommandOutput": {
               "text": "ok",
@@ -837,7 +837,7 @@
       },
       "timestamp": 1769731361186,
       "modelId": "copilot/gpt-4.1",
-      "responseId": "response_aaaaaaaa-0000-0000-0000-733d75b483da",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-000000000003",
       "result": {
         "timings": {
           "firstProgress": 2074,
@@ -857,7 +857,7 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "cef24a54-23bf-4173-8cc4-beb56227f5e0"
+              "id": "msg-aaaa-0000-0000-0000-000000000010"
             },
             {
               "response": "",
@@ -869,13 +869,13 @@
                 }
               ],
               "toolInputRetry": 0,
-              "id": "a33fa13d-2edb-4fc4-b268-2fa61c75eae0"
+              "id": "msg-aaaa-0000-0000-0000-000000000011"
             },
             {
               "response": "Task completed successfully.",
               "toolCalls": [],
               "toolInputRetry": 0,
-              "id": "7f61a954-9b5e-455b-be04-06f22d5de89c"
+              "id": "msg-aaaa-0000-0000-0000-000000000012"
             }
           ],
           "toolCallResults": {},
@@ -959,6 +959,5 @@
         "positionColumn": 1
       }
     ]
-  },
-  "_codexview_fixture_note": "real — sourced from terminal-only session, anonymized"
+  }
 }
