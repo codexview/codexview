@@ -41,3 +41,24 @@ describe('adaptGithubCopilot — terminal tool', () => {
     expect(typeof firstEnd.stdout).toBe('string');
   });
 });
+
+describe('adaptGithubCopilot — file edit', () => {
+  it('emits function_call + function_call_output by default (patchMode=function_call)', () => {
+    const { events } = adaptGithubCopilot(loadJson('file-edit-session.json'));
+    const fc = events.find((e) => e.type === 'function_call' && (e as any).name === 'insert_edit_into_file');
+    const fo = events.find((e) => e.type === 'function_call_output');
+    expect(fc).toBeDefined();
+    expect(fo).toBeDefined();
+  });
+
+  it('emits patch_apply_end when patchMode=patch_apply_end', () => {
+    const { events } = adaptGithubCopilot(loadJson('file-edit-session.json'), {
+      patchMode: 'patch_apply_end',
+    });
+    const patch = events.find((e) => e.type === 'patch_apply_end') as any;
+    expect(patch).toBeDefined();
+    expect(patch.ok).toBe(true);
+    expect(patch.files[0].path).toBe('/Users/agent/projects/example/utils.ts');
+    expect(patch.files[0].status).toBe('modified');
+  });
+});

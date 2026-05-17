@@ -41,12 +41,14 @@ interface CopilotToolInvocation {
 
 export function adaptGithubCopilot(
   input: RawLine[] | CopilotSession,
-  _options: AdaptGithubCopilotOptions = {},
+  options: AdaptGithubCopilotOptions = {},
 ): AdaptResult {
   const session = (Array.isArray(input) ? input[0] : input) as CopilotSession | undefined;
   if (!session || typeof session !== 'object' || !Array.isArray(session.requests)) {
     return { format: 'github-copilot', events: [] };
   }
+
+  const patchMode = options.patchMode ?? 'function_call';
 
   const events: ChatStreamEvent[] = [];
   events.push({ type: 'thread_started', threadId: session.sessionId, at: session.creationDate });
@@ -83,7 +85,7 @@ export function adaptGithubCopilot(
         continue;
       }
       flushText();
-      handleToolItem(item as any, turnId, at, events);
+      handleToolItem(item as any, turnId, at, events, patchMode);
     }
     flushText();
 
@@ -99,6 +101,7 @@ function handleToolItem(
   turnId: string,
   at: number,
   events: ChatStreamEvent[],
+  patchMode: 'function_call' | 'patch_apply_end',
 ): void {
   const k = (item as any).kind;
   if (k === 'prepareToolInvocation' || k === 'mcpServersStarting') return; // drop
@@ -130,5 +133,40 @@ function handleToolItem(
     return;
   }
 
-  // Other tool kinds in Task 5–6.
+  const EDIT_TOOLS = new Set(['insert_edit_into_file', 'apply_patch', 'create_file', 'replace_string_in_file']);
+  if (EDIT_TOOLS.has(tool.toolId)) {
+    if (patchMode === 'patch_apply_end') {
+      const path: string =
+        (tsd as any).filePath ?? (tsd as any).path ?? (tsd as any).file ?? '<unknown>';
+      const status: 'added' | 'modified' =
+        tool.toolId === 'create_file' ? 'added' : 'modified';
+      events.push({
+        type: 'patch_apply_end',
+        turnId,
+        callId,
+        ok: tool.isComplete,
+        files: [{ path, status, diff: (tsd as any).code ?? (tsd as any).newString ?? '' }],
+        at,
+      });
+    } else {
+      events.push({
+        type: 'function_call',
+        turnId,
+        callId,
+        name: tool.toolId,
+        args: tsd,
+        at,
+      });
+      events.push({
+        type: 'function_call_output',
+        turnId,
+        callId,
+        output: tool.invocationMessage ?? 'ok',
+        at,
+      });
+    }
+    return;
+  }
+
+  // Generic fallback in Task 6.
 }
