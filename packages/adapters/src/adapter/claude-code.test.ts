@@ -189,4 +189,16 @@ describe('adaptClaudeCode · WebSearch', () => {
     const errOut = out.find((e) => e.type === 'function_call_output') as { error?: string } | undefined;
     expect(errOut?.error).toBe('rate limited');
   });
+
+  it('end-to-end: parses fixtures/claude-code/websearch.jsonl', () => {
+    const lines = readFixture('fixtures/claude-code/websearch.jsonl');
+    const out = adaptClaudeCode(lines);
+    const call = out.find((e) => e.type === 'web_search_call') as { query: string; callId: string } | undefined;
+    expect(call?.query).toBe('react 19 migration guide');
+    expect(call?.callId).toBe('toolu_WS_FIXTURE_1');
+    const end = out.find((e) => e.type === 'web_search_end') as { results: Array<{ title: string; url: string }> } | undefined;
+    expect(end?.results.length).toBe(3);
+    expect(end?.results[0]?.url).toBe('https://react.example/blog/19-upgrade-guide');
+    expect(out.some((e) => e.type === 'function_call_output')).toBe(false);
+  });
 });
