@@ -9,6 +9,7 @@ export {
 export {
   adaptOpenCode,
   type AdaptOpenCodeOptions,
+  type OpenCodeSubagentInput,
 } from './adapter/opencode.js';
 export { parseJsonl } from './parse.js';
 export type {

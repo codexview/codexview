@@ -1,0 +1,32 @@
+{
+  "info": {
+    "id": "ses_fixture_child_002",
+    "parentID": "ses_fixture_parent_001",
+    "slug": "test-child-2",
+    "projectID": "proj_fixture_001",
+    "directory": "/tmp/test-project",
+    "title": "Screenshot current contact page (@general subagent)",
+    "version": "1.14.48",
+    "summary": { "additions": 0, "deletions": 0, "files": 0 },
+    "time": { "created": 1700000005500, "updated": 1700000055000 }
+  },
+  "messages": [
+    {
+      "info": { "id": "msg_c2_user1", "role": "user", "sessionID": "ses_fixture_child_002", "time": { "created": 1700000005500 } },
+      "parts": [{ "type": "text", "text": "Visit http://localhost:8080/contact and take a full-page screenshot" }]
+    },
+    {
+      "info": {
+        "id": "msg_c2_asst1",
+        "role": "assistant",
+        "sessionID": "ses_fixture_child_002",
+        "time": { "created": 1700000007000, "completed": 1700000055000 },
+        "tokens": { "input": 900, "output": 180 }
+      },
+      "parts": [
+        { "type": "tool", "tool": "bash", "callID": "call_c2_b1", "state": { "status": "completed", "input": { "command": "playwright screenshot http://localhost:8080/contact tmp/current.png" }, "output": "Screenshot saved", "time": { "start": 1700000007000, "end": 1700000054000 } } },
+        { "type": "text", "text": "Screenshot saved to tmp/current.png. Layout has been updated, see image." }
+      ]
+    }
+  ]
+}

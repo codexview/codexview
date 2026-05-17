@@ -204,3 +204,67 @@ describe('adaptOpenCode · end-to-end fixture', () => {
     expect((typeCounts.exec_command_begin ?? 0)).toBeGreaterThanOrEqual(1);
   });
 });
+
+describe('adaptOpenCode · subagents option', () => {
+  const fixtureDir = resolve(repoRoot, 'fixtures/opencode');
+  const loadJson = (name: string) => JSON.parse(readFileSync(resolve(fixtureDir, name), 'utf8'));
+
+  it('embeds matching child summaries when subagents passed', () => {
+    const parent = loadJson('subagent-parent.json');
+    const child1 = loadJson('subagent-child-1.json');
+    const child2 = loadJson('subagent-child-2.json');
+    const child3 = loadJson('subagent-child-3.json');
+    const events = adaptOpenCode([parent], {
+      subagents: [
+        { sessionId: child1.info.id, lines: [child1] },
+        { sessionId: child2.info.id, lines: [child2] },
+        { sessionId: child3.info.id, lines: [child3] },
+      ],
+    });
+    const taskOutputs = events.filter((e) => e.type === 'function_call_output') as Array<{ output?: string }>;
+    expect(taskOutputs).toHaveLength(3);
+    expect(taskOutputs[0]?.output).toContain('Screenshot original contact page');
+    expect(taskOutputs[0]?.output).toContain('agent_type:');
+    expect(taskOutputs[0]?.output).toContain('general');
+    expect(taskOutputs[0]?.output).toContain('session_id:');
+    expect(taskOutputs[1]?.output).toContain('Screenshot current contact page');
+    expect(taskOutputs[2]?.output).toContain('Screenshot updated contact page');
+  });
+
+  it('falls through to opaque function_call for unmatched task (subagent missing for one callID)', () => {
+    const parent = loadJson('subagent-parent.json');
+    const child1 = loadJson('subagent-child-1.json');
+    const child3 = loadJson('subagent-child-3.json');
+    const events = adaptOpenCode([parent], {
+      subagents: [
+        { sessionId: child1.info.id, lines: [child1] },
+        { sessionId: child3.info.id, lines: [child3] },
+      ],
+    });
+    const outputs = events.filter((e) => e.type === 'function_call_output') as Array<{ output?: string }>;
+    expect(outputs).toHaveLength(3);
+    expect(outputs[0]?.output).toContain('agent_type:');
+    expect(outputs[1]?.output).toBe('Screenshot saved to tmp/current.png. Layout has been updated, see image.');
+    expect(outputs[2]?.output).toContain('agent_type:');
+  });
+
+  it('no subagents passed → v0.2 byte-equal output (regression lock)', () => {
+    const parent = loadJson('subagent-parent.json');
+    const before = adaptOpenCode([parent]);
+    const after = adaptOpenCode([parent], { subagents: [] });
+    expect(JSON.stringify(after)).toBe(JSON.stringify(before));
+  });
+
+  it('renders tool counts and tokens in summary', () => {
+    const parent = loadJson('subagent-parent.json');
+    const child1 = loadJson('subagent-child-1.json');
+    const events = adaptOpenCode([parent], {
+      subagents: [{ sessionId: child1.info.id, lines: [child1] }],
+    });
+    const out = (events.find((e) => e.type === 'function_call_output' && (e as { output?: string }).output?.includes('Screenshot original')) as { output: string }).output;
+    expect(out).toMatch(/`bash`\s*×\s*2/);
+    expect(out).toMatch(/`read`\s*×\s*1/);
+    expect(out).toContain('800 in');
+    expect(out).toContain('150 out');
+  });
+});

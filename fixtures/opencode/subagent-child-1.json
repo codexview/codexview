@@ -1,0 +1,34 @@
+{
+  "info": {
+    "id": "ses_fixture_child_001",
+    "parentID": "ses_fixture_parent_001",
+    "slug": "test-child-1",
+    "projectID": "proj_fixture_001",
+    "directory": "/tmp/test-project",
+    "title": "Screenshot original contact page (@general subagent)",
+    "version": "1.14.48",
+    "summary": { "additions": 0, "deletions": 0, "files": 0 },
+    "time": { "created": 1700000005000, "updated": 1700000050000 }
+  },
+  "messages": [
+    {
+      "info": { "id": "msg_c1_user1", "role": "user", "sessionID": "ses_fixture_child_001", "time": { "created": 1700000005000 } },
+      "parts": [{ "type": "text", "text": "Visit https://example.com/contact and take a full-page screenshot" }]
+    },
+    {
+      "info": {
+        "id": "msg_c1_asst1",
+        "role": "assistant",
+        "sessionID": "ses_fixture_child_001",
+        "time": { "created": 1700000006000, "completed": 1700000050000 },
+        "tokens": { "input": 800, "output": 150 }
+      },
+      "parts": [
+        { "type": "tool", "tool": "bash", "callID": "call_c1_b1", "state": { "status": "completed", "input": { "command": "mkdir -p tmp" }, "output": "", "time": { "start": 1700000006000, "end": 1700000006100 } } },
+        { "type": "tool", "tool": "bash", "callID": "call_c1_b2", "state": { "status": "completed", "input": { "command": "playwright screenshot https://example.com/contact tmp/original.png" }, "output": "Screenshot saved", "time": { "start": 1700000006200, "end": 1700000049000 } } },
+        { "type": "tool", "tool": "read", "callID": "call_c1_r1", "state": { "status": "completed", "input": { "filePath": "/tmp/original.png" }, "output": "(binary)" } },
+        { "type": "text", "text": "Screenshot saved to tmp/original.png. Page has standard layout with header and footer." }
+      ]
+    }
+  ]
+}

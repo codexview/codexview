@@ -1,0 +1,106 @@
+{
+  "info": {
+    "id": "ses_fixture_parent_001",
+    "slug": "test-parent",
+    "projectID": "proj_fixture_001",
+    "directory": "/tmp/test-project",
+    "title": "Compare and screenshot contact pages",
+    "version": "1.14.48",
+    "summary": { "additions": 0, "deletions": 0, "files": 0 },
+    "time": { "created": 1700000000000, "updated": 1700000300000 }
+  },
+  "messages": [
+    {
+      "info": { "id": "msg_p_user1", "role": "user", "time": { "created": 1700000000000 } },
+      "parts": [{ "type": "text", "text": "Take three screenshots of /contact pages using subagents" }]
+    },
+    {
+      "info": {
+        "id": "msg_p_asst1",
+        "role": "assistant",
+        "time": { "created": 1700000001000, "completed": 1700000100000 },
+        "tokens": { "input": 500, "output": 200 }
+      },
+      "parts": [
+        { "type": "text", "text": "I'll dispatch three screenshot subagents in parallel." },
+        {
+          "type": "tool",
+          "tool": "task",
+          "callID": "toolu_fixture_task1",
+          "state": {
+            "status": "completed",
+            "input": {
+              "description": "Screenshot original contact page",
+              "prompt": "Visit https://example.com/contact and take a full-page screenshot",
+              "subagent_type": "general"
+            },
+            "output": "Screenshot saved to tmp/original.png. Page has standard layout with header and footer.",
+            "title": "Screenshot original contact page",
+            "metadata": {
+              "sessionId": "ses_fixture_child_001",
+              "summary": [],
+              "model": "test-model",
+              "truncated": false
+            },
+            "time": { "start": 1700000005000, "end": 1700000050000 }
+          }
+        },
+        {
+          "type": "tool",
+          "tool": "task",
+          "callID": "toolu_fixture_task2",
+          "state": {
+            "status": "completed",
+            "input": {
+              "description": "Screenshot current contact page",
+              "prompt": "Visit http://localhost:8080/contact and take a full-page screenshot",
+              "subagent_type": "general"
+            },
+            "output": "Screenshot saved to tmp/current.png. Layout has been updated, see image.",
+            "title": "Screenshot current contact page",
+            "metadata": {
+              "sessionId": "ses_fixture_child_002",
+              "summary": [],
+              "model": "test-model",
+              "truncated": false
+            },
+            "time": { "start": 1700000005500, "end": 1700000055000 }
+          }
+        },
+        {
+          "type": "tool",
+          "tool": "task",
+          "callID": "toolu_fixture_task3",
+          "state": {
+            "status": "completed",
+            "input": {
+              "description": "Screenshot updated contact page",
+              "prompt": "Visit http://localhost:8080/contact?lang=zh and take a full-page screenshot",
+              "subagent_type": "general"
+            },
+            "output": "Screenshot saved to tmp/updated.png. Chinese version rendered correctly.",
+            "title": "Screenshot updated contact page",
+            "metadata": {
+              "sessionId": "ses_fixture_child_003",
+              "summary": [],
+              "model": "test-model",
+              "truncated": false
+            },
+            "time": { "start": 1700000200000, "end": 1700000260000 }
+          }
+        }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_p_asst2",
+        "role": "assistant",
+        "time": { "created": 1700000270000, "completed": 1700000290000 },
+        "tokens": { "input": 1200, "output": 300 }
+      },
+      "parts": [
+        { "type": "text", "text": "All three screenshots captured. The contact pages differ in layout and language." }
+      ]
+    }
+  ]
+}
