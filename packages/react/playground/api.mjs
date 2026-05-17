@@ -8,7 +8,7 @@
 //
 // IDs are URL-safe slugs derived from the absolute path (base64url + sha-ish hash).
 
-import { readFileSync, statSync, openSync, closeSync, unlinkSync } from 'node:fs';
+import { readFileSync, statSync, openSync, closeSync, unlinkSync, readdirSync } from 'node:fs';
 import { homedir } from 'node:os';
 import { join } from 'node:path';
 import { execFileSync } from 'node:child_process';
@@ -19,6 +19,12 @@ const ROLLOUT_ROOT = join(HOME, '.codex/sessions');
 const TEAM_ROOT = join(HOME, 'Projects/agentweb/.codex-team/runs');
 const CLAUDE_ROOT = join(HOME, '.claude/projects');
 const OPENCODE_PREFIX = 'opencode-session://';
+
+const COPILOT_ROOTS = [
+  join(HOME, 'Library/Application Support/Code/User/workspaceStorage'),
+  join(HOME, 'Library/Application Support/Code - Insiders/User/workspaceStorage'),
+  join(HOME, '.config/Code/User/workspaceStorage'),
+];
 
 // vite spawns its workers with a stripped-down PATH that may not contain
 // user-local bins like ~/.opencode/bin. Probe known install locations directly.
@@ -116,6 +122,47 @@ function loadOpenCodeSubagents(parentRoot) {
     }
   }
   return out;
+}
+
+function listCopilotSessions() {
+  const out = [];
+  for (const root of COPILOT_ROOTS) {
+    if (!existsSync(root)) continue;
+    let hashes;
+    try { hashes = readdirSync(root); } catch { continue; }
+    for (const hash of hashes) {
+      const dir = join(root, hash, 'chatSessions');
+      if (!existsSync(dir)) continue;
+      const wsJsonPath = join(root, hash, 'workspace.json');
+      let folder;
+      try {
+        folder = JSON.parse(readFileSync(wsJsonPath, 'utf8')).folder;
+      } catch { /* workspace.json optional */ }
+      let files;
+      try { files = readdirSync(dir); } catch { continue; }
+      for (const f of files) {
+        if (!f.endsWith('.json')) continue;
+        const filePath = join(dir, f);
+        // Sniff first ~2KB to filter to Copilot sessions only.
+        let head;
+        try { head = readFileSync(filePath, 'utf8').slice(0, 2048); } catch { continue; }
+        if (!head.includes('"copilot"')) continue;
+        let st;
+        try { st = statSync(filePath); } catch { continue; }
+        const projectTail = folder
+          ? String(folder).replace(/^file:\/\//, '').replace(/^.*\//, '').slice(-30)
+          : hash.slice(0, 8);
+        out.push({
+          path: filePath,
+          source: 'github-copilot',
+          name: `${f.replace(/\.json$/, '').slice(0, 20)} · ${projectTail}`,
+          mtime: Math.floor(st.mtimeMs),
+          sizeKB: Math.round(st.size / 102.4) / 10,
+        });
+      }
+    }
+  }
+  return out.sort((a, b) => b.mtime - a.mtime);
 }
 
 let CACHE = { stamp: 0, files: [] };
@@ -373,6 +420,11 @@ function listFiles() {
     }
   }
 
+  // GitHub Copilot chat sessions
+  for (const s of listCopilotSessions()) {
+    out.push(s);
+  }
+
   // Sort newest first, cap at 200
   out.sort((a, b) => b.mtime - a.mtime);
   const limited = out.slice(0, 200).map((f) => ({
@@ -410,7 +462,8 @@ function isAllowed(path) {
     path.startsWith(ROLLOUT_ROOT) ||
     path.startsWith(TEAM_ROOT) ||
     path.startsWith(CLAUDE_ROOT) ||
-    path.startsWith(OPENCODE_PREFIX)
+    path.startsWith(OPENCODE_PREFIX) ||
+    COPILOT_ROOTS.some((r) => path.startsWith(r))
   );
 }
 

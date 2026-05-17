@@ -6,7 +6,7 @@ import { NarrativeView } from './NarrativeView.js';
 interface FileEntry {
   id: string;
   path: string;
-  source: 'codex-cli' | 'agentweb-team' | 'claude-code' | 'opencode' | 'synthetic';
+  source: 'codex-cli' | 'agentweb-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'synthetic';
   name: string;
   mtime: number;
   sizeKB: number;
@@ -14,7 +14,7 @@ interface FileEntry {
 
 interface EventsResponse {
   file: string;
-  format: 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'synthetic' | 'unknown';
+  format: 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'synthetic' | 'unknown';
   count: number;
   events: ChatStreamEvent[];
 }
@@ -37,7 +37,7 @@ export function App(): JSX.Element {
   const [error, setError] = useState<string | null>(null);
   const [tab, setTab] = useState<Tab>('rendered');
   const [renderStyle, setRenderStyle] = useState<RenderStyle>('narrative');
-  const [filter, setFilter] = useState<'all' | 'codex-cli' | 'agentweb-team' | 'claude-code' | 'opencode'>('all');
+  const [filter, setFilter] = useState<'all' | 'codex-cli' | 'agentweb-team' | 'claude-code' | 'opencode' | 'github-copilot'>('all');
   const [search, setSearch] = useState('');
 
   // Initial file list
@@ -120,6 +120,7 @@ export function App(): JSX.Element {
             <option value="agentweb-team">AgentWeb codex-team ({files.filter((f) => f.source === 'agentweb-team').length})</option>
             <option value="claude-code">Claude Code ({files.filter((f) => f.source === 'claude-code').length})</option>
             <option value="opencode">OpenCode ({files.filter((f) => f.source === 'opencode').length})</option>
+            <option value="github-copilot">GitHub Copilot ({files.filter((f) => f.source === 'github-copilot').length})</option>
           </select>
         </div>
         {filesError && <div style={styles.error}>无法加载文件列表: {filesError}</div>}
@@ -143,6 +144,7 @@ export function App(): JSX.Element {
                           : f.source === 'agentweb-team' ? styles.badgeTeam
                           : f.source === 'claude-code' ? styles.badgeClaude
                           : f.source === 'opencode' ? styles.badgeOpencode
+                          : f.source === 'github-copilot' ? styles.badgeCopilot
                           : styles.badgeDemo),
                       }}
                       data-source={f.source}
@@ -151,6 +153,7 @@ export function App(): JSX.Element {
                         : f.source === 'agentweb-team' ? 'Team'
                         : f.source === 'claude-code' ? 'Claude'
                         : f.source === 'opencode' ? 'OpenCode'
+                        : f.source === 'github-copilot' ? 'Copilot'
                         : 'Demo'}
                     </span>
                     <span>{f.sizeKB} KB</span>
@@ -339,6 +342,7 @@ const styles: Record<string, React.CSSProperties> = {
   badgeCli: { background: '#e0f2fe', color: '#075985' },
   badgeTeam: { background: '#fef3c7', color: '#92400e' },
   badgeOpencode: { background: '#dcfce7', color: '#166534' },
+  badgeCopilot: { background: '#e0e7ff', color: '#3730a3' },
   badgeDemo: { background: '#f3f4f6', color: '#4b5563' },
   sidebarFooter: {
     padding: '8px 12px',
