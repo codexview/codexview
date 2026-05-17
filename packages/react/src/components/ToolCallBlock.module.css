@@ -41,8 +41,15 @@
   transition: transform 120ms ease;
 }
 .block[open] > .header::before { transform: rotate(90deg); }
-.title { font-weight: 600; }
-.statusChip { margin-left: auto; font-size: 0.75rem; color: var(--cv-text-muted); }
+.title {
+  font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.block[open] .title { white-space: normal; overflow: visible; }
+.statusChip { margin-left: auto; font-size: 0.75rem; color: var(--cv-text-muted); flex-shrink: 0; }
 .label { font-size: 0.75rem; color: var(--cv-text-muted); }
 .body {
   display: flex;

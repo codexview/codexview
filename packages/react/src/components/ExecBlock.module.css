@@ -32,8 +32,15 @@
 }
 .block[open] > .header::before { transform: rotate(90deg); }
 .body { display: flex; flex-direction: column; gap: var(--cv-spacing-xs); margin-top: var(--cv-spacing-xs); }
-.cmd { white-space: pre-wrap; word-break: break-word; flex: 1; }
-.exit { font-size: 0.75rem; opacity: 0.7; }
+.cmd {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.block[open] .cmd { white-space: pre-wrap; word-break: break-word; overflow: visible; }
+.exit { font-size: 0.75rem; opacity: 0.7; flex-shrink: 0; }
 .stdout { white-space: pre-wrap; word-break: break-word; }
 .stderr { white-space: pre-wrap; word-break: break-word; color: var(--cv-status-failed); }
 .shimmer {
