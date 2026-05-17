@@ -6,6 +6,10 @@ export {
   type AdaptClaudeCodeOptions,
   type SubagentInput,
 } from './adapter/claude-code.js';
+export {
+  adaptOpenCode,
+  type AdaptOpenCodeOptions,
+} from './adapter/opencode.js';
 export { parseJsonl } from './parse.js';
 export type {
   ChatStreamEvent,

@@ -1,0 +1,59 @@
+{
+  "info": {
+    "id": "ses_fixture_short_001",
+    "slug": "quiet-fixture",
+    "projectID": "global",
+    "directory": "/work/example-project",
+    "title": "fixture session for adaptOpenCode tests",
+    "agent": "build",
+    "model": { "id": "test-model", "providerID": "test-provider" },
+    "version": "1.14.48",
+    "summary": { "additions": 0, "deletions": 0, "files": 0 },
+    "time": { "created": 1700000000000, "updated": 1700000020000 }
+  },
+  "messages": [
+    {
+      "info": { "id": "msg_fix_u1", "role": "user", "time": { "created": 1700000000000 } },
+      "parts": [
+        { "type": "text", "text": "list the project files and read one of them" }
+      ]
+    },
+    {
+      "info": {
+        "id": "msg_fix_a1",
+        "role": "assistant",
+        "agent": "build",
+        "time": { "created": 1700000001000, "completed": 1700000004000 },
+        "finish": "tool-calls",
+        "tokens": { "input": 120, "output": 80, "reasoning": 30 }
+      },
+      "parts": [
+        { "type": "step-start" },
+        { "type": "reasoning", "text": "the user wants a listing followed by a read. I'll start with ls." },
+        {
+          "type": "tool",
+          "tool": "bash",
+          "callID": "call_bash_001",
+          "state": {
+            "status": "completed",
+            "input": { "command": "ls -la", "description": "list project root" },
+            "output": "total 8\ndrwxr-xr-x  3  staff   96 May 17 17:00 .\n-rw-r--r--  1  staff   42 May 17 17:00 README.md",
+            "time": { "start": 1700000001100, "end": 1700000001280 }
+          }
+        },
+        {
+          "type": "tool",
+          "tool": "read",
+          "callID": "call_read_001",
+          "state": {
+            "status": "completed",
+            "input": { "filePath": "/work/example-project/README.md" },
+            "output": "<path>/work/example-project/README.md</path>\n<content>\n# Example\nA placeholder readme.\n</content>"
+          }
+        },
+        { "type": "text", "text": "Found one file (README.md) and read it. It is a placeholder." },
+        { "type": "step-finish" }
+      ]
+    }
+  ]
+}
