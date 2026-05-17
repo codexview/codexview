@@ -64,8 +64,12 @@ jobs:
         run: pnpm build
 
       - name: Publish @codexview/cli with provenance
+        # Use pnpm publish (not npm publish) so workspace:* in package.json
+        # dependencies is replaced with the concrete published version.
+        # npm publish leaves the workspace:* literal, breaking `npm install`
+        # for users (caught after cli-v0.3.0 shipped — see cli-v0.3.1).
         working-directory: packages/cli
-        run: npm publish --provenance --access public
+        run: pnpm publish --provenance --access public --no-git-checks
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v2

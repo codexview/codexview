@@ -2,6 +2,17 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] — 2026-05-17
+
+### Fixed
+
+- `0.2.0` and `0.3.0` were published with the literal `workspace:*`
+  string in their `dependencies."@codexview/adapters"`, which made
+  `npm install @codexview/cli` fail to resolve the dep. Republished
+  via `pnpm publish` so the workspace protocol is replaced with the
+  concrete published adapters version (`0.2.0`). Functionality
+  unchanged.
+
 ## [0.3.0] — 2026-05-17
 
 ### Added
