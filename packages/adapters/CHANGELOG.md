@@ -2,6 +2,37 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] — 2026-05-17
+
+### Added
+
+- **OpenCode subagent embedding** via new `subagents` option on
+  `adaptOpenCode`. New exported type `OpenCodeSubagentInput`
+  (`{ sessionId, lines }`). When a parent's `task` tool call's
+  `state.metadata.sessionId` matches a provided child, the call's
+  output is rewritten to a Markdown summary (description,
+  agent_type, tools used, tokens, final reply). Pairing is
+  deterministic 1:1 — no fallback queue (the parent task's
+  `metadata.sessionId` is always equal to the child's `info.id`
+  by construction, per OpenCode's session schema).
+- Mirrors Claude Code's existing `subagents` option but with a
+  cleaner pairing rule (no `agentId` / mtime FIFO fallback needed).
+
+### Changed
+
+- Umbrella `AdaptOptions` no longer extends both adapter option
+  interfaces (Claude Code's `SubagentInput` and OpenCode's
+  `OpenCodeSubagentInput` have incompatible required fields).
+  It now declares `subagents?: SubagentInput[] | OpenCodeSubagentInput[]`
+  and `patchMode?` directly. Each adapter ignores the wrong shape at
+  lookup time, so passing either is safe. **Source compatibility
+  unchanged for normal callers.**
+
+### Backwards compatibility
+
+- `adaptOpenCode` option default is `undefined`, producing byte-identical
+  output to 0.2.0 (regression-locked by existing tests).
+
 ## [0.2.0] — 2026-05-17
 
 ### Added
