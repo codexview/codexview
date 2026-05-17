@@ -8,7 +8,7 @@
 .bubble[data-role='user'] {
   align-self: flex-end;
   background: var(--cv-bg-user-bubble);
-  color: var(--cv-text-inverse);
+  color: var(--cv-text);
 }
 .bubble[data-role='assistant'] {
   background: var(--cv-bg-assistant-bubble);

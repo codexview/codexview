@@ -1,11 +1,18 @@
 .block {
-  background: var(--cv-bg-code);
-  color: var(--cv-fg-code);
+  background: transparent;
+  color: var(--cv-text);
   border-radius: var(--cv-radius-sm);
-  padding: var(--cv-spacing-sm);
+  border-left: 3px solid var(--cv-border);
+  padding: var(--cv-spacing-xs) var(--cv-spacing-sm);
   display: flex; flex-direction: column; gap: var(--cv-spacing-xs);
   font-family: var(--cv-font-mono); font-size: 0.85rem;
   overflow: hidden;
+}
+.block[open] {
+  background: var(--cv-bg-code);
+  color: var(--cv-fg-code);
+  border-left-color: var(--cv-border);
+  padding: var(--cv-spacing-sm);
 }
 .header {
   display: flex;

@@ -1,11 +1,15 @@
 .block {
   border-left: 3px solid var(--cv-status-running);
-  padding: var(--cv-spacing-sm) var(--cv-spacing-md);
-  background: var(--cv-bg-raised);
+  padding: var(--cv-spacing-xs) var(--cv-spacing-md);
+  background: transparent;
   border-radius: var(--cv-radius-sm);
 }
 .block[data-status='completed'] { border-left-color: var(--cv-status-completed); }
 .block[data-status='failed']    { border-left-color: var(--cv-status-failed); }
+.block[open] {
+  background: var(--cv-bg-raised);
+  padding: var(--cv-spacing-sm) var(--cv-spacing-md);
+}
 
 .summary {
   display: inline-flex;

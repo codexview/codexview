@@ -1,4 +1,5 @@
-.block { border: 1px dashed var(--cv-border); border-radius: var(--cv-radius-sm); padding: var(--cv-spacing-xs) var(--cv-spacing-sm); background: var(--cv-bg-raised); }
+.block { border: 1px dashed var(--cv-border); border-radius: var(--cv-radius-sm); padding: var(--cv-spacing-xs) var(--cv-spacing-sm); background: transparent; }
+.block[open] { background: var(--cv-bg-raised); }
 .summary { display: flex; align-items: center; gap: var(--cv-spacing-xs); cursor: pointer; color: var(--cv-text-muted); list-style: none; }
 .summary::-webkit-details-marker { display: none; }
 .code {
