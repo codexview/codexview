@@ -47,6 +47,10 @@ jobs:
             exit 1
           fi
 
+      - name: Build @codexview/adapters (cli depends on it)
+        working-directory: packages/adapters
+        run: pnpm build
+
       - name: Typecheck cli
         working-directory: packages/cli
         run: pnpm typecheck
