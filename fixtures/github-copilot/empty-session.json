@@ -1,0 +1,13 @@
+{
+  "version": 3,
+  "sessionId": "00000000-0000-0000-0000-000000000004",
+  "creationDate": 1769700000000,
+  "lastMessageDate": 1769700000000,
+  "initialLocation": "panel",
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": { "id": "copilot" },
+  "inputState": {},
+  "hasPendingEdits": false,
+  "_codexview_fixture_note": "synthesized — empty edge case",
+  "requests": []
+}

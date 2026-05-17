@@ -1,0 +1,51 @@
+{
+  "version": 3,
+  "sessionId": "00000000-0000-0000-0000-000000000003",
+  "customTitle": "MCP fixture",
+  "creationDate": 1769700000000,
+  "lastMessageDate": 1769700010000,
+  "initialLocation": "panel",
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": { "id": "copilot" },
+  "inputState": {},
+  "hasPendingEdits": false,
+  "_codexview_fixture_note": "synthesized — no real MCP session available at capture time",
+  "requests": [
+    {
+      "requestId": "request_cccccccc-0000-0000-0000-000000000001",
+      "responseId": "response_cccccccc-0000-0000-0000-000000000001",
+      "timestamp": 1769700000000,
+      "agent": {
+        "extensionId": { "value": "GitHub.copilot-chat", "_lower": "github.copilot-chat" },
+        "extensionVersion": "0.36.2",
+        "name": "agent",
+        "id": "github.copilot.editsAgent",
+        "isDefault": true,
+        "locations": ["panel"],
+        "modes": ["agent"]
+      },
+      "modelId": "claude-sonnet-4",
+      "message": { "text": "Search the codebase for the auth function.", "parts": [] },
+      "variableData": { "variables": [] },
+      "response": [
+        { "kind": "mcpServersStarting", "servers": ["github"] },
+        { "kind": "prepareToolInvocation", "toolName": "github__search_code" },
+        {
+          "kind": "toolInvocationSerialized",
+          "toolId": "github__search_code",
+          "toolCallId": "tool-cccc-0001",
+          "isComplete": true,
+          "invocationMessage": "Using \"Search Code\" (MCP: github)",
+          "source": { "type": "mcp", "label": "github", "serverId": "github" },
+          "toolSpecificData": {
+            "kind": "extension",
+            "rawInput": { "query": "auth" },
+            "rawResult": { "matches": [{ "path": "src/auth.ts", "line": 12 }] }
+          }
+        }
+      ],
+      "result": { "timings": { "firstProgress": 100, "totalElapsed": 800 }, "metadata": { "codeBlocks": [], "renderedUserMessage": [], "renderedGlobalContext": [] } },
+      "contentReferences": [], "codeCitations": [], "followups": [], "responseMarkdownInfo": {}, "modelState": {}, "timeSpentWaiting": 0
+    }
+  ]
+}

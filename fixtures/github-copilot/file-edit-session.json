@@ -1,0 +1,60 @@
+{
+  "version": 3,
+  "sessionId": "00000000-0000-0000-0000-000000000002",
+  "customTitle": "File edit fixture",
+  "creationDate": 1769700000000,
+  "lastMessageDate": 1769700010000,
+  "initialLocation": "panel",
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": { "id": "copilot" },
+  "inputState": {},
+  "hasPendingEdits": false,
+  "_codexview_fixture_note": "synthesized — no real file-edit session available at capture time",
+  "requests": [
+    {
+      "requestId": "request_bbbbbbbb-0000-0000-0000-000000000001",
+      "responseId": "response_bbbbbbbb-0000-0000-0000-000000000001",
+      "timestamp": 1769700000000,
+      "agent": {
+        "extensionId": { "value": "GitHub.copilot-chat", "_lower": "github.copilot-chat" },
+        "extensionVersion": "0.36.2",
+        "name": "agent",
+        "id": "github.copilot.editsAgent",
+        "isDefault": true,
+        "locations": ["panel"],
+        "modes": ["agent"]
+      },
+      "modelId": "claude-sonnet-4",
+      "message": {
+        "text": "Add a helper function to utils.ts.",
+        "parts": [{ "kind": "text", "text": "Add a helper function to utils.ts.", "range": { "start": 0, "endExclusive": 35 } }]
+      },
+      "variableData": { "variables": [] },
+      "response": [
+        { "kind": "prepareToolInvocation", "toolName": "insert_edit_into_file" },
+        {
+          "kind": "toolInvocationSerialized",
+          "toolId": "insert_edit_into_file",
+          "toolCallId": "tool-bbbb-0001",
+          "isComplete": true,
+          "invocationMessage": "Using \"Edit File\"",
+          "source": { "type": "internal", "label": "Built-In" },
+          "toolSpecificData": {
+            "kind": "edit",
+            "filePath": "/Users/agent/projects/example/utils.ts",
+            "explanation": "Add hello() function",
+            "code": "export function hello(name: string): string {\n  return `Hello, ${name}!`;\n}\n"
+          }
+        },
+        {
+          "value": "Added a `hello(name)` helper that returns a greeting string.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": { "$mid": 1, "path": "/Users/agent/projects/example/", "scheme": "file" }
+        }
+      ],
+      "result": { "timings": { "firstProgress": 500, "totalElapsed": 2400 }, "metadata": { "codeBlocks": [], "renderedUserMessage": [], "renderedGlobalContext": [] } },
+      "contentReferences": [], "codeCitations": [], "followups": [], "responseMarkdownInfo": {}, "modelState": {}, "timeSpentWaiting": 0
+    }
+  ]
+}

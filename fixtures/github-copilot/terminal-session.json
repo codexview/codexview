@@ -1,0 +1,964 @@
+{
+  "version": 3,
+  "responderUsername": "GitHub Copilot",
+  "responderAvatarIconUri": {
+    "id": "copilot"
+  },
+  "initialLocation": "panel",
+  "requests": [
+    {
+      "requestId": "request_aaaaaaaa-0000-0000-0000-6c6b3ab23629",
+      "message": {
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Run the tests and report failures.",
+            "range": {
+              "start": 0,
+              "endExclusive": 34
+            }
+          }
+        ],
+        "text": "Run the tests and report failures."
+      },
+      "variableData": {
+        "variables": []
+      },
+      "response": [
+        {
+          "kind": "mcpServersStarting",
+          "didStartServerIds": []
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 2,
+            "id": "chat.tools.global.autoApprove"
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "mogrify -resize 50% -quality 70 screenshots/ContactUs.png",
+              "toolEdited": " mogrify -resize 50% -quality 70 screenshots/ContactUs.png"
+            },
+            "language": "sh",
+            "terminalCommandState": {
+              "exitCode": 127,
+              "timestamp": 1769731182668,
+              "duration": 0
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-74a49515-acb0-4693-9f4b-9e71817dc877"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 1
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-7c5a",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 1
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "which convert",
+              "toolEdited": " which convert"
+            },
+            "language": "sh",
+            "autoApproveInfo": {
+              "value": "Auto approved by setting [`chat.tools.global.autoApprove`](command:workbench.action.terminal.chat.openTerminalSettingsLink?%255B%2522global%2522%255D \"View settings\")",
+              "isTrusted": {
+                "enabledCommands": [
+                  "workbench.action.terminal.chat.openTerminalSettingsLink"
+                ]
+              },
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "supportAlertSyntax": false
+            },
+            "terminalCommandState": {
+              "exitCode": 1,
+              "timestamp": 1769731184802,
+              "duration": 0
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-33c6e8e1-0d4e-4a2a-aab8-0270a9adeda1"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 1
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-f4c9",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 1
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "which sips",
+              "toolEdited": " which sips"
+            },
+            "language": "sh",
+            "autoApproveInfo": {
+              "value": "Auto approved by setting [`chat.tools.global.autoApprove`](command:workbench.action.terminal.chat.openTerminalSettingsLink?%255B%2522global%2522%255D \"View settings\")",
+              "isTrusted": {
+                "enabledCommands": [
+                  "workbench.action.terminal.chat.openTerminalSettingsLink"
+                ]
+              },
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "supportAlertSyntax": false
+            },
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731186278,
+              "duration": 4
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-360a3e56-51d2-4169-8a60-7e5d76f7f79e"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 1
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-ed19",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 2,
+            "id": "chat.tools.global.autoApprove"
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "sips -Z 800 screenshots/ContactUs.png --out screenshots/ContactUs_compressed.png",
+              "toolEdited": " sips -Z 800 screenshots/ContactUs.png --out screenshots/ContactUs_compressed.png"
+            },
+            "language": "sh",
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731188540,
+              "duration": 135
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-24af4660-7d88-4c21-962e-1349c897cb73"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-5282",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 1
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "ls -lh screenshots/ContactUs.png screenshots/ContactUs_compressed.png",
+              "toolEdited": " ls -lh screenshots/ContactUs.png screenshots/ContactUs_compressed.png"
+            },
+            "language": "sh",
+            "autoApproveInfo": {
+              "value": "Auto approved by setting [`chat.tools.global.autoApprove`](command:workbench.action.terminal.chat.openTerminalSettingsLink?%255B%2522global%2522%255D \"View settings\")",
+              "isTrusted": {
+                "enabledCommands": [
+                  "workbench.action.terminal.chat.openTerminalSettingsLink"
+                ]
+              },
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "supportAlertSyntax": false
+            },
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731190316,
+              "duration": 0
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-84431ced-f645-4620-8bec-977ae11f27be"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-285c",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "value": "Task completed successfully.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/Users/agent/projects/example/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "extensionVersion": "0.36.2",
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.editsAgent",
+        "description": "Edit files in your workspace in agent mode",
+        "when": "config.chat.agent.enabled",
+        "metadata": {
+          "themeIcon": {
+            "id": "tools"
+          },
+          "hasFollowups": false,
+          "supportIssueReporting": false
+        },
+        "name": "agent",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "modes": [
+          "agent"
+        ],
+        "slashCommands": [],
+        "disambiguation": []
+      },
+      "timestamp": 1769731178601,
+      "modelId": "copilot/gpt-4.1",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-eccdc0d18108",
+      "result": {
+        "timings": {
+          "firstProgress": 2720,
+          "totalElapsed": 13756
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "renderedUserMessage": [],
+          "renderedGlobalContext": [],
+          "cacheKey": "file:///Users/agent/projects/example",
+          "toolCallRounds": [
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "9623f964-4261-46de-b780-8890c6b0dcaa"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "c3d7a275-b904-48e3-b8aa-0a14933e3d9e"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "5d304841-b922-4e8b-ad08-b62ab837c5bb"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "f0312089-4637-4821-bc82-7d512d6725ca"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "e916c9fb-2a72-4e5a-a96f-3801b0719f66"
+            },
+            {
+              "response": "Task completed successfully.",
+              "toolCalls": [],
+              "toolInputRetry": 0,
+              "id": "887a360d-e63f-4903-acef-3c2c2eb5d5ac"
+            }
+          ],
+          "toolCallResults": {},
+          "modelMessageId": "00000000-0000-0000-0000-000000000001",
+          "responseId": "00000000-0000-0000-0000-000000000001",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "agentId": "github.copilot.editsAgent"
+        },
+        "details": "GPT-4.1 • 0x"
+      },
+      "responseMarkdownInfo": [],
+      "followups": [],
+      "modelState": {
+        "value": 1,
+        "completedAt": 1769731192393
+      },
+      "contentReferences": [],
+      "codeCitations": [],
+      "timeSpentWaiting": 0
+    },
+    {
+      "requestId": "request_aaaaaaaa-0000-0000-0000-a5dbef08e6a4",
+      "message": {
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Run the tests and report failures.",
+            "range": {
+              "start": 0,
+              "endExclusive": 34
+            }
+          }
+        ],
+        "text": "Run the tests and report failures."
+      },
+      "variableData": {
+        "variables": []
+      },
+      "response": [
+        {
+          "kind": "mcpServersStarting",
+          "didStartServerIds": []
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 2,
+            "id": "chat.tools.global.autoApprove"
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "sips -s format jpeg screenshots/ContactUs.png --out screenshots/ContactUs_converted.jpg",
+              "toolEdited": " sips -s format jpeg screenshots/ContactUs.png --out screenshots/ContactUs_converted.jpg"
+            },
+            "language": "sh",
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731220895,
+              "duration": 129
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-2d28662f-ac8e-45cb-abea-e13ba4984525"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-8f86",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 1
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "ls -lh screenshots/ContactUs.png screenshots/ContactUs_converted.jpg",
+              "toolEdited": " ls -lh screenshots/ContactUs.png screenshots/ContactUs_converted.jpg"
+            },
+            "language": "sh",
+            "autoApproveInfo": {
+              "value": "Auto approved by setting [`chat.tools.global.autoApprove`](command:workbench.action.terminal.chat.openTerminalSettingsLink?%255B%2522global%2522%255D \"View settings\")",
+              "isTrusted": {
+                "enabledCommands": [
+                  "workbench.action.terminal.chat.openTerminalSettingsLink"
+                ]
+              },
+              "supportThemeIcons": false,
+              "supportHtml": false,
+              "supportAlertSyntax": false
+            },
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731222763,
+              "duration": 13
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-847fdf3e-0cc4-4ecc-b278-671172ca6799"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-6428",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "value": "Task completed successfully.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/Users/agent/projects/example/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "extensionVersion": "0.36.2",
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.editsAgent",
+        "description": "Edit files in your workspace in agent mode",
+        "when": "config.chat.agent.enabled",
+        "metadata": {
+          "themeIcon": {
+            "id": "tools"
+          },
+          "hasFollowups": false,
+          "supportIssueReporting": false
+        },
+        "name": "agent",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "modes": [
+          "agent"
+        ],
+        "slashCommands": [],
+        "disambiguation": []
+      },
+      "timestamp": 1769731217915,
+      "modelId": "copilot/gpt-4.1",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-fc425f693a8f",
+      "result": {
+        "timings": {
+          "firstProgress": 2160,
+          "totalElapsed": 7619
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "renderedUserMessage": [],
+          "toolCallRounds": [
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "0880af13-95c2-4f65-9955-067dfceaddcd"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "ce67c518-fdb9-499e-bd7b-c7676e07582c"
+            },
+            {
+              "response": "Task completed successfully.",
+              "toolCalls": [],
+              "toolInputRetry": 0,
+              "id": "2af71bec-588e-4e5a-82ad-3fb39a9fae90"
+            }
+          ],
+          "toolCallResults": {},
+          "modelMessageId": "00000000-0000-0000-0000-000000000001",
+          "responseId": "00000000-0000-0000-0000-000000000001",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "agentId": "github.copilot.editsAgent",
+          "renderedGlobalContext": [],
+          "cacheKey": "file:///Users/agent/projects/example"
+        },
+        "details": "GPT-4.1 • 0x"
+      },
+      "responseMarkdownInfo": [],
+      "followups": [],
+      "modelState": {
+        "value": 1,
+        "completedAt": 1769731225562
+      },
+      "contentReferences": [],
+      "codeCitations": [],
+      "timeSpentWaiting": 0
+    },
+    {
+      "requestId": "request_aaaaaaaa-0000-0000-0000-3f18b7e68a0b",
+      "message": {
+        "parts": [
+          {
+            "kind": "text",
+            "text": "Run the tests and report failures.",
+            "range": {
+              "start": 0,
+              "endExclusive": 34
+            }
+          }
+        ],
+        "text": "Run the tests and report failures."
+      },
+      "variableData": {
+        "variables": []
+      },
+      "response": [
+        {
+          "kind": "mcpServersStarting",
+          "didStartServerIds": []
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 2,
+            "id": "chat.tools.global.autoApprove"
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "sips -Z 8000 screenshots/ContactUs_converted.jpg --out screenshots/ContactUs_converted_resized.jpg",
+              "toolEdited": " sips -Z 8000 screenshots/ContactUs_converted.jpg --out screenshots/ContactUs_converted_resized.jpg"
+            },
+            "language": "sh",
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731364177,
+              "duration": 269
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-4f58f25e-26df-4fb9-8cc1-ca73d7713fea"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-7466",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "kind": "prepareToolInvocation",
+          "toolName": "run_in_terminal"
+        },
+        {
+          "kind": "toolInvocationSerialized",
+          "invocationMessage": "Using \"Run in Terminal\"",
+          "isConfirmed": {
+            "type": 2,
+            "id": "chat.tools.global.autoApprove"
+          },
+          "isComplete": true,
+          "source": {
+            "type": "internal",
+            "label": "Built-In"
+          },
+          "toolSpecificData": {
+            "kind": "terminal",
+            "terminalToolSessionId": "00000000-0000-0000-aaaa-000000000000",
+            "terminalCommandId": "tool-aaaaaaaa-0000-0000-0000-000000000000",
+            "commandLine": {
+              "original": "sips -g pixelWidth -g pixelHeight screenshots/ContactUs_converted_resized.jpg",
+              "toolEdited": " sips -g pixelWidth -g pixelHeight screenshots/ContactUs_converted_resized.jpg"
+            },
+            "language": "sh",
+            "terminalCommandState": {
+              "exitCode": 0,
+              "timestamp": 1769731366738,
+              "duration": 10
+            },
+            "terminalCommandUri": {
+              "$mid": 1,
+              "path": "/anon/1",
+              "scheme": "vscode-terminal",
+              "query": "command=tool-323d99bc-c89b-441b-80db-9500d540eae8"
+            },
+            "terminalCommandOutput": {
+              "text": "ok",
+              "lineCount": 4
+            },
+            "terminalTheme": {
+              "background": "#181818",
+              "foreground": "#cccccc"
+            }
+          },
+          "toolCallId": "tool-aaaa-90fd",
+          "toolId": "run_in_terminal"
+        },
+        {
+          "value": "Task completed successfully.",
+          "supportThemeIcons": false,
+          "supportHtml": false,
+          "baseUri": {
+            "$mid": 1,
+            "path": "/Users/agent/projects/example/",
+            "scheme": "file"
+          }
+        }
+      ],
+      "agent": {
+        "extensionId": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "extensionVersion": "0.36.2",
+        "publisherDisplayName": "GitHub",
+        "extensionPublisherId": "GitHub",
+        "extensionDisplayName": "GitHub Copilot Chat",
+        "id": "github.copilot.editsAgent",
+        "description": "Edit files in your workspace in agent mode",
+        "when": "config.chat.agent.enabled",
+        "metadata": {
+          "themeIcon": {
+            "id": "tools"
+          },
+          "hasFollowups": false,
+          "supportIssueReporting": false
+        },
+        "name": "agent",
+        "fullName": "GitHub Copilot",
+        "isDefault": true,
+        "locations": [
+          "panel"
+        ],
+        "modes": [
+          "agent"
+        ],
+        "slashCommands": [],
+        "disambiguation": []
+      },
+      "timestamp": 1769731361186,
+      "modelId": "copilot/gpt-4.1",
+      "responseId": "response_aaaaaaaa-0000-0000-0000-733d75b483da",
+      "result": {
+        "timings": {
+          "firstProgress": 2074,
+          "totalElapsed": 7746
+        },
+        "metadata": {
+          "codeBlocks": [],
+          "renderedUserMessage": [],
+          "toolCallRounds": [
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "cef24a54-23bf-4173-8cc4-beb56227f5e0"
+            },
+            {
+              "response": "",
+              "toolCalls": [
+                {
+                  "name": "run_in_terminal",
+                  "arguments": "{\"command\":\"make test\",\"explanation\":\"Run the test suite.\",\"isBackground\":false}",
+                  "id": "call_anon__vscode-0000000000000"
+                }
+              ],
+              "toolInputRetry": 0,
+              "id": "a33fa13d-2edb-4fc4-b268-2fa61c75eae0"
+            },
+            {
+              "response": "Task completed successfully.",
+              "toolCalls": [],
+              "toolInputRetry": 0,
+              "id": "7f61a954-9b5e-455b-be04-06f22d5de89c"
+            }
+          ],
+          "toolCallResults": {},
+          "modelMessageId": "00000000-0000-0000-0000-000000000001",
+          "responseId": "00000000-0000-0000-0000-000000000001",
+          "sessionId": "00000000-0000-0000-0000-000000000001",
+          "agentId": "github.copilot.editsAgent",
+          "renderedGlobalContext": [],
+          "cacheKey": "file:///Users/agent/projects/example"
+        },
+        "details": "GPT-4.1 • 0x"
+      },
+      "responseMarkdownInfo": [],
+      "followups": [],
+      "modelState": {
+        "value": 1,
+        "completedAt": 1769731368964
+      },
+      "contentReferences": [],
+      "codeCitations": [],
+      "timeSpentWaiting": 0
+    }
+  ],
+  "sessionId": "00000000-0000-0000-0000-000000000001",
+  "creationDate": 1769731148389,
+  "lastMessageDate": 1769731361186,
+  "customTitle": "Anonymized fixture session",
+  "hasPendingEdits": false,
+  "inputState": {
+    "contrib": {
+      "chatDynamicVariableModel": []
+    },
+    "attachments": [],
+    "mode": {
+      "id": "agent",
+      "kind": "agent"
+    },
+    "selectedModel": {
+      "identifier": "copilot/gpt-4.1",
+      "metadata": {
+        "extension": {
+          "value": "GitHub.copilot-chat",
+          "_lower": "github.copilot-chat"
+        },
+        "id": "gpt-4.1",
+        "vendor": "copilot",
+        "name": "GPT-4.1",
+        "family": "gpt-4.1",
+        "detail": "0x",
+        "tooltip": "GPT-4.1 (gpt-4.1-2025-04-14) does not count towards your premium request limit. This model may be slowed during times of high congestion.",
+        "version": "gpt-4.1-2025-04-14",
+        "maxInputTokens": 111424,
+        "maxOutputTokens": 16384,
+        "auth": {
+          "providerLabel": "GitHub Copilot Chat",
+          "accountLabel": "agent-user"
+        },
+        "isDefault": false,
+        "isUserSelectable": true,
+        "modelPickerCategory": {
+          "label": "Standard Models",
+          "order": 0
+        },
+        "capabilities": {
+          "vision": true,
+          "toolCalling": true,
+          "agentMode": true
+        }
+      }
+    },
+    "inputText": "",
+    "selections": [
+      {
+        "startLineNumber": 1,
+        "startColumn": 1,
+        "endLineNumber": 1,
+        "endColumn": 1,
+        "selectionStartLineNumber": 1,
+        "selectionStartColumn": 1,
+        "positionLineNumber": 1,
+        "positionColumn": 1
+      }
+    ]
+  },
+  "_codexview_fixture_note": "real — sourced from terminal-only session, anonymized"
+}
