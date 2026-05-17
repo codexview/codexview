@@ -46,7 +46,7 @@ export type ChatStreamEvent =
 
 export type ChatStreamEventType = ChatStreamEvent['type'];
 
-export type DetectedFormat = 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'unknown';
+export type DetectedFormat = 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'unknown';
 
 export interface RawLine {
   [key: string]: unknown;

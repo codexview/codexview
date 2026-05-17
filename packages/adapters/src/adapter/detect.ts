@@ -14,7 +14,22 @@ export function detectFormat(lines: RawLine[]): DetectedFormat {
       ) {
         return 'opencode';
       }
-      if ('sessionId' in line) return 'claude-code';
+      // GitHub Copilot: single-JSON export with version=3 and copilot avatar id.
+      // Must be checked before the claude-code branch because Copilot exports
+      // also carry a top-level `sessionId` field.
+      const first = line as Record<string, unknown>;
+      if (
+        first.version === 3 &&
+        (first.responderAvatarIconUri as Record<string, unknown> | undefined)?.id === 'copilot' &&
+        Array.isArray(first.requests)
+      ) {
+        return 'github-copilot';
+      }
+      // claude-code JSONL lines have sessionId but are NOT v3+requests-shaped
+      // (that shape belongs to other tools like Copilot or Continue).
+      if ('sessionId' in line && !(first.version === 3 && Array.isArray(first.requests))) {
+        return 'claude-code';
+      }
       if ('type' in line && ('payload' in line || 'timestamp' in line)) return 'rollout';
       if ('event' in line && 'at' in line) return 'codex-team';
     }
