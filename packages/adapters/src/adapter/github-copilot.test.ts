@@ -101,3 +101,12 @@ describe('adaptGithubCopilot — mcp + generic fallback', () => {
     expect(fc.name).toBe('mystery_tool');
   });
 });
+
+import { adapt } from '../index';
+
+describe('adapt() umbrella — github-copilot', () => {
+  it('routes a github-copilot session through the umbrella', () => {
+    const result = adapt([loadJson('empty-session.json')]);
+    expect(result.format).toBe('github-copilot');
+  });
+});

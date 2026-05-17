@@ -42,6 +42,10 @@
     "./codex-team": {
       "types": "./dist/adapter/codex-team.d.ts",
       "import": "./dist/adapter/codex-team.js"
+    },
+    "./github-copilot": {
+      "types": "./dist/adapter/github-copilot.d.ts",
+      "import": "./dist/adapter/github-copilot.js"
     }
   },
   "files": [

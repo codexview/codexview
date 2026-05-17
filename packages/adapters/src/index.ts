@@ -11,6 +11,10 @@ export {
   type AdaptOpenCodeOptions,
   type OpenCodeSubagentInput,
 } from './adapter/opencode.js';
+export {
+  adaptGithubCopilot,
+  type AdaptGithubCopilotOptions,
+} from './adapter/github-copilot.js';
 export { parseJsonl } from './parse.js';
 export type {
   ChatStreamEvent,

@@ -4,8 +4,11 @@ import { adaptRollout } from './rollout.js';
 import { adaptCodexTeam } from './codex-team.js';
 import { adaptClaudeCode, type AdaptClaudeCodeOptions, type SubagentInput } from './claude-code.js';
 import { adaptOpenCode, type AdaptOpenCodeOptions, type OpenCodeSubagentInput } from './opencode.js';
+import { adaptGithubCopilot, type AdaptGithubCopilotOptions } from './github-copilot.js';
 
 export { detectFormat };
+export { adaptGithubCopilot };
+export type { AdaptGithubCopilotOptions };
 
 export interface AdaptResult {
   format: DetectedFormat;
@@ -31,7 +34,8 @@ export function adapt(lines: RawLine[], options: AdaptOptions = {}): AdaptResult
     case 'rollout':     return { format, events: adaptRollout(lines) };
     case 'codex-team':  return { format, events: adaptCodexTeam(lines) };
     case 'claude-code': return { format, events: adaptClaudeCode(lines, options as AdaptClaudeCodeOptions) };
-    case 'opencode':    return { format, events: adaptOpenCode(lines, options as AdaptOpenCodeOptions) };
-    default:            return { format: 'unknown', events: [] };
+    case 'opencode':        return { format, events: adaptOpenCode(lines, options as AdaptOpenCodeOptions) };
+    case 'github-copilot':  return adaptGithubCopilot(lines, options as any);
+    default:                return { format: 'unknown', events: [] };
   }
 }
