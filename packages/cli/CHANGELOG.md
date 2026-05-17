@@ -2,6 +2,29 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] — 2026-05-17
+
+### Added
+
+- Accepts **GitHub Copilot Chat** session exports (the
+  `chatSessions/<uuid>.json` files VS Code persists under
+  `workspaceStorage/<hash>/`). Auto-detected; `--format
+  github-copilot` for explicit override.
+
+### Changed
+
+- Runtime dep bumped to `@codexview/adapters@^0.4.0` (adds the
+  Copilot adapter).
+- `--help` and `USAGE` text list `github-copilot` as a valid
+  `--format` value.
+
+### Notes
+
+- Existing Codex CLI / codex-team / Claude Code / OpenCode inputs
+  unchanged.
+- Image attachments are dropped (large image-laden Copilot sessions
+  can be 100+ MB on disk because of inline byte-objects).
+
 ## [0.4.0] — 2026-05-17
 
 ### Added

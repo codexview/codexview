@@ -2,6 +2,33 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-05-17
+
+### Added
+
+- **GitHub Copilot adapter** (`adaptGithubCopilot`). Reads VS Code
+  Copilot Chat session JSON files (`~/Library/Application
+  Support/Code/User/workspaceStorage/<hash>/chatSessions/<uuid>.json`)
+  and converts to `ChatStreamEvent[]`. Auto-detected via the
+  umbrella `adapt()`; available as subpath import
+  `@codexview/adapters/github-copilot`.
+- `DetectedFormat` union gains `'github-copilot'`.
+- `AdaptGithubCopilotOptions { patchMode }` mirrors the same option
+  on the Claude Code and OpenCode adapters.
+
+### Notes
+
+- Tool mapping: `run_in_terminal` → `exec_command_*`; edit/write tools
+  (`insert_edit_into_file`, `apply_patch`, `create_file`,
+  `replace_string_in_file`) → `patch_apply_end` when
+  `patchMode='patch_apply_end'`, else generic `function_call`;
+  MCP-sourced tools → `mcp_tool_*`; everything else → generic
+  `function_call`. Per file-tool-first-class-decision (2026-05-17),
+  file-read tools stay generic.
+- Image attachments in `variableData.variables[]` are dropped (same
+  policy as Claude Code).
+- No subagent model in Copilot agent mode — no `subagents` option.
+
 ## [0.3.0] — 2026-05-17
 
 ### Added
