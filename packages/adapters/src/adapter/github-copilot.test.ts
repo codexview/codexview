@@ -62,3 +62,42 @@ describe('adaptGithubCopilot — file edit', () => {
     expect(patch.files[0].status).toBe('modified');
   });
 });
+
+describe('adaptGithubCopilot — mcp + generic fallback', () => {
+  it('emits mcp_tool_call + mcp_tool_call_output for MCP tools (source.type=mcp)', () => {
+    const { events } = adaptGithubCopilot(loadJson('mcp-session.json'));
+    const begin = events.find((e) => e.type === 'mcp_tool_call') as any;
+    const end = events.find((e) => e.type === 'mcp_tool_call_output');
+    expect(begin).toBeDefined();
+    expect(begin.server).toBe('github');
+    expect(begin.name).toBe('github__search_code');
+    expect(end).toBeDefined();
+  });
+
+  it('falls through to function_call for unknown tool ids (no toolSpecificData.kind match)', () => {
+    const session = {
+      version: 3,
+      sessionId: 's',
+      creationDate: 0,
+      requests: [{
+        requestId: 'r', timestamp: 0,
+        agent: { extensionId: { value: 'GitHub.copilot-chat' } },
+        message: { text: 'x' },
+        response: [{
+          kind: 'toolInvocationSerialized',
+          toolId: 'mystery_tool',
+          toolCallId: 'tc',
+          isComplete: true,
+          invocationMessage: 'Using "Mystery Tool"',
+          source: { type: 'internal' },
+          toolSpecificData: { kind: 'somethingElse', foo: 'bar' },
+        }],
+        result: { timings: { totalElapsed: 10 } },
+      }],
+    };
+    const { events } = adaptGithubCopilot(session as any);
+    const fc = events.find((e) => e.type === 'function_call') as any;
+    expect(fc).toBeDefined();
+    expect(fc.name).toBe('mystery_tool');
+  });
+});

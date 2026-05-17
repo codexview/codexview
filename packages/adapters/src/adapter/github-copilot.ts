@@ -168,5 +168,41 @@ function handleToolItem(
     return;
   }
 
-  // Generic fallback in Task 6.
+  if (tool.source?.type === 'mcp') {
+    const server = tool.source.serverId ?? tool.source.label ?? 'unknown';
+    events.push({
+      type: 'mcp_tool_call',
+      turnId,
+      callId,
+      server,
+      name: tool.toolId,
+      args: (tsd as any).rawInput ?? tsd,
+      at,
+    });
+    events.push({
+      type: 'mcp_tool_call_output',
+      turnId,
+      callId,
+      output: (tsd as any).rawResult ?? tool.invocationMessage ?? 'ok',
+      at,
+    });
+    return;
+  }
+
+  // Generic fallback (per file-tool-first-class-decision: read/glob/grep stay generic).
+  events.push({
+    type: 'function_call',
+    turnId,
+    callId,
+    name: tool.toolId,
+    args: tsd,
+    at,
+  });
+  events.push({
+    type: 'function_call_output',
+    turnId,
+    callId,
+    output: tool.invocationMessage ?? 'ok',
+    at,
+  });
 }
