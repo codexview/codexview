@@ -2,6 +2,51 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] — 2026-05-17
+
+### Added
+
+- New source format: **OpenCode** (sst/opencode session exports).
+  - `DetectedFormat` union gains `'opencode'`.
+  - `detectFormat` recognizes the `{ info: { id: 'ses_…' }, messages: [...] }`
+    top-level shape produced by `opencode export <sessionID>`.
+  - `adaptOpenCode(lines, options?)` and umbrella subpath import
+    `@codexview/adapters/opencode`. Wraps the single-JSON document
+    in a one-element `RawLine[]` for API parity.
+  - `AdaptOpenCodeOptions.patchMode` ('function_call' default | 'patch_apply_end')
+    mirrors the Claude Code adapter — cli stays compact, playground
+    can opt into diff rendering.
+  - Part mapping:
+    - `text` → `user_message` / `agent_message`
+    - `reasoning` → `reasoning` event
+    - `step-start` / `step-finish` → dropped (boundary markers)
+    - `tool` discriminated by `tool` field:
+      - `bash` → `exec_command_begin` + `exec_command_end` (atomic;
+        OpenCode bundles input + output in the same part)
+      - `edit` / `write` → fallback or `patch_apply_end` per option
+      - any other (`read` / `glob` / `grep` / …) → opaque
+        `function_call` + `function_call_output`
+
+### Notes
+
+- New types exported: `AdaptOpenCodeOptions`, `adaptOpenCode`.
+- The `AdaptOptions` umbrella type extends both
+  `AdaptClaudeCodeOptions` and `AdaptOpenCodeOptions` so the same
+  `patchMode` flag controls both adapters.
+- Anonymized fixture: `fixtures/opencode/session-short.json`.
+- Tests: 12 new in `opencode.test.ts`; adapters suite 46 / 46.
+- Recommended consumer prerequisite (playground / cli): the
+  `opencode` binary on `$PATH` and at least one session exported.
+
+### Path α justification
+
+We picked the CLI-based path over direct SQLite reads — see
+docs/superpowers/specs/2026-05-17-opencode-adapter-design.md for
+the full table. Briefly: zero runtime deps, decoupled from
+sst/opencode's schema migrations, built-in `--sanitize` for fixture
+generation, and an OpenCode user definitionally has the CLI
+installed already.
+
 ## [0.1.1] — 2026-05-17
 
 ### Added

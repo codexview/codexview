@@ -2,6 +2,31 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.0] — 2026-05-17
+
+### Added
+
+- Accepts **OpenCode** session exports (single JSON document, output
+  of `opencode export <sessionID>`). Auto-detected; no flag needed.
+- New internal `parseInput()` helper: tries whole-text JSON.parse
+  first (for OpenCode and other single-document formats), falls
+  through to `parseJsonl` for the existing line-delimited sources.
+
+### Changed
+
+- Runtime dep bumped to `@codexview/adapters@^0.2.0` (which adds the
+  OpenCode adapter).
+
+### Notes
+
+- Existing Codex CLI / codex-team / Claude Code inputs unchanged.
+- Usage example:
+  ```bash
+  opencode export ses_… | codexview-md - > transcript.md
+  # or with a saved file
+  codexview-md /path/to/opencode-session.json
+  ```
+
 ## [0.2.0] — 2026-05-17
 
 ### Changed
