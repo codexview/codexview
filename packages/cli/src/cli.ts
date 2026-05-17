@@ -21,7 +21,7 @@ function parseInput(text: string): RawLine[] {
   return parseJsonl(text);
 }
 
-const VERSION = '0.3.1';
+const VERSION = '0.4.0';
 
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 

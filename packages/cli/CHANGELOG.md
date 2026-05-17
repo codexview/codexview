@@ -2,6 +2,31 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-05-17
+
+### Added
+
+- **`--subagent <path>` flag** (repeatable) for OpenCode parent
+  sessions. Each path is parsed as a single JSON export; its
+  `info.id` becomes the lookup key into the parent's `task`
+  `state.metadata.sessionId`. Matched task calls are rendered as
+  Markdown summaries (delegated to `@codexview/adapters@0.3.0`).
+- Stderr hint when the parent has task calls but no matching
+  `--subagent` was given:
+  `note: N subagent task call(s) detected. Re-run with --subagent <child-export.json> per child to embed summaries.`
+- Renderer now inlines tool outputs for `task` (OpenCode) and
+  `Agent` (Claude Code) tool calls when the output begins with
+  `### ` (the markdown header used by subagent summaries). Other
+  tool outputs are still dropped (compact mode unchanged).
+- `task` tool calls now show the task description inline in the
+  compact tool line (matches existing `Agent` behavior).
+
+### Changed
+
+- Runtime dep bumped to `@codexview/adapters@^0.3.0` (subagents API).
+- `--format` now accepts `opencode` as a value.
+- Help (`-h`) text and USAGE block include the `--subagent` flag.
+
 ## [0.3.1] — 2026-05-17
 
 ### Fixed
