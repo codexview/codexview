@@ -2,7 +2,7 @@ import { readFile, writeFile } from 'node:fs/promises';
 import { adapt, parseJsonl, type DetectedFormat } from '@codexview/adapters';
 import { render } from './render/markdown.js';
 
-const VERSION = '0.1.1';
+const VERSION = '0.2.0';
 
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 

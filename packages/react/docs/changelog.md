@@ -2,6 +2,17 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.2.0] — 2026-05-17
+
+### Changed
+
+- Repo restructured as a pnpm workspace monorepo (`packages/react`, `packages/cli`, `packages/adapters`). No `@codexview/react` API change — source under `packages/react/src/` is bit-for-bit identical to 0.1.4. Re-published to keep semver in step with the parallel cli + adapters releases.
+
+### Notes
+
+- The reference Claude Code adapter that lived under `playground/adapter.mjs` has moved into the new [`@codexview/adapters`](https://www.npmjs.com/package/@codexview/adapters) package and gained two opt-in options (`patchMode`, `subagents`). The playground in this repo now re-exports from that package; external consumers can install it alongside `@codexview/react`.
+- No code changes are required to upgrade from 0.1.4 — re-installation only.
+
 ## [0.1.4] — 2026-05-17
 
 ### Changed
