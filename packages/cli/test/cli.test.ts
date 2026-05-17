@@ -101,4 +101,19 @@ describe('cli smoke', () => {
     expect(r.status).toBe(0);
     expect(r.stderr).toMatch(/note: 3 subagent task call\(s\) detected/);
   });
+
+  it('renders a github-copilot fixture to compact markdown', () => {
+    const gcFixture = resolve(repoRoot, 'fixtures', 'github-copilot', 'terminal-session.json');
+    const r = spawnSync('node', [bin, gcFixture], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('# Session');
+    expect(r.stdout).toContain('## User');
+    expect(r.stdout).toContain('## Assistant');
+  });
+
+  it('accepts --format github-copilot explicitly', () => {
+    const gcFixture = resolve(repoRoot, 'fixtures', 'github-copilot', 'empty-session.json');
+    const r = spawnSync('node', [bin, gcFixture, '--format', 'github-copilot'], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+  });
 });
