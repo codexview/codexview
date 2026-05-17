@@ -71,4 +71,34 @@ describe('cli smoke', () => {
     const r = spawnSync('node', [bin, '--nope'], { encoding: 'utf8' });
     expect(r.status).toBe(3);
   });
+
+  it('embeds subagent summaries with --subagent flag', () => {
+    const parent = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-parent.json');
+    const c1 = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-child-1.json');
+    const c2 = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-child-2.json');
+    const c3 = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-child-3.json');
+    const r = spawnSync('node', [bin, parent, '--subagent', c1, '--subagent', c2, '--subagent', c3], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('Screenshot original contact page');
+    expect(r.stdout).toContain('agent_type:');
+    expect(r.stdout).toContain('ses_fixture_child_001');
+    expect(r.stdout).toContain('ses_fixture_child_002');
+    expect(r.stdout).toContain('ses_fixture_child_003');
+    expect(r.stderr).toBe('');
+  });
+
+  it('prints stderr hint when parent has task calls but no --subagent given', () => {
+    const parent = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-parent.json');
+    const r = spawnSync('node', [bin, parent], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/note: 3 subagent task call\(s\) detected/);
+  });
+
+  it('ignores unrelated --subagent files (sessionId not matching any task)', () => {
+    const parent = resolve(repoRoot, 'fixtures', 'opencode', 'subagent-parent.json');
+    const unrelated = resolve(repoRoot, 'fixtures', 'opencode', 'session-short.json');
+    const r = spawnSync('node', [bin, parent, '--subagent', unrelated], { encoding: 'utf8' });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/note: 3 subagent task call\(s\) detected/);
+  });
 });

@@ -22,7 +22,8 @@ export function summarizeFunctionCall(name: string, args: unknown): string {
     case 'Read':       return truncate(str(a.file_path));
     case 'Glob':
     case 'Grep':       return truncate(str(a.pattern));
-    case 'Agent':      return truncate(str(a.description));
+    case 'Agent':
+    case 'task':       return truncate(str(a.description));
     case 'TodoWrite': {
       const todos = Array.isArray(a.todos) ? a.todos : [];
       return `(${todos.length} todos)`;

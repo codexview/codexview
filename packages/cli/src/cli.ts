@@ -26,13 +26,15 @@ const VERSION = '0.3.1';
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 
 USAGE
-  codexview-md <input.jsonl>            # write to stdout
-  codexview-md <input.jsonl> -o out.md  # write to file
-  codexview-md -                        # read jsonl from stdin
+  codexview-md <input.jsonl>                          # write to stdout
+  codexview-md <input.jsonl> -o out.md                # write to file
+  codexview-md -                                      # read jsonl from stdin
+  codexview-md parent.json --subagent c1.json ...     # OpenCode subagent embed
 
 OPTIONS
   -o, --output <path>   Write to file instead of stdout
-  --format <name>       Force input format (rollout | codex-team | claude-code)
+  --format <name>       Force input format (rollout | codex-team | claude-code | opencode)
+  --subagent <path>     Embed child session export (repeatable; OpenCode only)
   -h, --help            Show this help
   -v, --version         Show version
 
@@ -47,6 +49,7 @@ interface Args {
   input: string | null;
   output: string | null;
   format: DetectedFormat | null;
+  subagents: string[];
   help: boolean;
   version: boolean;
 }
@@ -54,7 +57,7 @@ interface Args {
 class ArgError extends Error {}
 
 export function parseArgs(argv: string[]): Args {
-  const out: Args = { input: null, output: null, format: null, help: false, version: false };
+  const out: Args = { input: null, output: null, format: null, subagents: [], help: false, version: false };
   for (let i = 0; i < argv.length; i++) {
     const a = argv[i];
     if (a === '-h' || a === '--help') out.help = true;
@@ -67,10 +70,15 @@ export function parseArgs(argv: string[]): Args {
     else if (a === '--format') {
       const next = argv[++i];
       if (!next) throw new ArgError('--format requires a value');
-      if (!['rollout', 'codex-team', 'claude-code'].includes(next)) {
-        throw new ArgError('--format must be one of: rollout, codex-team, claude-code');
+      if (!['rollout', 'codex-team', 'claude-code', 'opencode'].includes(next)) {
+        throw new ArgError('--format must be one of: rollout, codex-team, claude-code, opencode');
       }
       out.format = next as DetectedFormat;
+    }
+    else if (a === '--subagent') {
+      const next = argv[++i];
+      if (!next) throw new ArgError('--subagent requires a path');
+      out.subagents.push(next);
     }
     else if (a.startsWith('-') && a !== '-') {
       throw new ArgError(`unknown flag: ${a}`);
@@ -127,11 +135,61 @@ export async function main(argv: string[]): Promise<void> {
   }
 
   const lines = parseInput(text);
-  const { format, events } = adapt(lines, args.format ? { format: args.format } : {});
+
+  const subagents: { sessionId: string; lines: RawLine[] }[] = [];
+  for (const p of args.subagents) {
+    let stext: string;
+    try {
+      stext = await readFile(p, 'utf8');
+    } catch (e: unknown) {
+      const msg = e instanceof Error ? e.message : String(e);
+      process.stderr.write(`error: failed to read --subagent ${p}: ${msg}\n`);
+      process.exit(2);
+    }
+    const parsed = parseInput(stext);
+    const root = parsed.find(
+      (l) => l && typeof l === 'object' && (l as Record<string, unknown>).info && typeof ((l as { info: { id?: unknown } }).info?.id) === 'string',
+    ) as { info: { id: string } } | undefined;
+    if (!root) {
+      process.stderr.write(`warning: --subagent ${p} missing info.id, skipping\n`);
+      continue;
+    }
+    subagents.push({ sessionId: root.info.id, lines: parsed });
+  }
+
+  const adaptOptions: Parameters<typeof adapt>[1] = { subagents };
+  if (args.format) adaptOptions.format = args.format;
+  const { format, events } = adapt(lines, adaptOptions);
 
   if (format === 'unknown') {
     process.stderr.write(`error: could not detect input format (use --format to override)\n`);
     process.exit(1);
+  }
+
+  if (format === 'opencode') {
+    const matchedIds = new Set(subagents.map((s) => s.sessionId));
+    let unmatchedTaskCount = 0;
+    for (const root of lines) {
+      const msgs = (root as { messages?: unknown[] })?.messages;
+      if (!Array.isArray(msgs)) continue;
+      for (const m of msgs) {
+        const parts = (m as { parts?: unknown[] })?.parts;
+        if (!Array.isArray(parts)) continue;
+        for (const p of parts) {
+          const pp = p as { type?: unknown; tool?: unknown; state?: { metadata?: { sessionId?: unknown } } };
+          if (pp.type === 'tool' && pp.tool === 'task') {
+            const sid = pp.state?.metadata?.sessionId;
+            if (typeof sid === 'string' && !matchedIds.has(sid)) unmatchedTaskCount++;
+          }
+        }
+      }
+    }
+    if (unmatchedTaskCount > 0) {
+      process.stderr.write(
+        `note: ${unmatchedTaskCount} subagent task call(s) detected in parent session.\n` +
+        `      Re-run with --subagent <child-export.json> per child to embed summaries.\n`,
+      );
+    }
   }
 
   const md = render(events);

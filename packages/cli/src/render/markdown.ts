@@ -7,12 +7,13 @@ import {
 interface TurnState {
   lastRole: 'user' | 'assistant' | 'reasoning' | null;
   lastWasToolCall: boolean;
+  lastToolCallName: string | null;
   status: { kind: 'failed' | 'aborted'; message: string } | null;
   buffer: string[];
 }
 
 const newTurn = (): TurnState => ({
-  lastRole: null, lastWasToolCall: false, status: null, buffer: [],
+  lastRole: null, lastWasToolCall: false, lastToolCallName: null, status: null, buffer: [],
 });
 
 const blockquote = (text: string): string =>
@@ -111,6 +112,7 @@ export function render(events: ChatStreamEvent[]): string {
       case 'function_call': {
         ensureTurnOpen();
         appendTool(turn, toolLine(e.name, summarizeFunctionCall(e.name, e.args)));
+        turn.lastToolCallName = e.name;
         break;
       }
 
@@ -144,7 +146,23 @@ export function render(events: ChatStreamEvent[]): string {
         break;
       }
 
-      case 'function_call_output':
+      case 'function_call_output': {
+        // Subagent embedding: when adapter has rewritten a `task` (OpenCode)
+        // or `Agent` (Claude Code) tool's output to a markdown summary
+        // (starts with `### `), inline it as its own block. The compact
+        // cli output otherwise drops tool outputs.
+        if (
+          (turn.lastToolCallName === 'task' || turn.lastToolCallName === 'Agent') &&
+          typeof e.output === 'string' &&
+          e.output.startsWith('### ')
+        ) {
+          ensureTurnOpen();
+          turn.buffer.push(e.output);
+          turn.lastWasToolCall = false;
+        }
+        turn.lastToolCallName = null;
+        break;
+      }
       case 'exec_command_end':
       case 'mcp_tool_call_output':
       case 'web_search_end':
