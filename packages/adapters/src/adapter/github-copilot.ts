@@ -83,7 +83,7 @@ export function adaptGithubCopilot(
         continue;
       }
       flushText();
-      // Tool / mcp / prepare events handled in Task 4–6.
+      handleToolItem(item as any, turnId, at, events);
     }
     flushText();
 
@@ -92,4 +92,43 @@ export function adaptGithubCopilot(
   }
 
   return { format: 'github-copilot', events };
+}
+
+function handleToolItem(
+  item: CopilotResponseItem,
+  turnId: string,
+  at: number,
+  events: ChatStreamEvent[],
+): void {
+  const k = (item as any).kind;
+  if (k === 'prepareToolInvocation' || k === 'mcpServersStarting') return; // drop
+  if (k !== 'toolInvocationSerialized') return; // unknown kind, drop quietly
+
+  const tool = item as CopilotToolInvocation;
+  const callId = tool.toolCallId;
+  const tsd = tool.toolSpecificData ?? {};
+  const tsdKind = (tsd as any).kind as string | undefined;
+
+  if (tsdKind === 'terminal') {
+    const cmd: string =
+      (tsd as any).commandLine?.original ??
+      (tsd as any).commandLine?.toolEdited ??
+      '';
+    const state = (tsd as any).terminalCommandState ?? {};
+    const out = (tsd as any).terminalCommandOutput ?? {};
+    events.push({ type: 'exec_command_begin', turnId, callId, command: cmd, at });
+    events.push({
+      type: 'exec_command_end',
+      turnId,
+      callId,
+      exit: typeof state.exitCode === 'number' ? state.exitCode : 0,
+      stdout: typeof out.text === 'string' ? out.text : '',
+      stderr: '',
+      durationMs: typeof state.duration === 'number' ? state.duration : 0,
+      at,
+    });
+    return;
+  }
+
+  // Other tool kinds in Task 5–6.
 }
