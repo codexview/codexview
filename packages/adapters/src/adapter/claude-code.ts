@@ -1,4 +1,4 @@
-import type { ChatStreamEvent, PatchFile, RawLine } from '../types.js';
+import type { ChatStreamEvent, PatchFile, RawLine, SearchResult } from '../types.js';
 
 const epoch = (iso: unknown): number => {
   if (typeof iso === 'number') return iso;
@@ -34,7 +34,7 @@ export interface AdaptClaudeCodeOptions {
 }
 
 type PendingEntry =
-  | { kind: 'exec' | 'todo' | 'mcp' | 'agent' | 'function' }
+  | { kind: 'exec' | 'todo' | 'mcp' | 'agent' | 'function' | 'web_search' }
   | { kind: 'patch'; files: PatchFile[] };
 
 const ccPrefixLines = (text: string, prefix: string): string => {
@@ -253,6 +253,30 @@ export function adaptClaudeCode(
           pending.delete(callId);
           continue;
         }
+        if (p?.kind === 'web_search') {
+          if (!isError) {
+            const match = text.match(/^Links:\s*(\[.*?\])\s*$/m);
+            if (match) {
+              try {
+                const links = JSON.parse(match[1] ?? '[]') as Array<{ title?: unknown; url?: unknown }>;
+                if (Array.isArray(links)) {
+                  const results: SearchResult[] = links
+                    .filter((l) => typeof l?.url === 'string' && typeof l?.title === 'string')
+                    .map((l) => ({ title: l.title as string, url: l.url as string }));
+                  out.push({ type: 'web_search_end', turnId: currentTurnId, callId, results, at });
+                  pending.delete(callId);
+                  continue;
+                }
+              } catch { /* fall through to function_call_output */ }
+            }
+          }
+          const evt: ChatStreamEvent = isError
+            ? { type: 'function_call_output', turnId: currentTurnId, callId, error: text, at }
+            : { type: 'function_call_output', turnId: currentTurnId, callId, output: text, at };
+          out.push(evt);
+          pending.delete(callId);
+          continue;
+        }
         if (p?.kind === 'mcp') {
           const evt: ChatStreamEvent = isError
             ? { type: 'mcp_tool_call_output', turnId: currentTurnId, callId, error: text, at }
@@ -407,6 +431,17 @@ export function adaptClaudeCode(
                 status: 'modified',
                 diff: ccMultiEditDiff(edits),
               }],
+            });
+            return;
+          }
+          if (name === 'WebSearch') {
+            pending.set(callId, { kind: 'web_search' });
+            out.push({
+              type: 'web_search_call',
+              turnId: currentTurnId as string,
+              callId,
+              query: String(input.query ?? ''),
+              at,
             });
             return;
           }

@@ -115,3 +115,78 @@ describe('adaptClaudeCode · subagents option', () => {
     expect(json).not.toContain('Tools used:');
   });
 });
+
+describe('adaptClaudeCode · WebSearch', () => {
+  const minimalWebSearchLines = (resultText: string, isError = false): RawLine[] => [
+    {
+      type: 'user',
+      uuid: 'u1',
+      sessionId: 's-ws',
+      timestamp: '2026-05-17T00:00:00Z',
+      message: { role: 'user', content: 'search for X' },
+    },
+    {
+      type: 'assistant',
+      uuid: 'a1',
+      sessionId: 's-ws',
+      timestamp: '2026-05-17T00:00:01Z',
+      message: {
+        role: 'assistant',
+        content: [
+          { type: 'tool_use', id: 'toolu_WS1', name: 'WebSearch', input: { query: 'react 19 migration' } },
+        ],
+      },
+    },
+    {
+      type: 'user',
+      uuid: 'u2',
+      sessionId: 's-ws',
+      timestamp: '2026-05-17T00:00:02Z',
+      message: {
+        role: 'user',
+        content: [
+          { type: 'tool_result', tool_use_id: 'toolu_WS1', is_error: isError, content: resultText },
+        ],
+      },
+    },
+  ];
+
+  it('emits web_search_call with the query', () => {
+    const out = adaptClaudeCode(minimalWebSearchLines('Links: []'));
+    const call = out.find((e) => e.type === 'web_search_call');
+    expect(call).toBeTruthy();
+    expect((call as { query: string }).query).toBe('react 19 migration');
+    expect((call as { callId: string }).callId).toBe('toolu_WS1');
+  });
+
+  it('parses Links: [...] from tool_result into web_search_end results', () => {
+    const result = 'Web search results for query: "react 19 migration"\n\nLinks: [{"title":"Migrating to React 19","url":"https://react.example/migration"},{"title":"React 19 release notes","url":"https://react.example/blog/19"}]\n\nSome summary text.';
+    const out = adaptClaudeCode(minimalWebSearchLines(result));
+    const end = out.find((e) => e.type === 'web_search_end') as { results: Array<{ title: string; url: string }> } | undefined;
+    expect(end).toBeTruthy();
+    expect(end!.results.length).toBe(2);
+    expect(end!.results[0]?.title).toBe('Migrating to React 19');
+    expect(end!.results[0]?.url).toBe('https://react.example/migration');
+    expect(out.some((e) => e.type === 'function_call_output')).toBe(false);
+  });
+
+  it('emits web_search_end with empty results when Links: []', () => {
+    const out = adaptClaudeCode(minimalWebSearchLines('Links: []'));
+    const end = out.find((e) => e.type === 'web_search_end') as { results: unknown[] } | undefined;
+    expect(end).toBeTruthy();
+    expect(end!.results.length).toBe(0);
+  });
+
+  it('falls back to function_call_output when Links: is malformed JSON', () => {
+    const out = adaptClaudeCode(minimalWebSearchLines('Links: [not json'));
+    expect(out.some((e) => e.type === 'web_search_end')).toBe(false);
+    expect(out.some((e) => e.type === 'function_call_output')).toBe(true);
+  });
+
+  it('falls back to function_call_output when tool_result is an error', () => {
+    const out = adaptClaudeCode(minimalWebSearchLines('rate limited', /* isError */ true));
+    expect(out.some((e) => e.type === 'web_search_end')).toBe(false);
+    const errOut = out.find((e) => e.type === 'function_call_output') as { error?: string } | undefined;
+    expect(errOut?.error).toBe('rate limited');
+  });
+});
