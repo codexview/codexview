@@ -1,12 +1,8 @@
 import type { ChatStreamEvent, DetectedFormat, RawLine } from '../types.js';
+import type { AdaptResult } from './index.js';
 
 export interface AdaptGithubCopilotOptions {
   patchMode?: 'function_call' | 'patch_apply_end';
-}
-
-export interface AdaptResult {
-  format: DetectedFormat;
-  events: ChatStreamEvent[];
 }
 
 interface CopilotSession {
@@ -61,7 +57,7 @@ export function adaptGithubCopilot(
     const at = req.timestamp;
 
     events.push({ type: 'turn_started', turnId, at });
-    events.push({ type: 'user_message', turnId, itemId: turnId, text: req.message.text ?? '', at });
+    events.push({ type: 'user_message', turnId, itemId: `${turnId}-user`, text: req.message.text ?? '', at });
 
     // Concatenate adjacent text response items into one agent_message segment.
     let textBuf = '';
