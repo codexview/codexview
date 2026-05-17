@@ -2,6 +2,39 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.0] — 2026-05-18
+
+### Added
+
+- **AgentWeb transcript adapter** (`adaptAgentWebTranscript`) for live
+  hosts that merge persisted `ChatMessage[]` with an in-flight
+  `StreamingState` (resolves [#1](https://github.com/codexview/codexview/issues/1)).
+  Unlike the JSONL adapters, this one takes a structural options object
+  (`{ sessionId, messages, streaming, now? }`) and returns
+  `{ events, status, error? }` — the extra `status` and `error` feed
+  directly into `<CodexTranscript status=…>`. Available as subpath
+  import `@codexview/adapters/agentweb-transcript`. Not auto-detected
+  by `adapt()` (it consumes live host state, not a log file).
+- Input types `AgentWebMessage`, `AgentWebToolCall`,
+  `AgentWebStreamingState`, `AgentWebTokenUsage`,
+  `AgentWebStreamStatus`, plus a duplicated `TranscriptStatus` so
+  adapters stays free of `@codexview/react`.
+
+### Notes
+
+- Tool mapping: `run_command` → `exec_command_begin` +
+  `exec_command_end`; everything else → `function_call` +
+  `function_call_output`. In-flight tools (`completed: false`) get
+  the begin event but not the end event, so the open call renders
+  with a running indicator until the next adapter call.
+- Token usage mapping: AgentWeb `{ input, cachedInput, output }` →
+  CodexView `{ inputTokens, cachedInputTokens, outputTokens }`. Usage
+  is aggregated across multiple assistant rows in one turn.
+- Stream lifecycle: `streaming.status` of `failed` → `turn_failed` +
+  `status: 'failed'` + `error.message`; `disconnected` / `gaveUp` →
+  `turn_aborted` + `status: 'stopped'`; `completed` → `turn_completed`;
+  `streaming` leaves the turn open and yields `status: 'working'`.
+
 ## [0.4.0] — 2026-05-17
 
 ### Added

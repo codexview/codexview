@@ -41,6 +41,47 @@ const events = adaptClaudeCode(lines);
 | `rollout`     | first line has `type: 'thread_started'`        | `~/.codex/sessions/.../rollout-*.jsonl`                            |
 | `codex-team`  | first line has `event` + `at`                  | `~/Projects/agentweb/.codex-team/runs/*/events.jsonl`              |
 
+## Live-host adapter: AgentWeb transcript
+
+Apps that store chat history in a database and stream new turns live (rather
+than reading a JSONL log) need to merge two sources into one `ChatStreamEvent`
+stream. `adaptAgentWebTranscript` does that bridge for hosts shaped like
+[AgentWeb](https://github.com/codexview/codexview/issues/1) — persisted
+`ChatMessage[]` plus an in-flight `StreamingState`.
+
+```ts
+import { adaptAgentWebTranscript } from '@codexview/adapters/agentweb-transcript';
+import { CodexTranscript } from '@codexview/react';
+
+const { events, status, error } = adaptAgentWebTranscript({
+  sessionId,           // → thread_started.threadId
+  messages,            // ChatMessage[] from your DB
+  streaming,           // StreamingState atom (or null)
+  // now,              // optional clock override for tests
+});
+
+<CodexTranscript events={events} status={status} />
+```
+
+Input shapes (`AgentWebMessage`, `AgentWebStreamingState`, `AgentWebToolCall`)
+are structural — adapters has no AgentWeb dependency. The adapter:
+
+- emits `thread_started` for `sessionId` and synthesizes `turn_started` /
+  `turn_completed` boundaries around each `turnId` group;
+- preserves the same `turnId` across user message → live partial assistant
+  text → final persisted assistant row so they render in one turn;
+- maps `run_command` tool calls to `exec_command_begin` + `exec_command_end`,
+  and everything else to `function_call` + `function_call_output`;
+- maps AgentWeb `{ input, cachedInput, output }` to CodexView `TokenUsage`;
+- surfaces `streaming.status = 'failed' | 'disconnected' | 'gaveUp'` as
+  `turn_failed` / `turn_aborted` events plus a `TranscriptStatus` (`working`,
+  `failed`, `stopped`, `completed`, `idle`) on the result.
+
+In-flight tool calls (`completed: false`) get their `_begin` event but no
+`_end` — the open call renders with a running indicator until the next adapter
+call sees the completed shape. Approval / reconnect / gave-up UI stays
+host-owned and renders next to `<CodexTranscript>`.
+
 ## adapt() options
 
 ```ts
