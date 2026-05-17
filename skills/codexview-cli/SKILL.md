@@ -1,16 +1,19 @@
 ---
 name: codexview-cli
-description: Read or compress an AI coding agent session jsonl (Codex CLI rollouts, AgentWeb codex-team logs, or Claude Code sessions) into compact plaintext markdown using the `codexview-md` CLI. Keeps conversation text and plaintext reasoning; drops tool outputs, diffs, encrypted reasoning, and subagent transcripts. Use this skill whenever the user wants to read, summarize, skim, peek into, or compress an agent jsonl log; mentions paths like `~/.codex/sessions/.../rollout-*.jsonl`, `~/.claude/projects/<repo>/<sessionId>.jsonl`, or `.codex-team/runs/*/events.jsonl`; wants to feed a past agent conversation to another LLM as compressed context; or is debugging by inspecting earlier runs. Also triggers on phrases like "turn this jsonl into readable text", "summarize this Claude Code session", "what did this rollout do", "看 session 内容", "压缩 jsonl 当上下文", "把这个 jsonl 转成 markdown", or any time the user pipes/cats a multi-megabyte agent jsonl file into the conversation.
+description: Read or compress an AI coding agent session log (Codex CLI, AgentWeb codex-team, Claude Code, or OpenCode) into compact plaintext markdown using the `codexview-md` CLI. Keeps conversation text, plaintext reasoning, and subagent summaries (Claude Code `Agent` inline; OpenCode `task` via `--subagent`); drops tool outputs, diffs, encrypted reasoning. Use whenever the user wants to read, summarize, or compress an agent session log; mentions paths like `~/.codex/sessions/.../rollout-*.jsonl`, `~/.claude/projects/<repo>/<sessionId>.jsonl`, `.codex-team/runs/*/events.jsonl`, or OpenCode at `~/.local/share/opencode/`; wants a past agent conversation as compressed context for another LLM; or is debugging earlier runs. Also triggers on "turn this jsonl into readable text", "summarize this Claude Code session", "export this OpenCode session", "看 session 内容", "压缩 jsonl 当上下文", "把这个 jsonl 转成 markdown", or any time the user pipes/cats a multi-megabyte agent session file into the conversation.
 ---
 
-# codexview-cli — render agent jsonl to compact markdown
+# codexview-cli — render agent session logs to compact markdown
 
-`codexview-md` is a one-shot CLI that converts an AI coding agent session log into plaintext markdown. The output is small (typically ~5% of the raw jsonl) and structured for both human skim-reading and feeding to another LLM as compressed context.
+`codexview-md` is a one-shot CLI that converts an AI coding agent session log into plaintext markdown. The output is small (typically ~5% of the raw input) and structured for both human skim-reading and feeding to another LLM as compressed context.
+
+Accepts both **line-delimited jsonl** (Codex CLI, codex-team, Claude Code) and **single-document JSON** (OpenCode exports) — auto-detected.
 
 ## When you should reach for this skill
 
-- The user references an agent session by file path (`~/.codex/sessions/...`, `~/.claude/projects/...`, `.codex-team/runs/...`) and wants to see what happened in it.
-- The user has a giant jsonl (often hundreds of KB to many MB) and any direct `Read` / `cat` would blow context.
+- The user references an agent session by file path (`~/.codex/sessions/...`, `~/.claude/projects/...`, `.codex-team/runs/...`, `~/.local/share/opencode/...`) and wants to see what happened in it.
+- The user pipes `opencode export <id>` output and wants it as markdown.
+- The user has a giant log (often hundreds of KB to many MB) and any direct `Read` / `cat` would blow context.
 - The user wants a session summary to paste into another conversation, into a doc, or to compare two runs.
 - The user is debugging "what did the agent do at step N" and needs to read the turn-by-turn flow.
 
@@ -50,13 +53,31 @@ cat <jsonl> | npx -y @codexview/cli@latest -
 npx -y @codexview/cli@latest <jsonl> --format rollout
 ```
 
-Valid `--format` values: `rollout` (Codex CLI), `codex-team` (AgentWeb status log), `claude-code` (Claude Code session).
+Valid `--format` values: `rollout` (Codex CLI), `codex-team` (AgentWeb status log), `claude-code` (Claude Code session), `opencode` (OpenCode export).
+
+**OpenCode (live, no saved file):**
+```bash
+opencode export <sessionID> | npx -y @codexview/cli@latest -
+```
+
+**Embed OpenCode subagents** (parent's `task` tool invocations) by exporting each child and passing `--subagent` (repeatable):
+```bash
+opencode export ses_parent > /tmp/parent.json
+opencode export ses_child_a > /tmp/child-a.json
+opencode export ses_child_b > /tmp/child-b.json
+npx -y @codexview/cli@latest /tmp/parent.json \
+  --subagent /tmp/child-a.json \
+  --subagent /tmp/child-b.json
+```
+
+Pairing key: child `info.id` must equal parent's `task` `state.metadata.sessionId`. Mismatched / missing children print a stderr note and the `task` line falls back to a one-line placeholder.
 
 ### Other flags
 
 | Flag | Effect |
 |------|--------|
 | `-o, --output <path>` | Write to file instead of stdout |
+| `--subagent <path>` | (repeatable) embed an OpenCode subagent child export into the parent's `task` line |
 | `-h, --help` | Print usage |
 | `-v, --version` | Print version |
 
@@ -110,19 +131,21 @@ Rules:
 
 - Tool outputs: stdout, stderr, exit codes, file diffs, MCP results, function call outputs.
 - Encrypted reasoning (Codex Fernet blobs, Claude Code empty `thinking` blocks).
-- Claude Code subagent transcripts — the parent's `Agent` tool call appears once as a single 🔧 line; no nested summary.
 - Token usage, timestamps, durations, raw / unknown events.
 - Claude Code system noise: `attachment`, `system`, `last-prompt`, `queue-operation` lines.
 
-If the user needs any of those, the CLI is the wrong tool — recommend `@codexview/react`.
+**Kept (inlined) since cli 0.4.0:** subagent summaries — Claude Code `Agent` tool outputs appear automatically when present in the parent jsonl; OpenCode `task` tool outputs appear when the matching child export is passed via `--subagent`. Both render as `### {description}` blocks under the parent's tool line.
 
-## Where to find jsonl files on a user's machine
+If the user needs raw tool output (stdout, diffs, MCP results), the CLI is the wrong tool — recommend `@codexview/react`.
+
+## Where to find session files on a user's machine
 
 - **Codex CLI rollouts:** `~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl`
 - **Claude Code sessions:** `~/.claude/projects/<encoded-cwd>/<sessionId>.jsonl` (the directory is the project's working-directory path with `/` replaced by `-`)
 - **AgentWeb codex-team:** `<project>/.codex-team/runs/<runId>/events.jsonl`
+- **OpenCode:** real data lives at `~/.local/share/opencode/` (the `~/.opencode/` dir is the install, not the data). List sessions with `opencode session list --format json` (project-scoped to cwd; `cd /tmp` first for cross-project listing); export one with `opencode export <sessionID>` (single JSON document). Subagent children share the same store; pair via `parent.task.state.metadata.sessionId == child.info.id`.
 
-When the user gestures vaguely at "my last session" without a path, `ls -t ~/.claude/projects/<...>/` to find the most recently modified file is usually the right move.
+When the user gestures vaguely at "my last session" without a path, `ls -t ~/.claude/projects/<...>/` to find the most recently modified file is usually the right move (Claude Code). For OpenCode, `opencode session list --format json | jq '.[0]'` from `/tmp` gets the latest across all projects.
 
 ## Worked examples
 
@@ -144,6 +167,15 @@ F=~/.codex/sessions/2026/05/16/rollout-<...>.jsonl
 npx -y @codexview/cli@latest "$F" -o /tmp/yesterday.md
 # then attach /tmp/yesterday.md or paste its contents
 ```
+
+### "Summarize my last OpenCode session"
+
+```bash
+LATEST_ID=$(cd /tmp && opencode session list --format json | jq -r '.[0].id')
+opencode export "$LATEST_ID" | npx -y @codexview/cli@latest - -o /tmp/opencode.md
+```
+
+If the session dispatched subagents (parent has `task` tool calls), the cli will print a stderr hint like `note: 3 subagent task call(s) detected. Re-run with --subagent ...`. Export each child and re-run with `--subagent` to embed them.
 
 ### "What tool calls did this run make?"
 

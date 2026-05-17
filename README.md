@@ -1,14 +1,14 @@
 # codexview
 
-A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, AgentWeb codex-team) as either React UI or compact plaintext markdown.
+A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, OpenCode, AgentWeb codex-team) as either React UI or compact plaintext markdown. Subagent transcripts (Claude Code `Agent`, OpenCode `task`) can be embedded inline.
 
 ## Packages
 
 | Package | Purpose | npm |
 |---|---|---|
 | [`@codexview/react`](packages/react) | React components that render a `ChatStreamEvent[]` stream into a chat transcript UI | [![npm](https://img.shields.io/npm/v/@codexview/react)](https://www.npmjs.com/package/@codexview/react) |
-| [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert raw JSONL from Codex CLI / codex-team / Claude Code into `ChatStreamEvent[]`. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
-| [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
+| [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert raw JSONL/JSON from Codex CLI / codex-team / Claude Code / OpenCode into `ChatStreamEvent[]`. Optional subagent embedding. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
+| [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL/JSON log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
 
 ## Typical use
 
@@ -30,7 +30,11 @@ return <CodexTranscript events={events} />;
 Or invoke the cli for one-shot transcript compression:
 
 ```bash
+# Claude Code
 npx -y @codexview/cli ~/.claude/projects/<repo>/<sessionId>.jsonl > transcript.md
+
+# OpenCode (single-document JSON export)
+opencode export ses_… | npx -y @codexview/cli - > transcript.md
 ```
 
 ## Development
@@ -39,7 +43,7 @@ npx -y @codexview/cli ~/.claude/projects/<repo>/<sessionId>.jsonl > transcript.m
 pnpm install
 pnpm -r build
 pnpm -r test
-pnpm playground    # interactive viewer scanning ~/.codex, ~/.claude, ~/Projects/agentweb
+pnpm playground    # interactive viewer scanning ~/.codex, ~/.claude, ~/.local/share/opencode, ~/Projects/agentweb
 ```
 
 The repo is a pnpm workspace under `packages/*`.
