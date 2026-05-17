@@ -82,6 +82,42 @@ function exportOpencodeSession(sessionId) {
   }
 }
 
+function loadOpenCodeSubagents(parentRoot) {
+  // Walk parent.messages[].parts[] for {type:'tool', tool:'task'} and
+  // collect each state.metadata.sessionId. Then export each child via the
+  // opencode binary (reusing the fd-based stdout-redirect). Failed
+  // exports are logged and skipped — never block the parent render.
+  const childIds = [];
+  const msgs = Array.isArray(parentRoot?.messages) ? parentRoot.messages : [];
+  for (const m of msgs) {
+    const parts = Array.isArray(m?.parts) ? m.parts : [];
+    for (const p of parts) {
+      if (p?.type === 'tool' && p?.tool === 'task') {
+        const sid = p?.state?.metadata?.sessionId;
+        if (typeof sid === 'string' && sid.startsWith('ses_') && !childIds.includes(sid)) {
+          childIds.push(sid);
+        }
+      }
+    }
+  }
+  const out = [];
+  for (const sid of childIds) {
+    let text;
+    try { text = exportOpencodeSession(sid); }
+    catch (err) {
+      console.warn(`[codexview] failed to export subagent ${sid}: ${err.message || err}`);
+      continue;
+    }
+    try {
+      const childRoot = JSON.parse(text);
+      out.push({ sessionId: sid, lines: [childRoot] });
+    } catch (err) {
+      console.warn(`[codexview] failed to parse subagent export ${sid}: ${err.message || err}`);
+    }
+  }
+  return out;
+}
+
 let CACHE = { stamp: 0, files: [] };
 const CACHE_TTL_MS = 30_000;
 
@@ -456,7 +492,8 @@ export function apiPlugin() {
             }
 
             // OpenCode sessions: shell out to `opencode export <sessionID>` instead
-            // of reading a file from disk.
+            // of reading a file from disk. Then auto-discover and export any
+            // subagent children so the adapter can inline their summaries.
             if (file.startsWith(OPENCODE_PREFIX)) {
               const sessionId = file.slice(OPENCODE_PREFIX.length);
               let text;
@@ -465,7 +502,8 @@ export function apiPlugin() {
               const root = JSON.parse(text);
               const lines = [root];
               if (kind === 'raw') return sendJson(res, 200, { file, count: lines.length, lines });
-              const { format, events } = adapt(lines);
+              const subagents = loadOpenCodeSubagents(root);
+              const { format, events } = adapt(lines, { subagents });
               return sendJson(res, 200, { file, format, count: events.length, events });
             }
 
