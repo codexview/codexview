@@ -69,21 +69,39 @@ Returns `null` when `status === 'idle'`.
 <ReasoningBlock item={reasoningItem} defaultOpen?={boolean} smoothStream?={boolean} />
 ```
 
+### `<ToolGroup>` _(since 0.3.0)_
+
+```tsx
+<ToolGroup items={consecutiveToolItems} defaultOpen?={boolean}>
+  {/* pre-rendered children, one per item, in order */}
+</ToolGroup>
+```
+
+`<CodexTranscript>` wires this in automatically: each turn's items are partitioned via [`partitionForGrouping`](#partitionforgroupingitems--slice) and consecutive `tool_call` / `exec` / `search` / `patch` / `todo_list` / `raw` items are wrapped in one `<ToolGroup>`. Messages, reasoning, and errors act as break points (errors stay prominent).
+
+| Prop | Default | Notes |
+|------|---------|-------|
+| `items` | required | The grouped items, used to compute the summary title. |
+| `children` | required | Pre-rendered child blocks, one per `items[i]`, in order. |
+| `defaultOpen` | `false` | Group starts collapsed. Always opens while any contained item is `pending` / `running`, regardless of this prop. |
+
+Title is auto-generated from the item-kind counts, e.g. `更新待办、执行 9 个命令、调用 4 个工具`. Override by passing your own component via `<CodexTranscript components={{ ToolGroup: MyGroup }} />`.
+
 ### `<ToolCallBlock>`
 
 ```tsx
-<ToolCallBlock item={toolCallItem} />
+<ToolCallBlock item={toolCallItem} defaultOpen?={boolean} />
 ```
 
-Renders args inline; result inline if small, collapsed in `<details>` if long (`>500` chars, `>4` lines, or `>3` JSON depth).
+Renders args inline; result inline if small, collapsed in `<details>` if long (`>500` chars, `>4` lines, or `>3` JSON depth). Defaults to collapsed; auto-opens while `pending` / `running`. Header is single-line ellipsized when closed (since 0.2.3).
 
 ### `<ExecBlock>`
 
 ```tsx
-<ExecBlock item={execItem} />
+<ExecBlock item={execItem} defaultOpen?={boolean} />
 ```
 
-Shimmer bar shown while `status === 'running'`. stdout/stderr collapsed beyond size threshold.
+Shimmer bar shown while `status === 'running'`. stdout/stderr collapsed beyond size threshold. Closed header is single-line ellipsized — long absolute paths in `$ ...` commands no longer wrap; opening restores wrap (since 0.2.3).
 
 ### `<SearchBlock>`
 
@@ -145,12 +163,32 @@ Pure reducer. Use directly to drive your own state container.
 
 Returns `'idle' | 'working' | 'completed' | 'stopped' | 'failed'`.
 
+### `partitionForGrouping(items) => Slice[]` _(since 0.3.0)_
+
+Splits a flat `ItemView[]` into slices for `<ToolGroup>` rendering.
+
+```ts
+type Slice =
+  | { kind: 'single'; item: ItemView }       // render as before
+  | { kind: 'group';  items: ItemView[] };    // wrap children in <ToolGroup>
+```
+
+Consecutive groupable kinds (`tool_call`, `exec`, `search`, `patch`, `todo_list`, `raw`) collapse into one `group` slice; non-groupable kinds (`user_message`, `assistant_text`, `reasoning`, `error`) become `single` slices and act as break points.
+
+### `summarizeToolGroup(items) => string` _(since 0.3.0)_
+
+Returns the human-readable Chinese summary used as a `<ToolGroup>` title — e.g. `更新待办、执行 2 个命令、修改 1 个文件`. Each kind appears once with its count; order is fixed for stable phrasing.
+
+### `isGroupableKind(kind) => boolean` _(since 0.3.0)_
+
+Returns `true` for the six kinds that get aggregated into a `<ToolGroup>`.
+
 ### `EMPTY_MODEL`
 
 Frozen initial `TranscriptModel`. Always safe to start reducing from this.
 
 ## Types
 
-`ChatStreamEvent`, `ChatStreamEventType`, `TokenUsage`, `SearchResult`, `PatchFile`, `TranscriptModel`, `TurnView`, `ItemView`, `ItemKind`, `ItemStatus`, `TranscriptStatus`, `CodexTranscriptComponents`, `UseCodexTranscriptOptions`, `UseSmoothStreamOptions`, plus per-component prop types (`StatusBarProps`, etc.).
+`ChatStreamEvent`, `ChatStreamEventType`, `TokenUsage`, `SearchResult`, `PatchFile`, `TranscriptModel`, `TurnView`, `ItemView`, `ItemKind`, `ItemStatus`, `TranscriptStatus`, `CodexTranscriptComponents`, `UseCodexTranscriptOptions`, `UseSmoothStreamOptions`, `ToolGroupProps`, `ToolGroupSlice`, plus per-component prop types (`StatusBarProps`, etc.).
 
 See [docs/events.md](events.md) for the full `ChatStreamEvent` shape.

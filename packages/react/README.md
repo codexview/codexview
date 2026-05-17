@@ -50,9 +50,15 @@ CodexView itself only renders `ChatStreamEvent[]`. Hosts convert their raw logs 
 
 Session-level status (`idle | working | completed | stopped | failed`) is inferred automatically. Override via the `status` prop (e.g. when SSE drops, set `status="stopped"`).
 
+## Reading layout
+
+Consecutive tool-like items inside a turn (`tool_call`, `exec`, `search`, `patch`, `todo_list`) are wrapped automatically in a single collapsible `<ToolGroup>` titled by aggregated counts — e.g. `更新待办、执行 9 个命令、调用 4 个工具`. The transcript reads as narrative: text, a one-line summary of operations in between, more text. Messages, reasoning, and errors stay rendered standalone. See [docs/api.md#toolgroup](docs/api.md) for the API.
+
+The default light palette is a "warm paper" look (ivory page, deep ink-brown text, peach user bubble, warm-ink code blocks). To restore the previous cool palette, drop in the override snippet in [docs/styling.md](docs/styling.md#restoring-the-pre-021-cool-palette).
+
 ## Customizing
 
-- Swap any block via `components` prop: `<CodexTranscript components={{ ToolCallBlock: MyToolUI }} />`
+- Swap any block via `components` prop: `<CodexTranscript components={{ ToolCallBlock: MyToolUI, ToolGroup: MyGroupUI }} />`
 - Theme via CSS variables — see [docs/styling.md](docs/styling.md) for the full list.
 
 ## More docs

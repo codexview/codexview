@@ -2,6 +2,51 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.1] — 2026-05-18
+
+### Documentation
+
+- `docs/styling.md` token defaults updated to match the new warm-paper light palette (`#faf6ef` / `#3a342c` / `#e8c5b3` / `#2c2620`).
+- `docs/api.md` adds the `<ToolGroup>` reference and the new public exports (`partitionForGrouping`, `summarizeToolGroup`, `isGroupableKind`, `ToolGroupProps`, `ToolGroupSlice`).
+- README highlights the turn-level tool aggregation behavior introduced in 0.3.0.
+
+### Notes
+
+- No code changes; doc-only release synchronized with the 0.3.0 binary.
+
+## [0.3.0] — 2026-05-18
+
+### Added
+
+- New `<ToolGroup>` component aggregates consecutive tool-like items inside a turn (`tool_call`, `exec`, `search`, `patch`, `todo_list`, `raw`) into a single collapsible block. Title is computed from the item-kind counts in Chinese (e.g. `更新待办、执行 9 个命令、调用 4 个工具`).
+- Items that act as natural break points — `user_message`, `assistant_text`, `reasoning`, `error` — remain rendered standalone. Errors stay prominent.
+- Each item inside a group keeps its own `<details>`, so a reader can drill into one call without expanding the whole turn. Groups auto-expand while any contained item is `pending` / `running`.
+- Exports: `ToolGroup`, `ToolGroupProps`, `ToolGroupSlice`, `partitionForGrouping`, `summarizeToolGroup`, `isGroupableKind`.
+- `ToolGroup` added to `CodexTranscriptComponents` — consumers can replace it.
+
+### Changed
+
+- `CodexTranscript` now partitions each turn's items via `partitionForGrouping()` before rendering. Single (non-tool) items render exactly as before; consecutive tool items render inside a `<ToolGroup>`.
+
+## [0.2.3] — 2026-05-18
+
+### Changed
+
+- Collapsed `<ExecBlock>` and `<ToolCallBlock>` header rows now constrain their command / title text to one line with `text-overflow: ellipsis`. Long absolute paths in shell commands and long mcp-style tool names no longer let "collapsed" rows wrap into two or three lines. Opening the block restores wrap so the full text is visible.
+
+## [0.2.2] — 2026-05-18
+
+### Changed
+
+- Softer user bubble: `--cv-bg-user-bubble` lightened from terracotta `#b8694a` to peach `#e8c5b3`, with `MessageBubble` switching user-bubble text to `--cv-text` (deep ink brown) for an "ink on warm paper" look. Contrast remains ≥ 7.5:1 (AAA).
+- Collapsed-state visuals for `<ToolCallBlock>`, `<ExecBlock>`, `<TodoListBlock>`, `<RawEventBlock>` are now transparent — only a status-colored left-border and title row are visible. Expanding restores the filled panel (border + raised background). Consecutive tool calls now read as a clean outline rather than stacked color blocks.
+
+## [0.2.1] — 2026-05-18
+
+### Changed
+
+- New default light palette ("warm paper"): ivory page background, deep ink-brown text, terracotta user-bubble accent, sage / vermillion status colors, warm-ink (not cold-black) code blocks. All defaults driven via existing `--cv-*` tokens — no component changes, no new token names. Consumers who relied on the exact previous defaults (`#ffffff` / `#1f2328` / `#2f6feb` / `#0d1117`) can pin them back with a `<style>` block.
+
 ## [0.2.0] — 2026-05-17
 
 ### Changed
