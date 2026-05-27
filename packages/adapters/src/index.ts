@@ -1,4 +1,6 @@
 export { adapt, detectFormat, type AdaptResult, type AdaptOptions } from './adapter/index.js';
+export { classifyLine, formatHistogram } from './adapter/detect.js';
+export { diagnose, type DiagnoseInput } from './adapter/diagnose.js';
 export { adaptRollout } from './adapter/rollout.js';
 export { adaptCodexTeam } from './adapter/codex-team.js';
 export {
@@ -27,10 +29,12 @@ export {
   type AgentWebStreamStatus,
   type TranscriptStatus,
 } from './adapter/agentweb-transcript.js';
-export { parseJsonl } from './parse.js';
+export { parseJsonl, parseJsonlWithStats, type ParseStats } from './parse.js';
 export type {
   ChatStreamEvent,
   DetectedFormat,
+  Diagnostic,
+  DiagnosticCode,
   RawLine,
   TokenUsage,
   SearchResult,

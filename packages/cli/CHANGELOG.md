@@ -2,6 +2,33 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-05-28
+
+### Added
+
+- **Diagnostics on stderr** so silent data loss is no longer silent. The
+  CLI now warns (while still exiting `0` and emitting the same markdown to
+  stdout) when:
+  - malformed/truncated lines were skipped —
+    `warning: skipped N of M line(s) that were not valid JSON objects`;
+  - the input mixes formats and only the first-detected one was rendered —
+    `warning: input mixes 2 formats (claude-code: 12, rollout: 2); only
+    "rollout" was rendered, other lines were dropped`;
+  - a format was detected but produced no message content —
+    `warning: format "claude-code" was detected but produced no message
+    content`.
+
+### Changed
+
+- Runtime dep bumped to `@codexview/adapters@^0.6.0` (adds the
+  `diagnose` / `parseJsonlWithStats` exports the warnings are built on).
+
+### Notes
+
+- Clean single-format sessions stay completely silent on stderr.
+- Exit codes are unchanged; warnings go to stderr so piped stdout output
+  is unaffected.
+
 ## [0.5.0] — 2026-05-17
 
 ### Added

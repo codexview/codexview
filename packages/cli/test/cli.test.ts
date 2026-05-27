@@ -111,9 +111,48 @@ describe('cli smoke', () => {
     expect(r.stdout).toContain('## Assistant');
   });
 
-  it('accepts --format github-copilot explicitly', () => {
+  it('accepts --format github-copilot explicitly and flags an empty session', () => {
     const gcFixture = resolve(repoRoot, 'fixtures', 'github-copilot', 'empty-session.json');
     const r = spawnSync('node', [bin, gcFixture, '--format', 'github-copilot'], { encoding: 'utf8' });
     expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/no message content/);
+  });
+});
+
+describe('cli diagnostics', () => {
+  const ccText = readFileSync(fixture, 'utf8');
+  const rolloutText = readFileSync(resolve(repoRoot, 'packages', 'cli', 'test', 'rollout-sample.jsonl'), 'utf8');
+
+  it('stays silent on stderr for a clean single-format session', () => {
+    const r = spawnSync('node', [bin, '-'], { encoding: 'utf8', input: ccText });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toBe('');
+  });
+
+  it('warns about skipped malformed lines but still renders the rest', () => {
+    const ccLines = ccText.split('\n').filter(Boolean);
+    const corrupted = [ccLines[0], '{ this is not json', ...ccLines.slice(1)].join('\n');
+    const r = spawnSync('node', [bin, '-'], { encoding: 'utf8', input: corrupted });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/skipped 1 of/);
+    expect(r.stdout).toContain('# Session ');
+  });
+
+  it('warns when an input mixes two formats and only one was rendered', () => {
+    const mixed = rolloutText.trimEnd() + '\n' + ccText;
+    const r = spawnSync('node', [bin, '-'], { encoding: 'utf8', input: mixed });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/mixes 2 formats/);
+    expect(r.stderr).toContain('rollout');
+    expect(r.stderr).toContain('claude-code');
+  });
+
+  it('warns when a recognized format produced no message content', () => {
+    const r = spawnSync('node', [bin, '-'], {
+      encoding: 'utf8',
+      input: '{"type":"summary","sessionId":"abc-123","timestamp":"2026-05-17T00:00:00Z"}\n',
+    });
+    expect(r.status).toBe(0);
+    expect(r.stderr).toMatch(/no message content/);
   });
 });

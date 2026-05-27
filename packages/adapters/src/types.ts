@@ -48,6 +48,19 @@ export type ChatStreamEventType = ChatStreamEvent['type'];
 
 export type DetectedFormat = 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'unknown';
 
+export type DiagnosticCode =
+  | 'malformed-lines'
+  | 'mixed-format'
+  | 'empty-result'
+  | 'empty-input';
+
+/** A non-fatal observation about possible data loss during parse/detect/adapt. */
+export interface Diagnostic {
+  level: 'warning' | 'info';
+  code: DiagnosticCode;
+  message: string;
+}
+
 export interface RawLine {
   [key: string]: unknown;
 }

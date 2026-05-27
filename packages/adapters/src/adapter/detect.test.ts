@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { detectFormat } from './detect.js';
+import { detectFormat, classifyLine, formatHistogram } from './detect.js';
 
 describe('detectFormat', () => {
   it('detects claude-code via sessionId', () => {
@@ -45,5 +45,39 @@ describe('detectFormat — github-copilot', () => {
   it('does not detect a Continue.dev-shaped JSON', () => {
     const continueLike = { version: 3, sessionId: 'y', requests: [], responderUsername: 'Continue' };
     expect(detectFormat([continueLike])).toBe('unknown');
+  });
+});
+
+describe('classifyLine', () => {
+  it('classifies a claude-code line', () => {
+    expect(classifyLine({ type: 'user', sessionId: 's1', message: { content: 'hi' } })).toBe('claude-code');
+  });
+  it('classifies a rollout line', () => {
+    expect(classifyLine({ type: 'session_meta', payload: { id: 'x' }, timestamp: '2026' })).toBe('rollout');
+  });
+  it('classifies a codex-team line', () => {
+    expect(classifyLine({ event: 'updated', at: '2026', status: 'running', payload: {} })).toBe('codex-team');
+  });
+  it('classifies an unrecognized line as unknown', () => {
+    expect(classifyLine({ type: 'file-history-snapshot' })).toBe('unknown');
+  });
+});
+
+describe('formatHistogram', () => {
+  it('counts a file that mixes rollout and claude-code lines', () => {
+    const hist = formatHistogram([
+      { type: 'session_meta', payload: {}, timestamp: 'x' },
+      { type: 'event_msg', payload: {}, timestamp: 'x' },
+      { type: 'user', sessionId: 's1', message: { content: 'hi' } },
+    ]);
+    expect(hist).toEqual({ rollout: 2, 'claude-code': 1 });
+  });
+  it('counts unrecognized lines under unknown without inventing a second known format', () => {
+    const hist = formatHistogram([
+      { type: 'user', sessionId: 's1' },
+      { type: 'assistant', sessionId: 's1' },
+      { type: 'file-history-snapshot' },
+    ]);
+    expect(hist).toEqual({ 'claude-code': 2, unknown: 1 });
   });
 });

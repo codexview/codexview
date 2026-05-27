@@ -2,6 +2,32 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.0] — 2026-05-28
+
+### Added
+
+- **Diagnostics primitives** for detecting silent data loss when adapting
+  real-world (corrupted, truncated, or concatenated) logs:
+  - `parseJsonlWithStats(text)` returns `{ lines, stats }` where
+    `stats: ParseStats` reports `total` / `parsed` / `malformed` line
+    counts. `parseJsonl` is now a thin wrapper over it (unchanged
+    signature and behaviour).
+  - `classifyLine(line)` exposes the per-line format guess that
+    `detectFormat` already used internally; `formatHistogram(lines)`
+    returns per-format line counts (including `unknown`).
+  - `diagnose({ parseStats, lines, format, events })` returns a
+    `Diagnostic[]` describing malformed-line skips, mixed-format inputs
+    (where only the first-detected format was rendered and the rest
+    dropped), and recognized-but-empty results. Returns `[]` for a clean
+    single-format session.
+  - New exported types: `ParseStats`, `Diagnostic`, `DiagnosticCode`,
+    `DiagnoseInput`.
+
+### Notes
+
+- Purely additive — no existing export changed shape, and adapter output
+  is byte-for-byte identical.
+
 ## [0.5.0] — 2026-05-18
 
 ### Added

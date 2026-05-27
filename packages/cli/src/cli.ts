@@ -1,5 +1,13 @@
 import { readFile, writeFile } from 'node:fs/promises';
-import { adapt, parseJsonl, type DetectedFormat, type RawLine } from '@codexview/adapters';
+import {
+  adapt,
+  diagnose,
+  parseJsonl,
+  parseJsonlWithStats,
+  type DetectedFormat,
+  type ParseStats,
+  type RawLine,
+} from '@codexview/adapters';
 import { render } from './render/markdown.js';
 
 // parseJsonl handles newline-delimited JSON. OpenCode session exports are a
@@ -9,19 +17,27 @@ import { render } from './render/markdown.js';
 // first would mis-handle pretty-printed multi-line JSON whose internal lines
 // occasionally happen to be valid JSON objects on their own — e.g. compact
 // inline tool-result objects.)
-function parseInput(text: string): RawLine[] {
+function parseInputWithStats(text: string): { lines: RawLine[]; stats: ParseStats } {
   const trimmed = text.trim();
   if (trimmed.startsWith('{') || trimmed.startsWith('[')) {
     try {
       const parsed = JSON.parse(trimmed);
-      if (Array.isArray(parsed)) return parsed as RawLine[];
-      if (parsed && typeof parsed === 'object') return [parsed as RawLine];
+      const lines = Array.isArray(parsed)
+        ? (parsed as RawLine[])
+        : parsed && typeof parsed === 'object'
+          ? [parsed as RawLine]
+          : null;
+      if (lines) return { lines, stats: { total: lines.length, parsed: lines.length, malformed: 0 } };
     } catch { /* not a single JSON document; fall through to jsonl */ }
   }
-  return parseJsonl(text);
+  return parseJsonlWithStats(text);
 }
 
-const VERSION = '0.5.0';
+function parseInput(text: string): RawLine[] {
+  return parseInputWithStats(text).lines;
+}
+
+const VERSION = '0.6.0';
 
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 
@@ -43,6 +59,11 @@ EXIT CODES
   1  unrecognized format / parse failure
   2  file I/O error
   3  argument error
+
+DIAGNOSTICS
+  Non-fatal warnings print to stderr (exit stays 0): skipped malformed
+  lines, mixed-format inputs where only one format was rendered, and
+  formats that produced no message content.
 `;
 
 interface Args {
@@ -134,7 +155,7 @@ export async function main(argv: string[]): Promise<void> {
     process.exit(2);
   }
 
-  const lines = parseInput(text);
+  const { lines, stats } = parseInputWithStats(text);
 
   const subagents: { sessionId: string; lines: RawLine[] }[] = [];
   for (const p of args.subagents) {
@@ -190,6 +211,10 @@ export async function main(argv: string[]): Promise<void> {
         `      Re-run with --subagent <child-export.json> per child to embed summaries.\n`,
       );
     }
+  }
+
+  for (const d of diagnose({ parseStats: stats, lines, format, events })) {
+    process.stderr.write(`${d.level === 'warning' ? 'warning' : 'note'}: ${d.message}\n`);
   }
 
   const md = render(events);
