@@ -1,6 +1,6 @@
 {
   "name": "@codexview/adapters",
-  "version": "0.6.0",
+  "version": "0.6.1",
   "description": "Stateless adapters that convert AI coding agent transcript logs (Codex CLI rollouts, AgentWeb codex-team status, Claude Code main sessions, OpenCode, GitHub Copilot, AgentWeb persisted + live transcripts) into the CodexView ChatStreamEvent schema. Zero runtime dependencies, ESM only.",
   "keywords": [
     "codexview",

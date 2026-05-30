@@ -1,6 +1,6 @@
 import type { ChatStreamEvent, DetectedFormat, RawLine } from '../types.js';
 import { detectFormat } from './detect.js';
-import { adaptRollout } from './rollout.js';
+import { adaptRollout, type AdaptRolloutOptions } from './rollout.js';
 import { adaptCodexTeam } from './codex-team.js';
 import { adaptClaudeCode, type AdaptClaudeCodeOptions, type SubagentInput } from './claude-code.js';
 import { adaptOpenCode, type AdaptOpenCodeOptions, type OpenCodeSubagentInput } from './opencode.js';
@@ -26,12 +26,17 @@ export interface AdaptOptions {
   format?: DetectedFormat;
   patchMode?: 'function_call' | 'patch_apply_end';
   subagents?: SubagentInput[] | OpenCodeSubagentInput[];
+  /**
+   * Rollout-only. Set false for live tailing so a file without task_complete
+   * leaves the current turn open.
+   */
+  closeOpenTurn?: AdaptRolloutOptions['closeOpenTurn'];
 }
 
 export function adapt(lines: RawLine[], options: AdaptOptions = {}): AdaptResult {
   const format = options.format ?? detectFormat(lines);
   switch (format) {
-    case 'rollout':     return { format, events: adaptRollout(lines) };
+    case 'rollout':     return { format, events: adaptRollout(lines, options as AdaptRolloutOptions) };
     case 'codex-team':  return { format, events: adaptCodexTeam(lines) };
     case 'claude-code': return { format, events: adaptClaudeCode(lines, options as AdaptClaudeCodeOptions) };
     case 'opencode':        return { format, events: adaptOpenCode(lines, options as AdaptOpenCodeOptions) };

@@ -89,6 +89,7 @@ adapt(lines, {
   format?: 'rollout' | 'codex-team' | 'claude-code',  // skip detection
   patchMode?: 'function_call' | 'patch_apply_end',    // Claude Code only
   subagents?: SubagentInput[],                        // Claude Code only
+  closeOpenTurn?: boolean,                            // Codex rollout only
 });
 ```
 
@@ -97,6 +98,7 @@ adapt(lines, {
   - `'function_call'` (default) — emit as opaque `function_call` entries. Matches the cli's compact output.
   - `'patch_apply_end'` — defer until the matching `tool_result`, then emit a `patch_apply_end` with a synthesized `PatchFile[]` containing diff text. Use when downstream rendering (e.g. `<PatchBlock>`) needs the diff.
 - **`subagents`** — list of Claude Code subagent transcripts associated with this session. When supplied, each `Agent` tool's `tool_result` is rewritten to embed a Markdown summary of the matching subagent (description, agent type, tool counts, token totals, final reply). Pairing strategy: primary by `toolUseResult.agentId` on the parent's user-type `tool_result` line; FIFO fallback over unconsumed entries.
+- **`closeOpenTurn`** — controls Codex rollout EOF behavior. Defaults to `true` for static files, preserving the historical behavior of synthesizing `turn_completed` if the log ends mid-turn. Set to `false` when tailing a currently-written rollout so the final turn remains `working` until a real `task_complete` / abort event appears.
 
 ```ts
 interface SubagentInput {

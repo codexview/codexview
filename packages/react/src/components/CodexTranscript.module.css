@@ -18,3 +18,27 @@
   background: var(--cv-bg-raised);
   text-align: center;
 }
+.tailPrompt {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--cv-spacing-sm);
+  align-self: flex-start;
+  margin: var(--cv-spacing-sm) var(--cv-spacing-md) var(--cv-spacing-md);
+  color: var(--cv-status-running);
+  font-size: 0.875rem;
+  font-weight: 500;
+}
+.tailPulse {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: currentColor;
+  animation: cv-tail-pulse 1.4s ease-in-out infinite;
+}
+@keyframes cv-tail-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(0.8); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .tailPulse { animation: none; opacity: 1; }
+}

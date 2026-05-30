@@ -30,7 +30,17 @@ interface TokenUsageBucket {
   output_tokens: number;
 }
 
-export function adaptRollout(lines: RawLine[]): ChatStreamEvent[] {
+export interface AdaptRolloutOptions {
+  /**
+   * Older, fully-written rollout files sometimes miss terminal lifecycle
+   * events, so the historical default is to close an open turn at EOF. Live
+   * tailers should set this to false so an in-progress Codex run stays running.
+   */
+  closeOpenTurn?: boolean;
+}
+
+export function adaptRollout(lines: RawLine[], options: AdaptRolloutOptions = {}): ChatStreamEvent[] {
+  const closeOpenTurn = options.closeOpenTurn ?? true;
   const out: ChatStreamEvent[] = [];
   let currentTurnId: string | null = null;
   let threadStarted = false;
@@ -557,7 +567,7 @@ export function adaptRollout(lines: RawLine[]): ChatStreamEvent[] {
     }
   }
 
-  if (currentTurnId) {
+  if (currentTurnId && closeOpenTurn) {
     out.push({ type: 'turn_completed', turnId: currentTurnId, at: out[out.length - 1]?.at ?? Date.now() });
   }
 

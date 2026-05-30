@@ -26,6 +26,12 @@ export function NarrativeView({ events }: Props): JSX.Element {
       <div style={s.transcript}>
         {model.turns.flatMap((t, ti) => renderTurn(t, ti))}
         {model.turns.length === 0 && <div style={s.empty}>暂无对话</div>}
+        {status === 'working' && (
+          <div style={s.tailPrompt} aria-live="polite">
+            <span style={s.tailPromptDot} data-cv-narrative-status="working" aria-hidden />
+            <span>正在工作…</span>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -476,6 +482,21 @@ const s: Record<string, React.CSSProperties> = {
   },
   summary: { color: '#a8a8a8' },
   muted: { color: '#888' },
+  tailPrompt: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: 8,
+    color: '#79c0ff',
+    fontSize: 13,
+    fontWeight: 500,
+    padding: '4px 0',
+  },
+  tailPromptDot: {
+    width: 8,
+    height: 8,
+    borderRadius: '50%',
+    background: '#58a6ff',
+  },
   reasoningBody: {
     marginLeft: 18,
     marginTop: 4,

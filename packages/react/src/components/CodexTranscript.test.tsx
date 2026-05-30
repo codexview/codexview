@@ -36,4 +36,18 @@ describe('CodexTranscript', () => {
     render(<CodexTranscript events={ev} status="stopped" disableSmoothStream />);
     expect(screen.getByRole('status')).toHaveTextContent('已停止');
   });
+
+  it('shows a tail prompt while the last turn is running', () => {
+    render(
+      <CodexTranscript
+        disableSmoothStream
+        events={[
+          { type: 'thread_started', threadId: 'T', at: 1 },
+          { type: 'turn_started', turnId: 'A', at: 2 },
+          { type: 'agent_message', turnId: 'A', itemId: 'a', text: 'working', partial: false, at: 3 },
+        ]}
+      />,
+    );
+    expect(screen.getByText('正在工作…')).toBeInTheDocument();
+  });
 });

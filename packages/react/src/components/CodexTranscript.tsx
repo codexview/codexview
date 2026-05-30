@@ -140,6 +140,12 @@ export function CodexTranscript(props: CodexTranscriptProps): JSX.Element {
           </li>
         ))}
       </ol>
+      {status === 'working' && (
+        <div className={styles.tailPrompt} aria-live="polite">
+          <span className={styles.tailPulse} aria-hidden />
+          <span>正在工作…</span>
+        </div>
+      )}
     </div>
   );
 }

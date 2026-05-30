@@ -50,6 +50,18 @@ describe('adaptRollout', () => {
     expect(out[out.length - 1].type).toBe('turn_completed');
   });
 
+  it('can leave an unfinished task open for live tailing', () => {
+    const out = adaptRollout([
+      { type: 'session_meta', timestamp: '2026-01-01T00:00:00Z', payload: { id: 'T' } },
+      { type: 'event_msg', timestamp: '2026-01-01T00:00:01Z',
+        payload: { type: 'task_started', turn_id: 't-live' } },
+      { type: 'event_msg', timestamp: '2026-01-01T00:00:02Z',
+        payload: { type: 'agent_message', message: 'still working' } },
+    ] as RawLine[], { closeOpenTurn: false });
+    expect(out.some((e) => e.type === 'turn_completed')).toBe(false);
+    expect(out[out.length - 1]).toMatchObject({ type: 'agent_message', text: 'still working' });
+  });
+
   it('dedupes agent_message from event_msg + response_item', () => {
     const out = adaptRollout([
       { type: 'session_meta', timestamp: '2026-01-01T00:00:00Z', payload: { id: 'T' } },

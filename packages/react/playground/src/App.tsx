@@ -16,6 +16,7 @@ interface EventsResponse {
   file: string;
   format: 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'synthetic' | 'unknown';
   count: number;
+  live?: boolean;
   events: ChatStreamEvent[];
 }
 
@@ -63,23 +64,38 @@ export function App(): JSX.Element {
   useEffect(() => {
     if (!selectedId) return;
     let cancelled = false;
-    setLoading(true);
-    setError(null);
-    setData(null);
-    setRawData(null);
-    Promise.all([
-      fetch(`/api/logs/${selectedId}/events`).then((r) => r.json()),
-      fetch(`/api/logs/${selectedId}/raw`).then((r) => r.json()),
-    ])
-      .then(([events, raw]) => {
-        if (cancelled) return;
-        if (events.error) { setError(events.error); return; }
-        setData(events as EventsResponse);
-        setRawData((raw as { lines: unknown[] }).lines || []);
-      })
-      .catch((e) => { if (!cancelled) setError(String(e)); })
-      .finally(() => { if (!cancelled) setLoading(false); });
-    return () => { cancelled = true; };
+    let timer: ReturnType<typeof setTimeout> | undefined;
+
+    const load = (silent: boolean) => {
+      if (!silent) {
+        setLoading(true);
+        setError(null);
+        setData(null);
+        setRawData(null);
+      }
+      Promise.all([
+        fetch(`/api/logs/${selectedId}/events`).then((r) => r.json()),
+        fetch(`/api/logs/${selectedId}/raw`).then((r) => r.json()),
+      ])
+        .then(([events, raw]) => {
+          if (cancelled) return;
+          if (events.error) { setError(events.error); return; }
+          const nextData = events as EventsResponse;
+          setData(nextData);
+          setRawData((raw as { lines: unknown[] }).lines || []);
+          if (nextData.live) {
+            timer = setTimeout(() => load(true), 1500);
+          }
+        })
+        .catch((e) => { if (!cancelled) setError(String(e)); })
+        .finally(() => { if (!cancelled && !silent) setLoading(false); });
+    };
+
+    load(false);
+    return () => {
+      cancelled = true;
+      if (timer) clearTimeout(timer);
+    };
   }, [selectedId]);
 
   const visibleFiles = useMemo(() => {
@@ -206,6 +222,7 @@ export function App(): JSX.Element {
           {data && (
             <div style={styles.metaRow}>
               <span style={styles.metaItem}>format: <code>{data.format}</code></span>
+              {data.live && <span style={styles.metaItem}>live: <code>yes</code></span>}
               <span style={styles.metaItem}>file: <code style={styles.codeMono}>{data.file.replace(/^.*\//, '')}</code></span>
             </div>
           )}

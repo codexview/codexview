@@ -11,5 +11,6 @@ export function adapt(rawLines, options = {}) {
     patchMode: 'patch_apply_end',
     subagents: options.subagents,
     format: options.format,
+    closeOpenTurn: options.closeOpenTurn,
   });
 }

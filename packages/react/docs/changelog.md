@@ -2,6 +2,20 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.3.2] — 2026-05-30
+
+### Added
+
+- `<CodexTranscript>` now renders a lightweight tail prompt while the
+  transcript status is `working`, so live viewers see the active marker at
+  the end of the log as well as in the top status bar.
+
+### Playground
+
+- Codex rollout sessions that are still being written are detected as live,
+  polled automatically, and shown with `live: yes`.
+- The Narrative playground view mirrors the same tail prompt.
+
 ## [0.3.1] — 2026-05-18
 
 ### Documentation

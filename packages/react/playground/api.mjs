@@ -513,6 +513,25 @@ function loadSubagents(parentJsonlPath) {
   return out;
 }
 
+function hasOpenRolloutTurn(lines) {
+  let openTurnId = null;
+  for (const line of lines) {
+    if (!line || typeof line !== 'object') continue;
+    if (line.type !== 'event_msg' || !line.payload || typeof line.payload !== 'object') continue;
+    const payload = line.payload;
+    if (payload.type === 'task_started') {
+      openTurnId = String(payload.turn_id || 'open');
+      continue;
+    }
+    if (payload.type === 'task_complete' || payload.type === 'turn_aborted') {
+      if (!payload.turn_id || !openTurnId || String(payload.turn_id) === openTurnId) {
+        openTurnId = null;
+      }
+    }
+  }
+  return openTurnId != null;
+}
+
 export function apiPlugin() {
   return {
     name: 'codexview-playground-api',
@@ -569,8 +588,9 @@ export function apiPlugin() {
             const subagents = file.includes('/.claude/projects/') && !file.includes('/subagents/')
               ? loadSubagents(file)
               : [];
-            const { format, events } = adapt(lines, { subagents });
-            return sendJson(res, 200, { file, format, count: events.length, events });
+            const live = file.startsWith(ROLLOUT_ROOT) && hasOpenRolloutTurn(lines);
+            const { format, events } = adapt(lines, { subagents, closeOpenTurn: !live });
+            return sendJson(res, 200, { file, format, count: events.length, live, events });
           }
 
           return next();

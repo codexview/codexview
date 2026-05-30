@@ -2,6 +2,20 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.6.1] — 2026-05-30
+
+### Added
+
+- `adaptRollout(lines, { closeOpenTurn: false })` and umbrella
+  `adapt(..., { closeOpenTurn: false })` for live Codex rollout tailers.
+  Static parsing still defaults to closing an open turn at EOF.
+
+### Fixed
+
+- Live playground rendering no longer marks a currently-written Codex
+  rollout as completed just because the current file snapshot ends before
+  `task_complete`.
+
 ## [0.6.0] — 2026-05-28
 
 ### Added
