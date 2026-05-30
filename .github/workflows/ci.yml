@@ -23,6 +23,8 @@ jobs:
 
       - run: pnpm install --frozen-lockfile
 
+      - run: pnpm --filter @codexview/adapters build
+
       - run: pnpm typecheck
 
       - run: pnpm test
