@@ -1,8 +1,18 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 import { MessageBubble } from './MessageBubble.js';
 
+const bubbleCss = readFileSync(resolve('src/components/MessageBubble.module.css'), 'utf8');
+const tokenCss = readFileSync(resolve('src/styles/tokens.css'), 'utf8');
+
 describe('MessageBubble', () => {
+  it('exposes a configurable max-width token with the existing 80% default', () => {
+    expect(tokenCss).toContain('--cv-message-max-width: 80%');
+    expect(bubbleCss).toContain('max-width: var(--cv-message-max-width)');
+  });
+
   it('renders user message with role=user', () => {
     const { container } = render(
       <MessageBubble item={{ id: 'u', kind: 'user_message', status: 'completed', startedAt: 0, updatedAt: 0, text: 'hi' }} />,

@@ -1,5 +1,5 @@
 .bubble {
-  max-width: 80%;
+  max-width: var(--cv-message-max-width);
   padding: var(--cv-spacing-sm) var(--cv-spacing-md);
   border-radius: var(--cv-radius);
   white-space: pre-wrap;
