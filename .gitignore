@@ -3,6 +3,7 @@ dist/
 dev-build/
 .DS_Store
 *.log
+.env
 .vscode/
 .idea/
 coverage/
