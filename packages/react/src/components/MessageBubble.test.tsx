@@ -8,8 +8,8 @@ const bubbleCss = readFileSync(resolve('src/components/MessageBubble.module.css'
 const tokenCss = readFileSync(resolve('src/styles/tokens.css'), 'utf8');
 
 describe('MessageBubble', () => {
-  it('exposes a configurable max-width token with the existing 80% default', () => {
-    expect(tokenCss).toContain('--cv-message-max-width: 80%');
+  it('exposes a configurable max-width token with a full-width default', () => {
+    expect(tokenCss).toContain('--cv-message-max-width: 100%');
     expect(bubbleCss).toContain('max-width: var(--cv-message-max-width)');
   });
 

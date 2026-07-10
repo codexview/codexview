@@ -22,7 +22,7 @@ Set these on `.codexview-root` (or any ancestor) to theme.
 | `--cv-line-height` | `1.55` | |
 | `--cv-radius` | `12px` | bubble radius |
 | `--cv-radius-sm` | `8px` | block radius |
-| `--cv-message-max-width` | `80%` | maximum user/assistant message width |
+| `--cv-message-max-width` | `100%` | maximum user/assistant message width |
 | `--cv-spacing-xs/-sm/-md/-lg` | 4/8/12/16 px | spacing scale |
 
 ### Colors
