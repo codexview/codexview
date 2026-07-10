@@ -16,7 +16,8 @@ This directory is the source of truth for `@codexview/react`.
    or patch this component's logic inside a consuming project.
 2. Add or update focused tests, keeping the change scoped to this component.
 3. Run `./release.sh patch` (or `minor`, `major`, or an exact `X.Y.Z`)
-   to install dependencies and run typecheck, tests, build, and package checks.
+   to ensure dependencies are present and run typecheck, tests, build, and
+   package checks.
    This is a safe dry run and does not change the version or publish anything.
 4. When the worktree is clean, reviewed, and ready, run
    `./release.sh patch --publish`. Choose the semver level that matches the
