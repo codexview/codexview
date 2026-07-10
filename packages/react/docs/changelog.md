@@ -2,6 +2,14 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.4.0] — 2026-07-11
+
+### Added
+
+- `agent_message.phase` preserves Codex `commentary` / `final_answer`
+  metadata through the transcript reducer. Assistant bubbles expose it as
+  `data-phase` for host styling and inspection.
+
 ## [0.3.2] — 2026-05-30
 
 ### Added

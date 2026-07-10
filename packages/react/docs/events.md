@@ -19,7 +19,7 @@ All events carry `at: number` (epoch ms).
 | Type | Required fields | ItemView produced |
 |------|-----------------|-------------------|
 | `user_message` | `turnId`, `itemId`, `text` | `kind: 'user_message'`, status `completed` |
-| `agent_message` | `turnId`, `itemId`, `text`, `partial` | `kind: 'assistant_text'`; same `itemId` updates in place; `partial: false` flips to `completed` |
+| `agent_message` | `turnId`, `itemId`, `text`, `partial`, optional `phase` | `kind: 'assistant_text'`; same `itemId` updates in place; `partial: false` flips to `completed`; Codex `commentary` / `final_answer` phase is preserved |
 | `reasoning` | same as `agent_message` | `kind: 'reasoning'`; **never merged** with assistant_text |
 
 ## Tool calls (paired by `callId`)

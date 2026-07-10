@@ -2,6 +2,23 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-07-11
+
+### Added
+
+- `adaptCodexExec` and `codex-exec` auto-detection for the stable JSONL stream
+  emitted by `codex exec --json`, including lifecycle, messages, reasoning,
+  command/file/MCP/web/collaboration items, plans, errors, and token usage.
+- Codex assistant message phase metadata (`commentary` / `final_answer`).
+
+### Changed
+
+- The saved-rollout adapter understands Codex 0.144 canonical
+  `item_started` / `item_completed` events while preserving legacy events.
+- Rollout token usage now includes cached-input and reasoning-output tokens.
+- Non-conversation Codex world-state and thread-settings metadata is ignored
+  instead of appearing as raw transcript content.
+
 ## [0.6.1] — 2026-05-30
 
 ### Added

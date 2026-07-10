@@ -24,12 +24,13 @@ describe('MessageBubble', () => {
   });
 
   it('completed assistant has no caret', () => {
-    render(
+    const { container } = render(
       <MessageBubble
         smoothStream={false}
-        item={{ id: 'a', kind: 'assistant_text', status: 'completed', startedAt: 0, updatedAt: 0, text: 'done' }}
+        item={{ id: 'a', kind: 'assistant_text', status: 'completed', startedAt: 0, updatedAt: 0, text: 'done', phase: 'final_answer' }}
       />,
     );
     expect(screen.queryByText('▋')).toBeNull();
+    expect((container.querySelector('[data-role]') as HTMLElement).dataset.phase).toBe('final_answer');
   });
 });

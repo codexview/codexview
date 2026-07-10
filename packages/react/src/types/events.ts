@@ -40,7 +40,7 @@ export type ChatStreamEvent =
 
   // Messages
   | { type: 'user_message'; turnId: string; itemId: string; text: string; at: number }
-  | { type: 'agent_message'; turnId: string; itemId: string; text: string; partial: boolean; at: number }
+  | { type: 'agent_message'; turnId: string; itemId: string; text: string; partial: boolean; phase?: 'commentary' | 'final_answer'; at: number }
   | { type: 'reasoning'; turnId: string; itemId: string; text: string; partial: boolean; at: number }
 
   // Tool calls (paired by callId)

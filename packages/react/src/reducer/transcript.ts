@@ -120,7 +120,13 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
         if (exists) {
           return updateItem(t, event.itemId, (it) => {
             if (it.kind !== kind) return it;
-            return { ...it, text: event.text, status: event.partial ? 'running' : 'completed', updatedAt: event.at };
+            return {
+              ...it,
+              text: event.text,
+              ...(event.type === 'agent_message' && event.phase ? { phase: event.phase } : {}),
+              status: event.partial ? 'running' : 'completed',
+              updatedAt: event.at,
+            };
           });
         }
         return appendItem(t, {
@@ -130,6 +136,7 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
           startedAt: event.at,
           updatedAt: event.at,
           text: event.text,
+          ...(event.type === 'agent_message' && event.phase ? { phase: event.phase } : {}),
         } as ItemView);
       });
     }

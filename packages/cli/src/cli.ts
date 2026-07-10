@@ -49,7 +49,7 @@ USAGE
 
 OPTIONS
   -o, --output <path>   Write to file instead of stdout
-  --format <name>       Force input format (rollout | codex-team | claude-code | opencode | github-copilot)
+  --format <name>       Force input format (codex-exec | rollout | codex-team | claude-code | opencode | github-copilot)
   --subagent <path>     Embed child session export (repeatable; OpenCode only)
   -h, --help            Show this help
   -v, --version         Show version
@@ -91,8 +91,8 @@ export function parseArgs(argv: string[]): Args {
     else if (a === '--format') {
       const next = argv[++i];
       if (!next) throw new ArgError('--format requires a value');
-      if (!['rollout', 'codex-team', 'claude-code', 'opencode', 'github-copilot'].includes(next)) {
-        throw new ArgError('--format must be one of: rollout, codex-team, claude-code, opencode, github-copilot');
+      if (!['codex-exec', 'rollout', 'codex-team', 'claude-code', 'opencode', 'github-copilot'].includes(next)) {
+        throw new ArgError('--format must be one of: codex-exec, rollout, codex-team, claude-code, opencode, github-copilot');
       }
       out.format = next as DetectedFormat;
     }

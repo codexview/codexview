@@ -7,7 +7,7 @@ A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, Op
 | Package | Purpose | npm |
 |---|---|---|
 | [`@codexview/react`](packages/react) | React components that render a `ChatStreamEvent[]` stream into a chat transcript UI | [![npm](https://img.shields.io/npm/v/@codexview/react)](https://www.npmjs.com/package/@codexview/react) |
-| [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert raw JSONL/JSON from Codex CLI / codex-team / Claude Code / OpenCode / GitHub Copilot into `ChatStreamEvent[]`. Optional subagent embedding. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
+| [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert Codex `exec --json` streams and saved rollouts, plus codex-team / Claude Code / OpenCode / GitHub Copilot logs, into `ChatStreamEvent[]`. Optional subagent embedding. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
 | [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL/JSON log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
 
 ## Typical use
@@ -30,6 +30,9 @@ return <CodexTranscript events={events} />;
 Or invoke the cli for one-shot transcript compression:
 
 ```bash
+# Official Codex machine-readable stream
+codex exec --json "summarize the repo" | npx -y @codexview/cli -
+
 # Claude Code
 npx -y @codexview/cli ~/.claude/projects/<repo>/<sessionId>.jsonl > transcript.md
 

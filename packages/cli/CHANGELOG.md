@@ -2,6 +2,13 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.0] — 2026-07-11
+
+### Added
+
+- Auto-detect and explicitly select the official `codex exec --json` stream
+  with `--format codex-exec`.
+
 ## [0.6.0] — 2026-05-28
 
 ### Added

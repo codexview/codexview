@@ -6,7 +6,7 @@ Claude Code / Claude Agent SDK skills published with this repo. Each subdirector
 
 | Skill | What it does |
 |-------|--------------|
-| [`codexview-cli/`](./codexview-cli/SKILL.md) | Teaches an agent to use `@codexview/cli` (`codexview-md` command) to render or compress an agent session log (Codex CLI rollouts, codex-team status logs, Claude Code sessions, OpenCode exports, GitHub Copilot Chat sessions) into compact plaintext markdown. Subagent transcripts (Claude Code `Agent`, OpenCode `task --subagent`) embed inline. |
+| [`codexview-cli/`](./codexview-cli/SKILL.md) | Teaches an agent to use `@codexview/cli` (`codexview-md` command) to render or compress an agent session log (Codex exec JSONL and saved rollouts, codex-team status logs, Claude Code sessions, OpenCode exports, GitHub Copilot Chat sessions) into compact plaintext markdown. Subagent transcripts (Claude Code `Agent`, OpenCode `task --subagent`) embed inline. |
 
 More may appear over time. The structure of each skill is the [Anthropic skill spec](https://docs.claude.com/en/docs/claude-code/skills) — frontmatter `name` + `description` (which is the agent's trigger), then a markdown body the agent reads when triggered.
 

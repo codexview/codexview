@@ -95,6 +95,19 @@ describe('reduceTranscript / messages', () => {
     expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'assistant_text', text: 'hello', status: 'completed' });
   });
 
+  it('preserves assistant message phase metadata', () => {
+    const m = reduceTranscript(startedTurn(), {
+      type: 'agent_message',
+      turnId: 'tn-1',
+      itemId: 'a1',
+      text: 'working',
+      partial: false,
+      phase: 'commentary',
+      at: 120,
+    });
+    expect(m.turns[0]?.items[0]).toMatchObject({ kind: 'assistant_text', phase: 'commentary' });
+  });
+
   it('reasoning is independent from agent_message (not merged)', () => {
     let m = startedTurn();
     m = reduceTranscript(m, { type: 'reasoning', turnId: 'tn-1', itemId: 'r1', text: 'think', partial: false, at: 115 });

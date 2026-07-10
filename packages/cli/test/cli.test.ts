@@ -51,6 +51,20 @@ describe('cli smoke', () => {
     expect(r.stdout).toContain('# Session ');
   });
 
+  it('accepts --format codex-exec', () => {
+    const input = [
+      JSON.stringify({ type: 'thread.started', thread_id: 'T' }),
+      JSON.stringify({ type: 'turn.started' }),
+      JSON.stringify({ type: 'item.completed', item: { id: 'a', type: 'agent_message', text: 'done' } }),
+      JSON.stringify({ type: 'turn.completed', usage: { input_tokens: 1, cached_input_tokens: 0, output_tokens: 1, reasoning_output_tokens: 0 } }),
+    ].join('\n');
+    const r = spawnSync('node', [bin, '-', '--format', 'codex-exec'], { encoding: 'utf8', input });
+    expect(r.status).toBe(0);
+    expect(r.stdout).toContain('# Session T');
+    expect(r.stdout).toContain('## Assistant');
+    expect(r.stdout).toContain('done');
+  });
+
   it('exits 1 on unknown format', () => {
     const r = spawnSync('node', [bin, '-'], { encoding: 'utf8', input: '{"type":"thread_started"}\n' });
     expect(r.status).toBe(1);

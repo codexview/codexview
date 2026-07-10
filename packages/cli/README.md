@@ -1,6 +1,6 @@
 # @codexview/cli
 
-CLI that renders AI coding agent session logs (Codex CLI rollouts, AgentWeb
+CLI that renders AI coding agent session logs (Codex exec JSONL and saved rollouts, AgentWeb
 codex-team status logs, Claude Code sessions, OpenCode exports, GitHub Copilot
 Chat sessions) as compact plaintext markdown — suitable as compressed context
 to hand to another LLM, or as a quick human-readable session summary.
@@ -19,13 +19,15 @@ pnpm add -g @codexview/cli
 codexview-md path/to/session.jsonl                       # → stdout
 codexview-md path/to/session.jsonl -o out.md             # → file
 cat session.jsonl | codexview-md -                       # → stdin
+codex exec --json "summarize the repo" | codexview-md - # official Codex stream
 codexview-md path/to/session.jsonl --format rollout      # force a format
 codexview-md parent.json --subagent child.json           # embed an OpenCode subagent
 ```
 
 ## Supported input formats
 
-- **Codex CLI rollouts** — `~/.codex/sessions/.../rollout-*.jsonl`
+- **Codex exec JSONL** — output of `codex exec --json ...`
+- **Codex saved rollouts** — `~/.codex/sessions/.../rollout-*.jsonl`
 - **AgentWeb codex-team** status logs — `.codex-team/runs/*/events.jsonl`
 - **Claude Code** sessions — `~/.claude/projects/<repo>/<sessionId>.jsonl`
 - **OpenCode** session exports — single JSON document, output of
@@ -34,7 +36,7 @@ codexview-md parent.json --subagent child.json           # embed an OpenCode sub
   `~/Library/Application Support/Code/User/workspaceStorage/<hash>/chatSessions/<uuid>.json`
   (macOS); `~/.config/Code/User/workspaceStorage/...` on Linux; `Code - Insiders` for Insiders builds.
 
-Auto-detected by content; override with `--format rollout|codex-team|claude-code|opencode|github-copilot`.
+Auto-detected by content; override with `--format codex-exec|rollout|codex-team|claude-code|opencode|github-copilot`.
 
 ## Embedding OpenCode subagents
 

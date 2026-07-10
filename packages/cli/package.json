@@ -1,7 +1,7 @@
 {
   "name": "@codexview/cli",
   "version": "0.6.0",
-  "description": "CLI that renders AI coding agent transcript logs (Codex CLI, codex-team, Claude Code, OpenCode) as compact plaintext markdown — suitable as compressed context. Wraps @codexview/adapters.",
+  "description": "CLI that renders AI coding agent transcript logs (Codex exec JSONL and rollouts, codex-team, Claude Code, OpenCode, GitHub Copilot) as compact plaintext markdown. Wraps @codexview/adapters.",
   "keywords": [
     "ai",
     "agent",

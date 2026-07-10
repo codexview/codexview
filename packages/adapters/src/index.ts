@@ -1,6 +1,7 @@
 export { adapt, detectFormat, type AdaptResult, type AdaptOptions } from './adapter/index.js';
 export { classifyLine, formatHistogram } from './adapter/detect.js';
 export { diagnose, type DiagnoseInput } from './adapter/diagnose.js';
+export { adaptCodexExec, type AdaptCodexExecOptions } from './adapter/codex-exec.js';
 export { adaptRollout } from './adapter/rollout.js';
 export { adaptCodexTeam } from './adapter/codex-team.js';
 export {

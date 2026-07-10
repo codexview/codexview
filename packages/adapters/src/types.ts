@@ -29,7 +29,7 @@ export type ChatStreamEvent =
   | { type: 'turn_failed'; turnId: string; at: number; error: { message: string; code?: string } }
   | { type: 'turn_aborted'; turnId: string; at: number; reason?: string }
   | { type: 'user_message'; turnId: string; itemId: string; text: string; at: number }
-  | { type: 'agent_message'; turnId: string; itemId: string; text: string; partial: boolean; at: number }
+  | { type: 'agent_message'; turnId: string; itemId: string; text: string; partial: boolean; phase?: 'commentary' | 'final_answer'; at: number }
   | { type: 'reasoning'; turnId: string; itemId: string; text: string; partial: boolean; at: number }
   | { type: 'function_call'; turnId: string; callId: string; name: string; args: unknown; at: number }
   | { type: 'function_call_output'; turnId: string; callId: string; output?: unknown; error?: string; at: number }
@@ -46,7 +46,14 @@ export type ChatStreamEvent =
 
 export type ChatStreamEventType = ChatStreamEvent['type'];
 
-export type DetectedFormat = 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot' | 'unknown';
+export type DetectedFormat =
+  | 'codex-exec'
+  | 'rollout'
+  | 'codex-team'
+  | 'claude-code'
+  | 'opencode'
+  | 'github-copilot'
+  | 'unknown';
 
 export type DiagnosticCode =
   | 'malformed-lines'

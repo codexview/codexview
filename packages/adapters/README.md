@@ -20,13 +20,15 @@ import { adapt, parseJsonl } from '@codexview/adapters';
 
 const lines = parseJsonl(readFileSync('rollout-xyz.jsonl', 'utf8'));
 const { format, events } = adapt(lines);
-// format: 'rollout' | 'codex-team' | 'claude-code' | 'unknown'
+// format: 'codex-exec' | 'rollout' | 'codex-team' | 'claude-code'
+//       | 'opencode' | 'github-copilot' | 'unknown'
 ```
 
 ### Per-source (tree-shakeable)
 
 ```ts
 import { adaptClaudeCode } from '@codexview/adapters/claude-code';
+import { adaptCodexExec }  from '@codexview/adapters/codex-exec';
 import { adaptRollout }    from '@codexview/adapters/rollout';
 import { adaptCodexTeam }  from '@codexview/adapters/codex-team';
 
@@ -37,9 +39,22 @@ const events = adaptClaudeCode(lines);
 
 | Format        | Detection                                      | Typical file location                                              |
 |---------------|------------------------------------------------|--------------------------------------------------------------------|
+| `codex-exec`  | documented dotted events such as `thread.started` | output of `codex exec --json ...`                               |
+| `rollout`     | `session_meta` / `event_msg` / `response_item` | `~/.codex/sessions/.../rollout-*.jsonl`                            |
 | `claude-code` | first line has `sessionId`                     | `~/.claude/projects/<repo>/<sessionId>.jsonl`                      |
-| `rollout`     | first line has `type: 'thread_started'`        | `~/.codex/sessions/.../rollout-*.jsonl`                            |
 | `codex-team`  | first line has `event` + `at`                  | `~/Projects/agentweb/.codex-team/runs/*/events.jsonl`              |
+
+`codex-exec` is the stable machine-readable stream documented by Codex. A
+saved `rollout` is the richer session-persistence format and remains a
+separate compatibility adapter. The exec stream does not include the original
+prompt or timestamps; `adaptCodexExec` therefore synthesizes turn ids and
+monotonic line-index event times starting at zero. Pass `{ startAt }` when a
+different base timestamp is useful to the host.
+
+The normalized `exec_command_end` contract currently requires a numeric exit
+code. A Codex command that is declined or otherwise ends without an exit code
+is represented with exit code `1`; this intentionally preserves failure
+semantics but cannot distinguish a decline from a process failure.
 
 ## Live-host adapter: AgentWeb transcript
 
@@ -86,7 +101,8 @@ host-owned and renders next to `<CodexTranscript>`.
 
 ```ts
 adapt(lines, {
-  format?: 'rollout' | 'codex-team' | 'claude-code',  // skip detection
+  format?: 'codex-exec' | 'rollout' | 'codex-team' | 'claude-code' | 'opencode' | 'github-copilot',
+  startAt?: number,                                   // Codex exec JSONL only
   patchMode?: 'function_call' | 'patch_apply_end',    // Claude Code only
   subagents?: SubagentInput[],                        // Claude Code only
   closeOpenTurn?: boolean,                            // Codex rollout only
@@ -94,6 +110,8 @@ adapt(lines, {
 ```
 
 - **`format`** — skip `detectFormat()` and use the given format directly.
+- **`startAt`** — base timestamp for a Codex exec JSONL stream, whose wire
+  events have no timestamps. Defaults to `0` for deterministic output.
 - **`patchMode`** — controls how Claude Code's `Edit` / `Write` / `MultiEdit` tool calls are rendered.
   - `'function_call'` (default) — emit as opaque `function_call` entries. Matches the cli's compact output.
   - `'patch_apply_end'` — defer until the matching `tool_result`, then emit a `patch_apply_end` with a synthesized `PatchFile[]` containing diff text. Use when downstream rendering (e.g. `<PatchBlock>`) needs the diff.

@@ -24,6 +24,7 @@ export function MessageBubble({ item, smoothStream = true, markdown = true }: Me
       className={styles.bubble}
       data-role={isUser ? 'user' : 'assistant'}
       data-status={item.status}
+      {...(!isUser && item.phase ? { 'data-phase': item.phase } : {})}
     >
       <Markdown asPlain={!useMd}>{text}</Markdown>
       {item.status === 'running' && <span aria-hidden className={styles.caret}>▋</span>}

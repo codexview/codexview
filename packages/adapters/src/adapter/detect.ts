@@ -5,6 +5,24 @@ export function classifyLine(line: RawLine): DetectedFormat {
   if (!line || typeof line !== 'object') return 'unknown';
   const first = line as Record<string, unknown>;
 
+  // Stable machine-readable stream emitted by `codex exec --json`.
+  // Detect any documented top-level event so truncated streams that do not
+  // begin with thread.started are still recognized.
+  const type = first.type;
+  if (
+    typeof type === 'string' &&
+    (type === 'thread.started' ||
+      type === 'turn.started' ||
+      type === 'turn.completed' ||
+      type === 'turn.failed' ||
+      type === 'item.started' ||
+      type === 'item.updated' ||
+      type === 'item.completed' ||
+      (type === 'error' && typeof first.message === 'string' && !('sessionId' in first) && !('payload' in first)))
+  ) {
+    return 'codex-exec';
+  }
+
   // OpenCode: single-JSON export wrapped in a one-element array.
   // Top level has { info: { id: 'ses_...' }, messages: [...] }.
   const info = first.info;

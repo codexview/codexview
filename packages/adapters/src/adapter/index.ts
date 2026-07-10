@@ -1,5 +1,6 @@
 import type { ChatStreamEvent, DetectedFormat, RawLine } from '../types.js';
 import { detectFormat } from './detect.js';
+import { adaptCodexExec, type AdaptCodexExecOptions } from './codex-exec.js';
 import { adaptRollout, type AdaptRolloutOptions } from './rollout.js';
 import { adaptCodexTeam } from './codex-team.js';
 import { adaptClaudeCode, type AdaptClaudeCodeOptions, type SubagentInput } from './claude-code.js';
@@ -24,6 +25,8 @@ export interface AdaptResult {
 export interface AdaptOptions {
   /** Skip detectFormat and use this format directly. */
   format?: DetectedFormat;
+  /** Codex exec JSONL only. Timestamp assigned to the first input event. */
+  startAt?: AdaptCodexExecOptions['startAt'];
   patchMode?: 'function_call' | 'patch_apply_end';
   subagents?: SubagentInput[] | OpenCodeSubagentInput[];
   /**
@@ -36,6 +39,7 @@ export interface AdaptOptions {
 export function adapt(lines: RawLine[], options: AdaptOptions = {}): AdaptResult {
   const format = options.format ?? detectFormat(lines);
   switch (format) {
+    case 'codex-exec':  return { format, events: adaptCodexExec(lines, options as AdaptCodexExecOptions) };
     case 'rollout':     return { format, events: adaptRollout(lines, options as AdaptRolloutOptions) };
     case 'codex-team':  return { format, events: adaptCodexTeam(lines) };
     case 'claude-code': return { format, events: adaptClaudeCode(lines, options as AdaptClaudeCodeOptions) };

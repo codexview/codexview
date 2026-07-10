@@ -14,6 +14,15 @@ describe('detectFormat', () => {
   it('detects rollout via type + payload', () => {
     expect(detectFormat([{ type: 'session_meta', payload: { id: 'x' }, timestamp: '2026' }])).toBe('rollout');
   });
+  it('detects codex exec JSONL via documented dotted event names', () => {
+    expect(detectFormat([{ type: 'thread.started', thread_id: 'x' }])).toBe('codex-exec');
+  });
+  it('detects a truncated codex exec JSONL stream', () => {
+    expect(detectFormat([{ type: 'item.completed', item: { id: 'i', type: 'agent_message', text: 'ok' } }])).toBe('codex-exec');
+  });
+  it('does not steal Claude Code error rows that carry a sessionId', () => {
+    expect(detectFormat([{ type: 'error', sessionId: 's1', message: 'boom' }])).toBe('claude-code');
+  });
   it('detects codex-team via event + at', () => {
     expect(detectFormat([{ event: 'updated', at: '2026', status: 'running', payload: {} }])).toBe('codex-team');
   });
@@ -54,6 +63,9 @@ describe('classifyLine', () => {
   });
   it('classifies a rollout line', () => {
     expect(classifyLine({ type: 'session_meta', payload: { id: 'x' }, timestamp: '2026' })).toBe('rollout');
+  });
+  it('classifies a codex exec JSONL line', () => {
+    expect(classifyLine({ type: 'turn.completed', usage: {} })).toBe('codex-exec');
   });
   it('classifies a codex-team line', () => {
     expect(classifyLine({ event: 'updated', at: '2026', status: 'running', payload: {} })).toBe('codex-team');
