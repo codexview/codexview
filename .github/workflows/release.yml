@@ -46,6 +46,8 @@ jobs:
             exit 1
           fi
 
+      - run: pnpm --filter @codexview/runtime... build
+
       - name: Typecheck @codexview/react
         working-directory: packages/react
         run: pnpm typecheck
@@ -60,7 +62,7 @@ jobs:
 
       - name: Publish @codexview/react with provenance
         working-directory: packages/react
-        run: npm publish --provenance --access public
+        run: pnpm publish --provenance --access public --no-git-checks
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v3

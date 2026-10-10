@@ -43,3 +43,9 @@ export { Markdown } from './components/Markdown.js';
 export type { MarkdownProps } from './components/Markdown.js';
 
 export const VERSION = '0.3.1';
+
+export { useCodexSession } from './hooks/useCodexSession.js';
+export type { UseCodexSessionOptions, CodexSessionController } from './hooks/useCodexSession.js';
+export { CodexSession, SessionComposer, SessionRequests } from './components/CodexSession.js';
+export type { CodexSessionProps, SessionComposerProps, SessionRequestsProps } from './components/CodexSession.js';
+export type { SessionConnection, SessionExecution, SessionRequest, SessionSnapshot, SessionModel, SessionTurnOptions, SessionTransport } from '@codexview/adapters';

@@ -42,3 +42,5 @@ export type {
   PatchFile,
   TodoEntry,
 } from './types.js';
+export type { SessionConnection, SessionExecution, SessionRequest, SessionSnapshot, SessionModel, SessionTurnOptions, SessionTransport } from './session.js';
+export { AppServerTranscriptStore, adaptAppServerThread, type AppServerThread, type AppServerTurn, type AppServerTranscriptOptions } from './adapter/app-server.js';

@@ -20,6 +20,6 @@
     "noEmit": true,
     "types": ["node", "vitest/globals", "@testing-library/jest-dom"]
   },
-  "include": ["src/**/*", "dev/**/*"],
+  "include": ["src/**/*", "dev/**/*", "playground/src/**/*", "playground/vite.config.ts"],
   "exclude": ["dist", "node_modules"]
 }

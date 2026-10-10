@@ -72,3 +72,11 @@ The default light palette is a "warm paper" look (ivory page, deep ink-brown tex
 ## License
 
 MIT.
+
+## Interactive Codex sessions
+
+Use `CodexSession` with a host-provided `SessionTransport` for input, steer, stop,
+approvals, questions and context-compaction status. `useCodexSession`,
+`SessionComposer` and `SessionRequests` support custom layouts. Keep
+`@codexview/runtime` on your Node backend and authenticate the transport.
+See [the runnable example and integration guide](../../docs/app-server.md).

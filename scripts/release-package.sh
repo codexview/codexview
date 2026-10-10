@@ -44,6 +44,12 @@ case "$package_key" in
     tag_prefix="adapters-v"
     workflow="publish-adapters.yml"
     ;;
+  runtime)
+    package_name="@codexview/runtime"
+    package_dir="packages/runtime"
+    tag_prefix="runtime-v"
+    workflow="publish-runtime.yml"
+    ;;
   cli)
     package_name="@codexview/cli"
     package_dir="packages/cli"
@@ -104,12 +110,14 @@ for command in git node npm pnpm; do
   command -v "$command" >/dev/null 2>&1 || die "missing command: $command"
 done
 
-[[ "$(git branch --show-current)" == "main" ]] || die "releases must run on main"
-[[ -z "$(git status --porcelain)" ]] || die "worktree must be clean before release"
+if [[ "$publish" == true ]]; then
+  [[ "$(git branch --show-current)" == "main" ]] || die "releases must run on main"
+  [[ -z "$(git status --porcelain)" ]] || die "worktree must be clean before release"
 
-git fetch origin main
-[[ "$(git rev-list --left-right --count origin/main...HEAD)" == $'0\t0' ]] ||
-  die "local main must exactly match origin/main"
+  git fetch origin main
+  [[ "$(git rev-list --left-right --count origin/main...HEAD)" == $'0\t0' ]] ||
+    die "local main must exactly match origin/main"
+fi
 
 current_version="$(node -p "require('./$package_dir/package.json').version")"
 target_version="$(next_version "$current_version" "$version_spec")"
@@ -119,9 +127,7 @@ printf 'Package: %s\nCurrent: %s\nTarget:  %s\nTag:     %s\n' \
   "$package_name" "$current_version" "$target_version" "$tag"
 
 CI=true pnpm install --frozen-lockfile
-if [[ "$package_key" == "cli" ]]; then
-  pnpm --filter @codexview/adapters build
-fi
+pnpm --filter "$package_name^..." build
 pnpm --filter "$package_name" typecheck
 CI=true pnpm --filter "$package_name" test
 pnpm --filter "$package_name" build
