@@ -57,7 +57,7 @@ export class CodexRuntime {
     child.stdout.on('end', () => { if (generation === this.generation) this.lost('Codex app-server output closed'); });
     child.stdin.on('error', () => { if (generation === this.generation) this.lost('Codex app-server input closed'); });
     try {
-      await this.rpc('initialize', { clientInfo: this.options.clientInfo ?? { name: 'codexview', version: '0.7.0' }, capabilities: null }, true);
+      await this.rpc('initialize', { clientInfo: this.options.clientInfo ?? { name: 'codexview', version: '0.7.0' }, capabilities: this.options.experimentalApi ? { experimentalApi: true } : null }, true);
       if (this.process !== child) throw new UncertainOutcomeError('Connection lost during initialization');
       this.write({ method: 'initialized', params: {} });
       this.ready = true;
@@ -151,9 +151,11 @@ export class CodexRuntime {
   }
   models(): Promise<SessionModel[]> { return this.listModels(); }
   async send(threadId: string, text: string, options: SessionTurnOptions = {}): Promise<{ turn: CodexTurn }> {
+    if (options.collaborationMode && !this.options.experimentalApi) throw new Error('collaborationMode requires experimentalApi');
     const session = this.session(threadId);
     if (!session.resumed) throw new Error('Create or resume the thread before sending');
     if (session.sending || activeStates.has(session.snapshot.execution)) throw new Error('Thread has an active or uncertain turn');
+    const startingRevision = session.liveRevision;
     session.sending = true;
     try {
       const result = await this.rpc('turn/start', { ...options, threadId, input: input(text) }) as { turn: CodexTurn };
@@ -166,7 +168,7 @@ export class CodexRuntime {
       }
       return result;
     } catch (error) {
-      if (error instanceof UncertainOutcomeError) { session.snapshot.execution = 'unknown'; this.changed(session); }
+      if (error instanceof UncertainOutcomeError && !(session.liveRevision > startingRevision && ['completed', 'failed', 'interrupted'].includes(session.snapshot.execution))) { session.snapshot.execution = 'unknown'; this.changed(session); }
       throw error;
     } finally { session.sending = false; }
   }
@@ -178,7 +180,8 @@ export class CodexRuntime {
     this.checkTurn(threadId, turnId);
     return this.rpc('turn/interrupt', { threadId, turnId });
   }
-  async reply(threadId: string, requestId: RpcId, result: unknown): Promise<void> {
+  async reply(threadId: string, requestId: RpcId, result: unknown, epoch: string | undefined): Promise<void> {
+    if (!epoch || epoch !== this.epoch) throw new Error('Request belongs to an expired runtime epoch');
     const request = this.requests.get(requestId);
     if (!request || request.threadId !== threadId) throw new Error('Request is expired, already answered, or belongs to another thread');
     if (!this.ready) throw new Error('Codex runtime disconnected');
@@ -225,7 +228,11 @@ export class CodexRuntime {
     const session = this.session(thread.id);
     session.store.mergeHistory(thread);
     for (const turn of thread.turns) if (['completed', 'failed', 'interrupted'].includes(turn.status)) this.rememberTerminal(session, turn.id);
-    if (resumed) { session.resumed = true; session.owned = true; session.resumeOptions = options; }
+    if (resumed) {
+      session.resumed = true; session.owned = true;
+      session.resumeOptions = { ...session.resumeOptions, ...options,
+        ...(session.resumeOptions?.config || options?.config ? { config: { ...session.resumeOptions?.config, ...options?.config } } : {}) };
+    }
     // Saved history can establish outcomes, while newer live evidence takes precedence.
     if ((resumed || session.liveRevision === 0) && session.liveRevision === expectedLiveRevision && !(session.snapshot.activeTurnId && activeStates.has(session.snapshot.execution) && session.snapshot.execution !== 'unknown')) {
       const turn = thread.turns?.at(-1);
@@ -311,8 +318,8 @@ export class CodexRuntime {
         for (const [id, request] of this.requests) if (request.threadId === threadId && (!request.turnId || request.turnId === params.turn.id)) { this.requests.delete(id); this.rememberResolved(id); }
         session.snapshot.requests = [...this.requests.values()].filter(r => r.threadId === threadId);
       } else if (message.method === 'thread/compacted' || (message.method === 'item/completed' && params.item?.type === 'contextCompaction')) {
-        if (session.snapshot.execution === 'compacting') { session.liveRevision++; session.snapshot.execution = 'running'; }
-      } else if (message.method === 'item/started' && params.item?.type === 'contextCompaction') { session.liveRevision++; session.snapshot.execution = 'compacting'; }
+        if (applied && params.turnId === session.snapshot.activeTurnId && session.snapshot.execution === 'compacting') { session.liveRevision++; session.snapshot.execution = 'running'; }
+      } else if (message.method === 'item/started' && params.item?.type === 'contextCompaction' && applied && params.turnId === session.snapshot.activeTurnId && activeStates.has(session.snapshot.execution)) { session.liveRevision++; session.snapshot.execution = 'compacting'; }
       this.changed(session);
       return;
     }

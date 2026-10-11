@@ -23,6 +23,8 @@ export interface Page<T> { data: T[]; nextCursor: string | null }
 /** Injectable process boundary, useful for hosts and deterministic protocol tests. */
 export interface RuntimeProcess extends EventEmitter { stdin: Writable; stdout: Readable; stderr?: Readable; kill(signal?: NodeJS.Signals): boolean }
 export interface RuntimeOptions {
+  /** Opt in only when using experimental protocol fields such as collaborationMode. */
+  experimentalApi?: boolean;
   executable?: string; args?: string[]; cwd?: string; env?: NodeJS.ProcessEnv;
   requestTimeoutMs?: number; maxTurns?: number; snapshotIntervalMs?: number;
   clientInfo?: { name: string; title?: string; version: string };

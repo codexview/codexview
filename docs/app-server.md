@@ -62,7 +62,9 @@ export function AgentPanel({ threadId, transport }: {
 ```
 
 Implement `SessionTransport` in your host client: subscribe, models, send, steer,
-interrupt and reply. Return materialized snapshots with monotonic revision within
+interrupt and reply. Replies carry the snapshot epoch captured when the request was rendered;
+the runtime rejects missing or retired epochs before sending a server response.
+Return materialized snapshots with monotonic revision within
 a process epoch. `useCodexSession`, `SessionComposer` and `SessionRequests` are
 exported for custom layouts. `CodexTranscript` remains a display component.
 
@@ -86,7 +88,7 @@ Initialization sends `initialize`, waits for success, then sends `initialized`.
 `turn/start` is an acceptance receipt. Only `turn/completed` establishes completed,
 failed or interrupted. Connection state remains independent; loss can leave an
 uncertain outcome. Concurrent sends are rejected and steer requires an expected
-turn ID. Server requests retain numeric or string IDs, are resolved once, and
+turn ID. Server requests retain numeric or string IDs and process epochs, are resolved once, and
 expire on completion/disconnection. Unsupported server request methods fail
 explicitly. No approval is automatically accepted.
 
@@ -95,8 +97,14 @@ thread's first message is materialized. The runtime handles the exact pre-messag
 error. Before the first message, read/resume of a newly created loaded thread
 uses current-process metadata; if that process exits before persistence, create
 a new thread. The runtime reports unsupported API errors rather than selecting another execution
-backend. The integration does not opt into experimentalApi. WebSocket app-server
-transport and experimental methods are outside this implementation.
+backend. The runtime defaults to stable capabilities. `new CodexRuntime({ experimentalApi:
+true })` explicitly enables experimental fields. `send` accepts the installed
+`collaborationMode` shape (mode `plan` or `default`, settings with `model`,
+`reasoning_effort` and `developer_instructions`); using it without opt-in fails
+locally. Plan mode enables real `request_user_input` calls on this CLI.
+The playground only forwards this field when started with
+`CODEXVIEW_PLAYGROUND_ACCEPTANCE=1`; normal session controls remain unchanged.
+WebSocket app-server transport is outside this implementation.
 
 Codex manages context compaction; the UI displays its lifecycle. Persistent
 history is distinct from model context: context is limited and compaction is not
@@ -116,7 +124,7 @@ Publish adapters before packages that depend on its new API. React publication
 uses pnpm so workspace dependency versions are rewritten in the package. This feature branch
 does not merge main or deploy consumers.
 
-## Validation record (2026-10-11)
+## Initial validation (2026-10-11)
 
 - Codex 0.162.1 stdio initialize/initialized and model catalog verified against
   the installed CLI; fresh schema generated without experimental flags.
@@ -136,7 +144,80 @@ does not merge main or deploy consumers.
   bare Node SSR currently hits a bundled markdown dependency's `document` usage
   and is not a supported validation target for this client component.
 
-Real model-triggered approvals, user questions, interruption during tool execution
-and long-context automatic compaction were not forced. Their state/response paths
-are fixture-tested. No private histories were copied or changed. No npm publish,
-main merge or downstream consumer deployment was performed.
+## Real acceptance (2026-10-12)
+
+The installed CLI remains **0.162.1**. Stable and experimental bindings were
+regenerated before testing. Stable pagination is present in this installation;
+`collaborationMode` is experimental. The installed bindings take precedence over
+differences in the online documentation.
+
+Real testing used GPT-6.1 Sol at **medium**, confirmed by thread-start/resume
+responses, temporary workspaces and synthetic markers. The automated runner uses
+an isolated `CODEX_HOME` with only the existing authentication file linked in;
+it does not import personal sessions or configuration. Raw JSONL stays in its
+private temporary directory. The checked-in acceptance record contains sanitized
+assertions and relevant event fields, without credentials or absolute user paths.
+
+- The model requested command and file approvals. Approve and Decline were
+  exercised in the browser; the approved file existed and the declined file did
+  not. A declined command has a null exit code and displays **Declined**.
+- Plan mode produced `item/tool/requestUserInput`. The browser supplied `Blue`
+  and free text `CUSTOM-4821`; the final model response repeated both exactly.
+- Independent browser tests covered refresh during execution, read-only Continue,
+  live steer, Stop during a running command, interrupted terminal state, a killed
+  app-server, reconnect and both markers recalled on the next turn. History did
+  not duplicate live messages.
+- With `model_auto_compact_token_limit=18000`, synthetic input increased the last
+  input token count from 15,520 to 46,559. Automatic compaction occurred on the
+  following turn, not immediately on submission of the long input. Two distinct
+  `contextCompaction` items each emitted `item/started` and `item/completed`.
+  There was no manual compaction RPC. Runtime snapshots exposed `compacting`;
+  `CV-COMPACT-7391` and `violet-lantern` were recalled after compaction, in another
+  turn and again after process restart. This confirms these markers for this
+  run; it does not promise lossless arbitrary context retention.
+- Changing the threshold via resume while the thread was already loaded did not
+  prevent the next automatic compaction in this CLI. Restart/resume applied the
+  higher threshold for the final recovery turn. The evidence counts both calls.
+
+Real testing exposed and fixed old-epoch approval reuse, terminal state overwritten
+by a missing start receipt, stale compaction notifications changing current state,
+empty HTTP reply responses, fabricated successful exits for declined commands and
+unreviewable pending file changes. Focused regressions cover these boundaries.
+
+### Repeat the acceptance
+
+```sh
+pnpm build
+# Explicit opt-in; never invoked by pnpm test or CI. Requires an existing login.
+node scripts/accept-app-server.mjs --run --budget 11
+# Browser operates the approval/question cards; no extra model turn is needed.
+node scripts/accept-app-server.mjs --run --cases approvals --budget 2 --interactive
+# Compaction + recall/restart only, in a fresh synthetic workspace:
+node scripts/accept-app-server.mjs --run --cases compaction --budget 7
+```
+
+The runner prints its temporary evidence directory and loopback URL (default
+5193; override with `CODEXVIEW_TEST_PORT`). `--cases all` includes live steer and
+tool interruption. `--resume DIR` continues a saved compaction case using its
+explicit thread ID and cumulative counts. Preserve `summary.json`,
+`protocol.jsonl` and `snapshots.jsonl` together when diagnosing a failed run.
+Budget accounting counts user turn starts plus automatic compaction calls;
+individual tool continuations within a turn can make additional model requests.
+Model behavior can vary; failures remain explicit and the runner does not retry
+prompts automatically. Review the cumulative count before authorizing another run.
+
+No npm publication, main merge or downstream consumer deployment was performed.
+
+Final local checks passed: **319 tests** (125 adapters, 30 runtime, 62 CLI,
+102 React), all package typechecks/builds, all four `release.sh minor` dry runs,
+and installation of all four tarballs into a separate consumer. The consumer
+imported runtime/adapters, rendered a packaged React transcript under a browser
+DOM and executed the packaged CLI. The local pnpm store override used for release
+checks was an environment setting, with no repository configuration change.
+
+The real acceptance used **14 budget units**: nine worker user turns, two automatic
+compactions and three independent browser turns, including the two-turn post-fix
+approval/question rerun. All post-fix browser interactions had no error alert.
+See [the sanitized acceptance record](validation/app-server-20261012.json).
+PR creation and GitHub CI verification follow the final pushed commit; release
+publication remains a separate action.

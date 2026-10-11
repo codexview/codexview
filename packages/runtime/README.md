@@ -2,7 +2,7 @@
 
 Node 20+ host for persistent local Codex app-server sessions. Requires an installed,
 authenticated Codex CLI. Tested against **0.162.1** using stdio and the stable API;
-`experimentalApi` is not enabled. Authentication stays in the Codex process.
+`experimentalApi` defaults to false. Opt in explicitly for Plan collaboration mode. Authentication stays in the Codex process.
 
 ```ts
 import { CodexRuntime } from '@codexview/runtime';
@@ -22,7 +22,7 @@ const unsubscribe = runtime.subscribe(thread.id, snapshot => {
 await runtime.send(thread.id, 'Summarize this project'); // acceptance, not completion
 // Completion is reported by a snapshot with completed / failed / interrupted.
 // User decisions must be sent to the original request ID:
-// await runtime.reply(thread.id, request.id, { decision: 'accept' });
+// await runtime.reply(thread.id, request.id, { decision: 'accept' }, snapshot.epoch);
 // await runtime.steer(thread.id, 'Focus on tests', snapshot.activeTurnId!);
 // await runtime.interrupt(thread.id, snapshot.activeTurnId!);
 unsubscribe(); // does not stop the backend task
@@ -41,9 +41,9 @@ unsubscribe(); // does not stop the backend task
 - `listTurns`, `listItems`: explicit cursor-based history reads.
 - `listModels` / `models`: model and reasoning catalog, not an entitlement check.
 - `send`: rejects concurrent or active/uncertain turns. `steer` requires the
-  expected active turn ID. `interrupt` waits for the real completion notification.
+  expected active turn ID. `interrupt` sends a cancellation request; wait for the real completion notification to establish the outcome.
 - `reply`: answers a pending command/file approval or user-input request. Expired,
-  already answered, and cross-thread IDs are rejected. Unknown request methods
+  already answered, cross-thread IDs and missing/stale epochs are rejected. Unknown request methods
   receive JSON-RPC method-not-found rather than implicit approval.
 - `releaseSession`: evict an inactive, unsubscribed cache while retaining the host
   database ID; returns false for active work or pending requests.

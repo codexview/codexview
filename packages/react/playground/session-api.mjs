@@ -8,9 +8,10 @@ import { randomBytes } from 'node:crypto';
 // thread ownership checks and their own durable session store.
 export function sessionApiPlugin(options = {}) {
   const root = resolve(options.stateDir || process.env.CODEXVIEW_PLAYGROUND_DIR || join(homedir(), '.codexview/playground'));
+  const acceptance = process.env.CODEXVIEW_PLAYGROUND_ACCEPTANCE === '1';
   const token = randomBytes(32).toString('hex');
   const known = new Map();
-  const runtime = options.runtime ?? new CodexRuntime({ maxTurns: 40 });
+  const runtime = options.runtime ?? new CodexRuntime({ maxTurns: 40, experimentalApi: acceptance });
   let ready;
   let persistence = Promise.resolve();
   async function init() {
@@ -53,7 +54,7 @@ export function sessionApiPlugin(options = {}) {
             body = JSON.parse(raw || '{}');
           }
           if (path === '/threads' && req.method === 'POST') {
-            const result = await runtime.createThread({ cwd: join(root, 'workspace'), sandbox: 'workspace-write', approvalPolicy: 'on-request' });
+            const result = await runtime.createThread({ cwd: join(root, 'workspace'), sandbox: 'workspace-write', approvalPolicy: 'on-request', ...(acceptance ? { baseInstructions: 'You are a test assistant in an isolated synthetic workspace. Follow the user precisely; do not read outside the workspace.', config: { model_reasoning_effort: 'medium' } } : {}), ...options.threadOptions });
             const thread = result.thread ?? result;
             known.set(thread.id, { id: thread.id, name: `Session ${new Date().toLocaleString()}` });
             await save();
@@ -98,10 +99,14 @@ export function sessionApiPlugin(options = {}) {
             const options = {};
             if (typeof body.model === 'string') options.model = body.model;
             if (typeof body.effort === 'string') options.effort = body.effort;
+            if (body.collaborationMode !== undefined) {
+              if (!acceptance || !['plan', 'default'].includes(body.collaborationMode?.mode) || typeof body.collaborationMode?.settings?.model !== 'string') return json(400, { error: 'Experimental collaboration mode requires acceptance profile' });
+              options.collaborationMode = body.collaborationMode;
+            }
             return json(200, await runtime.send(threadId, body.text, options));
           }
           if (action === 'interrupt') return json(200, await runtime.interrupt(threadId, body.turnId));
-          if (action === 'reply') return json(200, await runtime.reply(threadId, body.requestId, body.result));
+          if (action === 'reply') { await runtime.reply(threadId, body.requestId, body.result, body.epoch); return json(200, {}); }
           return json(405, { error: 'Method not allowed' });
         } catch (error) { if (!res.headersSent) json(400, { error: error.message }); else res.end(); }
       });

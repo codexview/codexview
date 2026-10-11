@@ -194,7 +194,7 @@ function itemEvents(turnId: string, itemId: string, item: Item): ChatStreamEvent
     case 'reasoning': return [{ type: 'reasoning', turnId, itemId, text: [...list(data.summary), ...list(data.content)].map(str).filter(Boolean).join('\n\n'), partial: !item.final, at }];
     case 'commandExecution': {
       const events: ChatStreamEvent[] = [{ type: 'exec_command_begin', turnId, callId, command: str(data.command), at }];
-      if (item.final) events.push({ type: 'exec_command_end', turnId, callId, exit: typeof data.exitCode === 'number' ? data.exitCode : data.status === 'failed' ? 1 : 0, stdout: str(data.aggregatedOutput), stderr: '', durationMs: typeof data.durationMs === 'number' ? data.durationMs : 0, at });
+      if (item.final) events.push({ type: 'exec_command_end', turnId, callId, exit: typeof data.exitCode === 'number' ? data.exitCode : null, ...(data.status === 'declined' ? { outcome: 'declined' as const } : {}), stdout: str(data.aggregatedOutput), stderr: '', durationMs: typeof data.durationMs === 'number' ? data.durationMs : 0, at });
       else if (data.aggregatedOutput) events.push({ type: 'raw', turnId, itemId, payload: { ...data }, at });
       return events;
     }
@@ -210,12 +210,14 @@ function itemEvents(turnId: string, itemId: string, item: Item): ChatStreamEvent
       return events;
     }
     case 'functionCallOutput': return [{ type: 'function_call_output', turnId, callId, output: data.output, at }];
-    case 'fileChange': if (!item.final) return [{ type: 'raw', turnId, itemId, payload: { ...data }, at }];
-      return [{ type: 'patch_apply_end', turnId, callId, files: list(data.changes).map(value => {
+    case 'fileChange': {
+      const files = list(data.changes).map(value => {
       const change = record(value);
       const kind = record(change.kind).type;
       return { path: str(change.path), status: kind === 'add' ? 'added' : kind === 'delete' ? 'deleted' : 'modified', diff: str(change.diff) } as PatchFile;
-    }), ok: data.status === 'completed', at }];
+    });
+      return item.final ? [{ type: 'patch_apply_end', turnId, callId, files, ok: data.status === 'completed', ...(data.status === 'declined' ? { outcome: 'declined' as const } : {}), at }] : [{ type: 'patch_apply_begin', turnId, callId, files, at }];
+    }
     case 'webSearch': {
       const events: ChatStreamEvent[] = [{ type: 'web_search_call', turnId, callId, query: str(data.query), at }];
       if (item.final) events.push({ type: 'web_search_end', turnId, callId, results: list(data.results).map(value => record(value)).filter(value => typeof value.url === 'string').map(value => ({ title: str(value.title), url: str(value.url), ...(value.snippet ? { snippet: str(value.snippet) } : {}) } as SearchResult)), at });

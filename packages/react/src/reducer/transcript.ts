@@ -186,9 +186,10 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
           if (it.kind !== 'exec') return it;
           return {
             ...it,
-            status: event.exit === 0 ? 'completed' : 'failed',
+            status: event.outcome ? 'stopped' : event.exit === 0 ? 'completed' : 'failed',
+            ...(event.outcome ? { outcome: event.outcome } : {}),
             updatedAt: event.at,
-            exit: event.exit,
+            ...(event.exit !== null ? { exit: event.exit } : {}),
             stdout: event.stdout,
             stderr: event.stderr,
             durationMs: event.durationMs,
@@ -216,18 +217,20 @@ export function reduceTranscript(prev: TranscriptModel, event: ChatStreamEvent):
         }),
       );
 
+    case 'patch_apply_begin':
     case 'patch_apply_end':
-      return withinTurn(prev, event.turnId, event.at, (t) =>
-        appendItem(t, {
+      return withinTurn(prev, event.turnId, event.at, (t) => {
+        const item: ItemView = {
           id: event.callId,
           kind: 'patch',
-          status: event.ok ? 'completed' : 'failed',
+          status: event.type === 'patch_apply_begin' ? 'pending' : event.outcome === 'declined' ? 'stopped' : event.ok ? 'completed' : 'failed',
           startedAt: event.at,
           updatedAt: event.at,
           files: event.files,
-          ok: event.ok,
-        }),
-      );
+          ...(event.type === 'patch_apply_end' ? { ok: event.ok, ...(event.outcome ? { outcome: event.outcome } : {}) } : {}),
+        };
+        return t.items.some(existing => existing.id === item.id) ? updateItem(t, item.id, () => item) : appendItem(t, item);
+      });
 
     case 'todo_list':
       // Plan / TODO list — itemId-keyed so subsequent updates replace in place.

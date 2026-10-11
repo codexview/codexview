@@ -34,12 +34,13 @@ export type ChatStreamEvent =
   | { type: 'function_call'; turnId: string; callId: string; name: string; args: unknown; at: number }
   | { type: 'function_call_output'; turnId: string; callId: string; output?: unknown; error?: string; at: number }
   | { type: 'exec_command_begin'; turnId: string; callId: string; command: string; at: number }
-  | { type: 'exec_command_end'; turnId: string; callId: string; exit: number; stdout: string; stderr: string; durationMs: number; at: number }
+  | { type: 'exec_command_end'; turnId: string; callId: string; exit: number | null; outcome?: 'declined' | 'interrupted'; stdout: string; stderr: string; durationMs: number; at: number }
   | { type: 'mcp_tool_call'; turnId: string; callId: string; server: string; name: string; args: unknown; at: number }
   | { type: 'mcp_tool_call_output'; turnId: string; callId: string; output?: unknown; error?: string; at: number }
   | { type: 'web_search_call'; turnId: string; callId: string; query: string; at: number }
   | { type: 'web_search_end'; turnId: string; callId: string; results: SearchResult[]; at: number }
-  | { type: 'patch_apply_end'; turnId: string; callId: string; files: PatchFile[]; ok: boolean; at: number }
+  | { type: 'patch_apply_begin'; turnId: string; callId: string; files: PatchFile[]; at: number }
+  | { type: 'patch_apply_end'; turnId: string; callId: string; files: PatchFile[]; ok: boolean; outcome?: 'declined'; at: number }
   | { type: 'todo_list'; turnId: string; itemId: string; items: TodoEntry[]; at: number }
   | { type: 'error_item'; turnId: string; itemId: string; message: string; at: number }
   | { type: 'raw'; turnId?: string; itemId?: string; payload: unknown; at: number };

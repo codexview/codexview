@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from 'react';
-import type { SessionRequest, SessionTransport } from '@codexview/adapters';
+import type { PatchFile, SessionRequest, SessionTransport } from '@codexview/adapters';
 import { useCodexSession, sessionRequestKey, type CodexSessionController } from '../hooks/useCodexSession.js';
 import { CodexTranscript, type CodexTranscriptProps } from './CodexTranscript.js';
 import type { TranscriptStatus } from '../types/model.js';
@@ -72,11 +72,13 @@ export function SessionRequests({ session, readOnly = false }: SessionRequestsPr
     const key = sessionRequestKey(request.id);
     const resolved = session.resolvedRequestIds.has(key);
     const disabled = readOnly || session.snapshot.connection !== 'connected' || resolved || session.pendingRequestIds.has(key);
-    return <RequestCard key={`${session.snapshot.epoch ?? "legacy"}:${key}`} request={request} disabled={disabled} resolved={resolved} reply={session.reply} />;
+    const patch = session.snapshot.events.find(event => event.type === 'patch_apply_begin' && event.callId === request.params.itemId && event.turnId === request.turnId);
+    const files = patch?.type === 'patch_apply_begin' ? patch.files : undefined;
+    return <RequestCard {...(files ? { files } : {})} key={`${session.snapshot.epoch ?? "legacy"}:${key}`} request={request} disabled={disabled} resolved={resolved} reply={session.reply} />;
   })}</div>;
 }
 interface Question { id: string; header?: string; question: string; isOther?: boolean; isSecret?: boolean; options?: { label: string; description?: string }[] | null }
-function RequestCard({ request, disabled, resolved, reply }: { request: SessionRequest; disabled: boolean; resolved: boolean; reply: CodexSessionController['reply'] }) {
+function RequestCard({ request, disabled, resolved, reply, files }: { files?: PatchFile[]; request: SessionRequest; disabled: boolean; resolved: boolean; reply: CodexSessionController['reply'] }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const approval = request.method === 'item/commandExecution/requestApproval' || request.method === 'item/fileChange/requestApproval';
   const userInput = request.method === 'item/tool/requestUserInput';
@@ -90,6 +92,7 @@ function RequestCard({ request, disabled, resolved, reply }: { request: SessionR
       {typeof request.params.cwd === 'string' && <p>Directory: {request.params.cwd}</p>}
       {typeof request.params.itemId === 'string' && <p>Transcript item: {request.params.itemId}</p>}
       {typeof request.params.grantRoot === 'string' && <p>Requested write root: {request.params.grantRoot}</p>}
+      {files?.map(file => <div key={file.path}><p>{file.status}: <code>{file.path}</code></p>{file.diff && <pre>{file.diff}</pre>}</div>)}
       {['accept', 'decline', 'cancel'].map(decision => <button key={decision} type="button" disabled={disabled} onClick={() => ignoreFailure(reply(request.id, { decision }))}>{decision === 'accept' ? 'Approve' : decision === 'decline' ? 'Decline' : 'Cancel turn'}</button>)}
     </>}
     {userInput && <form onSubmit={event => { event.preventDefault(); if (!disabled) ignoreFailure(reply(request.id, { answers: Object.fromEntries(questions.map(question => [question.id, { answers: [answers[question.id] ?? ''] }])) })); }}>

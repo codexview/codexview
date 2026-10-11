@@ -41,6 +41,25 @@ describe('CodexRuntime protocol', () => {
     expect(process.messages[0].params.capabilities).toBeNull();
     await runtime.close();
   });
+  it('requires explicit experimental opt-in for collaboration mode and preserves plan settings', async () => {
+    const mode = { mode: 'plan' as const, settings: { model: 'test-model', reasoning_effort: 'medium', developer_instructions: null } };
+    const stable = await setup();
+    await stable.runtime.createThread();
+    await expect(stable.runtime.send('t', 'question', { collaborationMode: mode })).rejects.toThrow('experimentalApi');
+    expect(stable.process.messages.some(m => m.method === 'turn/start')).toBe(false);
+    await stable.runtime.close();
+    const process = new FakeProcess();
+    process.handler = m => {
+      if (m.id === undefined) return;
+      process.response(m.id, m.method === 'thread/start' ? { thread: thread() } : m.method === 'turn/start' ? { turn: { id: 'turn', status: 'inProgress', items: [] } } : {});
+    };
+    const runtime = new CodexRuntime({ spawn: () => process, experimentalApi: true });
+    await runtime.start(); await runtime.createThread();
+    await runtime.send('t', 'question', { collaborationMode: mode });
+    expect(process.messages[0].params.capabilities).toEqual({ experimentalApi: true });
+    expect(process.messages.find(m => m.method === 'turn/start').params.collaborationMode).toEqual(mode);
+    await runtime.close();
+  });
   it('rejects failed handshake and cleans up process', async () => {
     const process = new FakeProcess();
     process.handler = m => process.emitMessage({ id: m.id, error: { code: -1, message: 'handshake refused' } });
@@ -69,14 +88,14 @@ describe('CodexRuntime protocol', () => {
     const { runtime, process } = await setup(); await runtime.createThread(); await runtime.send('t', 'hello');
     process.emitMessage({ id: 'approval', method: 'item/commandExecution/requestApproval', params: { threadId: 't', turnId: 'turn', itemId: 'cmd' } });
     expect(runtime.getSnapshot('t').execution).toBe('waitingApproval');
-    await expect(runtime.reply('other', 'approval', { decision: 'decline' })).rejects.toThrow('another thread');
-    await runtime.reply('t', 'approval', { decision: 'decline' });
+    await expect(runtime.reply('other', 'approval', { decision: 'decline' }, runtime.getSnapshot('t').epoch)).rejects.toThrow('another thread');
+    await runtime.reply('t', 'approval', { decision: 'decline' }, runtime.getSnapshot('t').epoch);
     expect(process.messages.at(-1)).toEqual({ id: 'approval', result: { decision: 'decline' } });
-    await expect(runtime.reply('t', 'approval', {})).rejects.toThrow('expired');
+    await expect(runtime.reply('t', 'approval', {}, runtime.getSnapshot('t').epoch)).rejects.toThrow('expired');
     process.emitMessage({ id: 42, method: 'item/tool/requestUserInput', params: { threadId: 't', turnId: 'turn', questions: [] } });
     expect(runtime.getSnapshot('t').execution).toBe('waitingInput');
     process.emitMessage({ method: 'serverRequest/resolved', params: { threadId: 't', requestId: 42 } });
-    await expect(runtime.reply('t', 42, {})).rejects.toThrow('expired');
+    await expect(runtime.reply('t', 42, {}, runtime.getSnapshot('t').epoch)).rejects.toThrow('expired');
     await runtime.close();
   });
   it('responds to unsupported requests with a JSON-RPC error', async () => {
@@ -92,6 +111,39 @@ describe('CodexRuntime protocol', () => {
     await runtime.restart();
     expect(process.messages.filter(m => m.method === 'turn/start')).toHaveLength(1);
     expect(process.messages.filter(m => m.method === 'thread/resume')).toHaveLength(1);
+    await runtime.close();
+  });
+  it('rejects delayed replies from the prior process even when request IDs repeat', async () => {
+    const { runtime, process } = await setup(); await runtime.createThread();
+    const epoch = runtime.getSnapshot('t').epoch;
+    process.emit('exit', 1); await runtime.restart();
+    process.emitMessage({ id: 7, method: 'item/fileChange/requestApproval', params: { threadId: 't', turnId: 'new' } });
+    await expect(runtime.reply('t', 7, { decision: 'accept' }, epoch)).rejects.toThrow('epoch');
+    expect(runtime.getSnapshot('t').requests).toHaveLength(1);
+    await runtime.reply('t', 7, { decision: 'decline' }, runtime.getSnapshot('t').epoch);
+    expect(process.messages.at(-1)).toEqual({ id: 7, result: { decision: 'decline' } });
+    await runtime.close();
+  });
+  it.each(['completed', 'failed', 'interrupted'])('preserves proven %s if the start receipt times out', async status => {
+    const { runtime, process } = await setup(); await runtime.createThread();
+    process.handler = m => { if (m.method === 'turn/start') process.emitMessage({ method: 'turn/completed', params: { threadId: 't', turn: { id: 'new', status, items: [] } } }); };
+    await expect(runtime.send('t', 'hello')).rejects.toBeInstanceOf(UncertainOutcomeError);
+    expect(runtime.getSnapshot('t').execution).toBe(status);
+    await runtime.close();
+  });
+  it('ignores stale or replayed compaction lifecycle events', async () => {
+    const { runtime, process } = await setup(); await runtime.createThread(); await runtime.send('t', 'hello');
+    const compact = (method: string, turnId: string, id: string) => process.emitMessage({ method, params: { threadId: 't', turnId, item: { id, type: 'contextCompaction' } } });
+    compact('item/started', 'turn', 'compact'); compact('item/completed', 'turn', 'compact');
+    process.emitMessage({ method: 'turn/completed', params: { threadId: 't', turn: { id: 'turn', status: 'completed', items: [] } } });
+    compact('item/started', 'turn', 'compact'); compact('item/started', 'turn', 'late');
+    expect(runtime.getSnapshot('t').execution).toBe('completed');
+    process.emitMessage({ method: 'turn/started', params: { threadId: 't', turn: { id: 'new', status: 'inProgress', items: [] } } });
+    compact('item/started', 'new', 'new-compact');
+    compact('item/completed', 'turn', 'late');
+    expect(runtime.getSnapshot('t').execution).toBe('compacting');
+    compact('item/completed', 'new', 'new-compact');
+    expect(runtime.getSnapshot('t').execution).toBe('running');
     await runtime.close();
   });
   it('reports timeout uncertainty without retrying a start request', async () => {
@@ -140,7 +192,7 @@ describe('runtime state regressions', () => {
     process.emitMessage({ method: 'serverRequest/resolved', params: { threadId: 't', requestId: 50 } });
     process.emitMessage({ id: 50, method: 'item/fileChange/requestApproval', params: { threadId: 't', turnId: 'turn' } });
     expect(runtime.getSnapshot('t').requests).toEqual([]);
-    await expect(runtime.reply('t', 50, {})).rejects.toThrow('expired');
+    await expect(runtime.reply('t', 50, {}, runtime.getSnapshot('t').epoch)).rejects.toThrow('expired');
     await runtime.close();
   });
   it('clears compaction execution on item completion', async () => {
@@ -285,4 +337,13 @@ describe('process authority recovery', () => {
     expect(runtime.getSnapshot('t').events.find(e => e.type === 'agent_message')).toMatchObject({ text: 'partial', partial: false });
     await runtime.close();
   });
+});
+
+it('retains explicit thread policy and config when restart follows a partial resume override', async () => {
+  const { runtime, process } = await setup();
+  await runtime.createThread({ sandbox: 'workspace-write', approvalPolicy: 'on-request', config: { first: true } });
+  await runtime.resumeThread('t', { config: { second: true } });
+  await runtime.restart();
+  expect(process.messages.filter(m => m.method === 'thread/resume').at(-1).params).toMatchObject({ sandbox: 'workspace-write', approvalPolicy: 'on-request', config: { first: true, second: true } });
+  await runtime.close();
 });

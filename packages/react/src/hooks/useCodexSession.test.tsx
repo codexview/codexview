@@ -84,3 +84,19 @@ describe('runtime epochs', () => {
     expect(result.current.busy).toBe(false);
   });
 });
+
+it('rejects a reply callback retained by an old render after request ID reuse', async () => {
+  let listener!: (state: SessionSnapshot) => void;
+  const transport: SessionTransport = {
+    subscribe: (_id, next) => { listener = next; return () => {}; },
+    models: async () => [], send: async () => {}, steer: async () => {}, interrupt: async () => {}, reply: vi.fn(async () => {}),
+  };
+  const { result } = renderHook(() => useCodexSession({ threadId: 'thread', transport }));
+  act(() => listener({ ...snapshot('thread'), epoch: 'old' }));
+  const oldReply = result.current.reply;
+  act(() => listener({ ...snapshot('thread'), epoch: 'new' }));
+  await expect(oldReply('original', { decision: 'accept' })).rejects.toThrow('expired session');
+  expect(transport.reply).not.toHaveBeenCalled();
+  await act(async () => { await result.current.reply('original', { decision: 'decline' }); });
+  expect(transport.reply).toHaveBeenCalledWith('thread', 'original', { decision: 'decline' }, 'new');
+});

@@ -73,13 +73,15 @@ export function useCodexSession({ threadId, transport }: UseCodexSessionOptions)
     return act(() => transport.interrupt(threadId, turnId));
   }, [act, threadId, transport]);
   const reply = useCallback(async (requestId: string | number, result: unknown) => {
+    const epoch = snapshot.epoch;
+    if (snapshotRef.current.epoch !== epoch || snapshotRef.current.threadId !== threadId || context.current.transport !== transport) throw new Error('Request belongs to an expired session');
     const key = sessionRequestKey(requestId);
     if (requestsInFlight.current.has(key) || resolved.current.has(key)) return;
     if (!snapshotRef.current.requests.some(request => request.id === requestId)) throw new Error('Request is no longer pending');
     requestsInFlight.current.add(key); setPending(new Set(requestsInFlight.current));
     const owner = context.current;
     try {
-      await act(() => transport.reply(threadId, requestId, result));
+      await act(() => transport.reply(threadId, requestId, result, epoch));
       if (context.current === owner) {
         resolved.current.add(key); setResolved(new Set(resolved.current));
       }
@@ -88,7 +90,7 @@ export function useCodexSession({ threadId, transport }: UseCodexSessionOptions)
         requestsInFlight.current.delete(key); setPending(new Set(requestsInFlight.current));
       }
     }
-  }, [act, threadId, transport]);
+  }, [act, threadId, transport, snapshot.epoch]);
   return { snapshot, models, actionError, busy, resolvedRequestIds, pendingRequestIds, send, steer, interrupt, reply };
 }
 export type CodexSessionController = ReturnType<typeof useCodexSession>;

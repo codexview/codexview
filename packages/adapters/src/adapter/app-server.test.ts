@@ -129,3 +129,15 @@ describe('app-server transcript', () => {
     expect(zero.truncated).toBe(true);
   });
 });
+
+it('preserves real declined commands and pending file changes without inventing exit zero', () => {
+  const store = new AppServerTranscriptStore('thread');
+  store.apply('item/completed', { ...params('command'), item: { type: 'commandExecution', id: 'command', command: 'printf COMMAND_DECLINE', status: 'declined', exitCode: null, durationMs: null, aggregatedOutput: null } });
+  expect(store.getEvents().find(e => e.type === 'exec_command_end')).toMatchObject({ exit: null, outcome: 'declined' });
+  const item = { type: 'fileChange', id: 'patch', status: 'inProgress', changes: [{ path: 'accept.txt', kind: { type: 'add' }, diff: 'FILE_ACCEPT\n' }] };
+  store.apply('item/started', { ...params('patch'), item });
+  expect(store.getEvents().find(e => e.type === 'patch_apply_begin')).toMatchObject({ callId: 'patch', files: [{ path: 'accept.txt', status: 'added', diff: 'FILE_ACCEPT\n' }] });
+  store.apply('item/completed', { ...params('patch'), item: { ...item, status: 'declined' } });
+  expect(store.getEvents().some(e => e.type === 'patch_apply_begin')).toBe(false);
+  expect(store.getEvents().find(e => e.type === 'patch_apply_end')).toMatchObject({ ok: false, outcome: 'declined' });
+});

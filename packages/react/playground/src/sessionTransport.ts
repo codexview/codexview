@@ -19,7 +19,7 @@ export const sessionTransport: SessionTransport = {
   send: (id, text, options) => sessionRequest(`/threads/${id}/send`, { text, ...options }),
   steer: (id, text, expectedTurnId) => sessionRequest(`/threads/${id}/steer`, { text, expectedTurnId }),
   interrupt: (id, turnId) => sessionRequest(`/threads/${id}/interrupt`, { turnId }),
-  reply: (id, requestId, result) => sessionRequest(`/threads/${id}/reply`, { requestId, result }),
+  reply: (id, requestId, result, epoch) => sessionRequest(`/threads/${id}/reply`, { requestId, result, epoch }),
   subscribe(id, listener, connection) {
     const controller = new AbortController();
     let retry: ReturnType<typeof setTimeout>;

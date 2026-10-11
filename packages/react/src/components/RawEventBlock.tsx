@@ -18,7 +18,7 @@ export function RawEventBlock({ item }: RawEventBlockProps): JSX.Element {
     <details className={styles.block}>
       <summary className={styles.summary}>
         <Icon size={14} aria-hidden />
-        <span>未知事件: {typeLabel}</span>
+        <span>{typeLabel === 'contextCompaction' ? 'Context compaction' : `未知事件: ${typeLabel}`}</span>
       </summary>
       <pre className={styles.code}>{safeStringify(item.payload)}</pre>
     </details>

@@ -33,7 +33,7 @@ async function fixture() {
     readThread: vi.fn(async () => ({ thread: { id: 'owned', turns: [] } })),
     resumeThread: vi.fn(async () => ({ thread: { id: 'owned', turns: [] } })),
     listModels: vi.fn(async () => []), listTurns: vi.fn(async () => ({ data: [], nextCursor: null })),
-    send: vi.fn(async () => ({})), steer: vi.fn(async () => ({})), interrupt: vi.fn(async () => ({})), reply: vi.fn(async () => ({})),
+    send: vi.fn(async () => ({})), steer: vi.fn(async () => ({})), interrupt: vi.fn(async () => ({})), reply: vi.fn(async () => {}),
     rpc: vi.fn(async () => ({})), getSnapshot: vi.fn(() => snapshot),
     subscribe: vi.fn((_id: string, callback: (snapshot: Snapshot) => void) => {
       listener = callback; callback(snapshot); return unsubscribe;
@@ -158,4 +158,11 @@ describe('local session host authorization and stream protocol', () => {
     await app.close();
     expect(app.runtime.close).toHaveBeenCalledTimes(1);
   });
+});
+
+it('returns JSON for void replies and forwards the captured epoch', async () => {
+  const host = await fixture(); await host.own();
+  const response = await host.http('/threads/owned/reply', { method: 'POST', headers: host.headers, body: { requestId: 3, result: { decision: 'decline' }, epoch: 'captured' } });
+  expect(response).toEqual({ status: 200, body: {} });
+  expect(host.runtime.reply).toHaveBeenCalledWith('owned', 3, { decision: 'decline' }, 'captured');
 });

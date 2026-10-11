@@ -29,9 +29,9 @@ export type ItemView =
   | (ItemViewBase & { kind: 'reasoning'; text: string })
   | (ItemViewBase & { kind: 'assistant_text'; text: string; phase?: 'commentary' | 'final_answer' })
   | (ItemViewBase & { kind: 'tool_call'; name: string; server?: string; args: unknown; result?: unknown; error?: string })
-  | (ItemViewBase & { kind: 'exec'; command: string; exit?: number; stdout?: string; stderr?: string; durationMs?: number })
+  | (ItemViewBase & { kind: 'exec'; command: string; outcome?: 'declined' | 'interrupted'; exit?: number; stdout?: string; stderr?: string; durationMs?: number })
   | (ItemViewBase & { kind: 'search'; query: string; results?: SearchResult[] })
-  | (ItemViewBase & { kind: 'patch'; files: PatchFile[]; ok?: boolean })
+  | (ItemViewBase & { kind: 'patch'; files: PatchFile[]; outcome?: 'declined'; ok?: boolean })
   | (ItemViewBase & { kind: 'todo_list'; items: TodoEntry[] })
   | (ItemViewBase & { kind: 'error'; message: string })
   | (ItemViewBase & { kind: 'raw'; payload: unknown });

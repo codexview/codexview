@@ -12,7 +12,7 @@ function fixture() {
     models: vi.fn(async () => [{ id: 'model-id', model: 'model', displayName: 'Test model', defaultReasoningEffort: 'medium', supportedReasoningEfforts: [{ reasoningEffort: 'high', description: 'More reasoning' }] }]),
   };
   let revision = 0;
-  return { transport, emit: (next: Partial<SessionSnapshot>) => act(() => listener({ threadId: 'thread', revision: ++revision, connection: 'connected', execution: 'idle', events: [], requests: [], ...next })), disconnect: () => act(() => connection('disconnected')) };
+  return { transport, emit: (next: Partial<SessionSnapshot>) => act(() => listener({ threadId: 'thread', epoch: 'test-epoch', revision: ++revision, connection: 'connected', execution: 'idle', events: [], requests: [], ...next })), disconnect: () => act(() => connection('disconnected')) };
 }
 
 describe('CodexSession', () => {
@@ -50,7 +50,7 @@ describe('CodexSession', () => {
     expect(host.transport.reply).not.toHaveBeenCalled();
     fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
     expect(screen.getByRole('button', { name: 'Approve' })).toBeDisabled();
-    await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 17, { decision: 'accept' }));
+    await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 17, { decision: 'accept' }, 'test-epoch'));
     await screen.findByText('Response sent');
     expect(screen.getByRole('button', { name: 'Decline' })).toBeDisabled();
   });
@@ -64,6 +64,19 @@ describe('CodexSession', () => {
     fireEvent.change(screen.getByLabelText('Choose color'), { target: { value: 'Blue' } });
     fireEvent.change(screen.getByLabelText('Add note'), { target: { value: 'Ready' } });
     fireEvent.click(screen.getByRole('button', { name: 'Submit answers' }));
-    await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 'request-id', { answers: { color: { answers: ['Blue'] }, note: { answers: ['Ready'] } } }));
+    await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 'request-id', { answers: { color: { answers: ['Blue'] }, note: { answers: ['Ready'] } } }, 'test-epoch'));
   });
+});
+
+it('shows the actual file path and diff before approving a file change', async () => {
+  const host = fixture(); render(<CodexSession threadId="thread" transport={host.transport} />);
+  host.emit({ execution: 'waitingApproval', events: [
+    { type: 'turn_started', turnId: 'turn', at: 0 },
+    { type: 'patch_apply_begin', turnId: 'turn', callId: 'patch', at: 0, files: [{ path: 'accept.txt', status: 'added', diff: 'FILE_ACCEPT' }] },
+  ], requests: [{ id: 2, threadId: 'thread', turnId: 'turn', method: 'item/fileChange/requestApproval', params: { itemId: 'patch', reason: null, grantRoot: null } }] });
+  const card = screen.getByRole('region', { name: 'Request 2' });
+  expect(card).toHaveTextContent('accept.txt'); expect(card).toHaveTextContent('FILE_ACCEPT');
+  expect(screen.queryByText(/未知事件/)).not.toBeInTheDocument();
+  fireEvent.click(screen.getByRole('button', { name: 'Approve' }));
+  await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 2, { decision: 'accept' }, 'test-epoch'));
 });

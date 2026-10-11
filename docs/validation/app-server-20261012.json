@@ -1,0 +1,221 @@
+{
+  "date": "2026-10-12",
+  "cli": "codex-cli 0.162.1",
+  "model": "gpt-6.1-sol",
+  "effort": "medium",
+  "effectiveModelAndEffortEvidence": "thread/start and thread/resume responses",
+  "scope": "stdio runtime, adapter, React and local playground",
+  "budget": {
+    "workerTurnStarts": 9,
+    "workerAutomaticCompactions": 2,
+    "independentBrowserTurnStarts": 3,
+    "total": 14,
+    "authorizedLimit": 16,
+    "unit": "user turn/start plus automatic compaction; tool continuations can add internal model requests"
+  },
+  "schema": {
+    "stableTurnStartSha256": "abaede48b0df0c0c597dc120331b88558bf000630ddca49901cf015208bfff08",
+    "experimentalTurnStartSha256": "849401f5c04842391cb2838c5bfa315b92c6ce85a059a8f032201ce83baa07ed"
+  },
+  "cases": [
+    {
+      "name": "newSession",
+      "result": "passed"
+    },
+    {
+      "name": "refreshWhileRunning",
+      "result": "passed"
+    },
+    {
+      "name": "continueReadOnly",
+      "result": "passed"
+    },
+    {
+      "name": "savedHistoryDedup",
+      "result": "passed"
+    },
+    {
+      "name": "multiTurnRecall",
+      "result": "passed"
+    },
+    {
+      "name": "steerInActiveTurn",
+      "result": "passed"
+    },
+    {
+      "name": "interruptDuringCommand",
+      "result": "passed"
+    },
+    {
+      "name": "interruptedTerminalStatePreservedOnDisconnect",
+      "result": "passed"
+    },
+    {
+      "name": "processRestartResume",
+      "result": "passed"
+    },
+    {
+      "name": "sendAfterInterruption",
+      "result": "passed"
+    }
+  ],
+  "fixedBrowserCases": [
+    {
+      "name": "command and file approvals accepted/declined",
+      "result": "passed",
+      "requests": [
+        "item/commandExecution/requestApproval",
+        "item/commandExecution/requestApproval",
+        "item/commandExecution/requestApproval",
+        "item/fileChange/requestApproval",
+        "item/fileChange/requestApproval"
+      ]
+    },
+    {
+      "name": "real requestUserInput selection and free answer",
+      "result": "passed",
+      "answers": [
+        "Blue",
+        "CUSTOM-4821"
+      ]
+    }
+  ],
+  "fixedBrowserStates": [
+    "idle",
+    "running",
+    "waitingApproval",
+    "completed",
+    "waitingInput"
+  ],
+  "automaticCompaction": {
+    "configuredThreshold": 18000,
+    "lastInputTokensBeforeFiller": 15520,
+    "lastInputTokensAfterFiller": 46559,
+    "trigger": "following turn after synthetic filler",
+    "manualCompactionRpcCount": 0,
+    "startedItems": 2,
+    "completedItems": 2,
+    "runtimeStateObserved": "compacting",
+    "browserBanner": "fixture-tested; automatic run runtime snapshots verified",
+    "markers": [
+      "CV-COMPACT-7391",
+      "violet-lantern"
+    ],
+    "recallAfterCompaction": true,
+    "recallOnSubsequentTurn": true,
+    "recallAfterProcessRestart": true,
+    "historyLiveAgentMessageCountUnchanged": true,
+    "events": [
+      {
+        "method": "item/started",
+        "itemType": "contextCompaction",
+        "item": "1",
+        "emittedAtMs": 1791717677958
+      },
+      {
+        "method": "item/completed",
+        "itemType": "contextCompaction",
+        "item": "1",
+        "emittedAtMs": 1791717687727
+      },
+      {
+        "method": "item/started",
+        "itemType": "contextCompaction",
+        "item": "2",
+        "emittedAtMs": 1791717691210
+      },
+      {
+        "method": "item/completed",
+        "itemType": "contextCompaction",
+        "item": "2",
+        "emittedAtMs": 1791717701000
+      }
+    ]
+  },
+  "realEventNames": [
+    "account/rateLimits/updated",
+    "account/updated",
+    "item/agentMessage/delta",
+    "item/commandExecution/requestApproval",
+    "item/completed",
+    "item/fileChange/requestApproval",
+    "item/started",
+    "item/tool/requestUserInput",
+    "mcpServer/startupStatus/updated",
+    "remoteControl/status/changed",
+    "serverRequest/resolved",
+    "thread/goal/cleared",
+    "thread/settings/updated",
+    "thread/started",
+    "thread/status/changed",
+    "thread/tokenUsage/updated",
+    "turn/completed",
+    "turn/diff/updated",
+    "turn/started"
+  ],
+  "correctedFindings": [
+    "Expired approval reply epoch and old-render callback rejected",
+    "Terminal notification preserved when start receipt times out",
+    "Stale/replayed compaction cannot replace current turn state",
+    "Void approval HTTP response serialized as JSON object",
+    "Declined command retains null exit and displays Declined",
+    "Pending file approval shows path and diff",
+    "Partial resume options preserve explicit policy/config for restart"
+  ],
+  "firstAttemptLimitation": "The initial assertion expected compaction immediately after filler; it failed without a compaction event. The same isolated saved thread was resumed and its next turn triggered automatic compaction. No manual compaction was used.",
+  "postFixRerun": {
+    "turnStarts": 2,
+    "automaticCompactions": 0,
+    "approvals": {
+      "commandAccept": true,
+      "commandDecline": true,
+      "fileAccept": true,
+      "fileDecline": true,
+      "approvedFileExists": true,
+      "declinedFileAbsent": true
+    },
+    "questionAnswers": [
+      "Blue",
+      "CUSTOM-4821"
+    ],
+    "finalAnswerIncludesBoth": true
+  },
+  "privacy": "Only synthetic input. Raw protocols/screenshots remain in temporary local storage; this record omits credentials and absolute user paths.",
+  "verification": {
+    "tests": {
+      "adapters": 125,
+      "runtime": 30,
+      "cli": 62,
+      "react": 102,
+      "total": 319
+    },
+    "typecheck": "passed",
+    "build": "passed",
+    "releaseDryRuns": [
+      "adapters minor",
+      "runtime minor",
+      "cli minor",
+      "react minor"
+    ],
+    "independentTarballConsumer": [
+      "runtime import",
+      "adapter materialization",
+      "React transcript render with browser DOM",
+      "CLI executable --help"
+    ],
+    "noPublication": true
+  },
+  "postFixBrowserUi": {
+    "approvalThread": "01a12ab4-7662-7633-86ce-3e20bf20e69d",
+    "questionThread": "01a12ab6-4436-74f3-98fa-fa8f13c0a99d",
+    "commandAccept": true,
+    "commandDecline": true,
+    "fileAccept": true,
+    "fileDecline": true,
+    "filePreview": true,
+    "declinedLabels": true,
+    "answer": "Blue\nCUSTOM-4821",
+    "alerts": [],
+    "state": "Connection: disconnected \u00b7 Execution: completed\u5df2\u5b8c\u6210Use request_user_inp"
+  }
+}

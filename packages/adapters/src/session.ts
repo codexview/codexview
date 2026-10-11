@@ -31,13 +31,21 @@ export interface SessionModel {
   defaultReasoningEffort: string;
   supportedReasoningEfforts: { reasoningEffort: string; description: string }[];
 }
-export interface SessionTurnOptions { model?: string; effort?: string }
+export interface SessionTurnOptions {
+  model?: string;
+  effort?: string;
+  /** Experimental app-server API; the host runtime must explicitly enable it. */
+  collaborationMode?: {
+    mode: 'plan' | 'default';
+    settings: { model: string; reasoning_effort: string | null; developer_instructions: string | null };
+  };
+}
 /** Implement this small authenticated host boundary; never expose arbitrary RPC. */
 export interface SessionTransport {
   subscribe(threadId: string, listener: (snapshot: SessionSnapshot) => void, onConnection?: (state: SessionConnection) => void): () => void;
   send(threadId: string, text: string, options?: SessionTurnOptions): Promise<unknown>;
   steer(threadId: string, text: string, expectedTurnId: string): Promise<unknown>;
   interrupt(threadId: string, turnId: string): Promise<unknown>;
-  reply(threadId: string, requestId: string | number, result: unknown): Promise<unknown>;
+  reply(threadId: string, requestId: string | number, result: unknown, epoch: string | undefined): Promise<unknown>;
   models(): Promise<SessionModel[]>;
 }
