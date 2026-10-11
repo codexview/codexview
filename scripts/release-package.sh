@@ -71,15 +71,18 @@ usage() {
   cat <<USAGE
 Usage:
   ./release.sh <patch|minor|major|X.Y.Z> [--publish]
+  ./release.sh 0.0.0 --bootstrap   # runtime first-package creation only
   ./release.sh --help
 
-Without --publish, this runs install, typecheck, tests, and build without
-changing the package version. Add --publish to bump the version, commit and
+Without publishing flags, this runs install, typecheck, tests, and build
+without changing the package version. --bootstrap creates only the initial
+runtime 0.0.0 package under the bootstrap dist-tag. Add --publish to bump the version, commit and
 push main, push the package release tag, wait for $workflow, and verify npm.
 USAGE
 }
 
 publish=false
+bootstrap=false
 version_spec=""
 
 for arg in "$@"; do
@@ -87,6 +90,9 @@ for arg in "$@"; do
     -h|--help)
       usage
       exit 0
+      ;;
+    --bootstrap)
+      bootstrap=true
       ;;
     --publish)
       publish=true
@@ -106,12 +112,18 @@ done
   exit 2
 }
 
+if [[ "$bootstrap" == true ]]; then
+  [[ "$package_key" == "runtime" && "$version_spec" == "0.0.0" && "$publish" == false ]] ||
+    die "bootstrap is only supported as runtime release.sh 0.0.0 --bootstrap"
+fi
+
 for command in git node npm pnpm; do
   command -v "$command" >/dev/null 2>&1 || die "missing command: $command"
 done
 
 if [[ "$publish" == true ]]; then
-  [[ "$(git branch --show-current)" == "main" ]] || die "releases must run on main"
+  release_branch="$(git branch --show-current)"
+  [[ "$release_branch" == "main" || -z "$release_branch" ]] || die "releases require main or a detached checkout of origin/main"
   [[ -z "$(git status --porcelain)" ]] || die "worktree must be clean before release"
 
   git fetch origin main
@@ -135,6 +147,29 @@ pnpm --filter "$package_name" build
 pack_dir="$(mktemp -d)"
 trap 'rm -rf "$pack_dir"' EXIT
 pnpm --dir "$package_dir" pack --pack-destination "$pack_dir" >/dev/null
+
+if [[ "$bootstrap" == true ]]; then
+  npm whoami >/dev/null 2>&1 || die "npm maintainer login is required for first-package bootstrap"
+  if npm view "$package_name" version >/dev/null 2>&1; then
+    die "runtime package already exists; use the OIDC release workflow"
+  fi
+  bootstrap_dir="$pack_dir/bootstrap"
+  mkdir "$bootstrap_dir"
+  tar -xzf "$pack_dir"/*.tgz -C "$bootstrap_dir"
+  node --input-type=module - "$bootstrap_dir/package/package.json" <<'JS'
+import { readFileSync, writeFileSync } from 'node:fs';
+const path = process.argv[2];
+const pkg = JSON.parse(readFileSync(path, 'utf8'));
+pkg.version = '0.0.0';
+delete pkg.scripts;
+writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
+JS
+  npm pack "$bootstrap_dir/package" --pack-destination "$bootstrap_dir" >/dev/null
+  npm publish "$bootstrap_dir"/*.tgz --tag bootstrap --access public
+  [[ "$(npm view "$package_name@0.0.0" version)" == "0.0.0" ]] || die "bootstrap registry verification failed"
+  printf 'Bootstrap created: %s@0.0.0 (tag bootstrap). Configure trusted publishing, then use --publish.\n' "$package_name"
+  exit 0
+fi
 
 if [[ "$publish" != true ]]; then
   printf 'Dry run complete. Publish with: ./release.sh %s --publish\n' \
@@ -160,7 +195,7 @@ if [[ "$target_version" != "$current_version" ]]; then
   )
   git add "$package_dir/package.json"
   git commit -m "release($package_key): $target_version"
-  git push origin main
+  git push origin HEAD:main
 else
   printf 'Version already set to %s; continuing with tag creation.\n' \
     "$target_version"

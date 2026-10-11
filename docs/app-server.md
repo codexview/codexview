@@ -124,15 +124,16 @@ Official references: [app-server](https://learn.chatgpt.com/docs/app-server) and
 
 Run each affected package's `release.sh minor` for install, typecheck, tests,
 build and tarball checks. Dry runs work on feature branches and leave versions
-unchanged. `--publish` still requires clean main matching origin/main, then tags
-and waits for OIDC publication. Merge the reviewed feature PR with passing CI,
-then use a clean main checkout matching origin/main for publication.
+unchanged. `--publish` requires a clean checkout matching origin/main, on main
+or a detached HEAD, then tags and waits for OIDC publication. Merge the reviewed
+feature PR with passing CI, then publish from that clean checkout. Detached
+publication leaves another worktree's checked-out main branch untouched.
 
 Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its npm
 package must exist before the package Settings page can configure a trusted
-publisher. For this first release, publish a separately prepared, verified
-`0.0.0` bootstrap tarball with the `bootstrap` dist-tag using the maintainer's npm
-login, without changing the source manifest or taking the canonical version.
+publisher. For this first release, run
+`packages/runtime/release.sh 0.0.0 --bootstrap` using the maintainer's npm login. This verifies the package, prepares a temporary `0.0.0` tarball and publishes
+only the `bootstrap` dist-tag, preserving the source manifest and canonical version.
 Then associate `codexview/codexview`, workflow `publish-runtime.yml`, no
 environment, and allow direct npm publication. Complete the first OIDC publish
 within the trusted publisher's initial verification window.
