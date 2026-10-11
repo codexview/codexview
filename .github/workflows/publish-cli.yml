@@ -4,9 +4,7 @@ name: Publish @codexview/cli
 # (no long-lived NPM_TOKEN secret required).
 #
 # Trigger: push a tag matching cli-v*.*.* (e.g. cli-v0.1.1).
-# To release:
-#   1. bump version in cli/package.json
-#   2. commit; git tag cli-v0.1.1; git push --follow-tags
+# Release through packages/cli/release.sh after merging to main.
 #
 # Set up trusted publishing once at npmjs.com:
 #   Package @codexview/cli → Settings → Trusted Publishers → Add → GitHub Actions

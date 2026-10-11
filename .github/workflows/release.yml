@@ -1,15 +1,13 @@
 name: Release
 
-# Publishes @codexview/* packages to npm via OIDC trusted publishing
+# Publishes @codexview/react to npm via OIDC trusted publishing
 # (no long-lived NPM_TOKEN secret required).
 #
 # Trigger: push a tag matching v*.*.* (e.g. v0.2.0).
-# To release:
-#   1. bump version in package.json
-#   2. commit; git tag v0.2.0; git push --follow-tags
+# Release through packages/react/release.sh after merging to main.
 #
-# Set up trusted publishing on each package once at npmjs.com:
-#   Package → Settings → Trusted Publishers → Add → GitHub Actions
+# Set up trusted publishing once at npmjs.com:
+#   Package @codexview/react → Settings → Trusted Publishers → Add → GitHub Actions
 #     repo:        codexview/codexview
 #     workflow:    release.yml
 #     environment: (leave blank)

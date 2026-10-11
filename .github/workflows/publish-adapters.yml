@@ -4,9 +4,7 @@ name: Publish @codexview/adapters
 # (no long-lived NPM_TOKEN secret required).
 #
 # Trigger: push a tag matching adapters-v*.*.* (e.g. adapters-v0.1.0).
-# To release:
-#   1. bump version in packages/adapters/package.json
-#   2. commit; git tag adapters-v0.1.0; git push --follow-tags
+# Release through packages/adapters/release.sh after merging to main.
 #
 # Set up trusted publishing once at npmjs.com:
 #   Package @codexview/adapters → Settings → Trusted Publishers → Add → GitHub Actions

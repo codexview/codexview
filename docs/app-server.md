@@ -129,6 +129,24 @@ or a detached HEAD, then tags and waits for OIDC publication. Merge the reviewed
 feature PR with passing CI, then publish from that clean checkout. Detached
 publication leaves another worktree's checked-out main branch untouched.
 
+Each npm package has its own GitHub Actions trusted publisher. All bindings use
+owner **codexview**, repository **codexview**, a blank environment, and permission
+to run `npm publish`. The workflow filename must match exactly:
+
+| npm package | Workflow filename | Tag prefix | npm publisher status checked 2026-10-12 |
+| --- | --- | --- | --- |
+| @codexview/adapters | `publish-adapters.yml` | `adapters-v` | Valid; published with OIDC |
+| @codexview/cli | `publish-cli.yml` | `cli-v` | Valid; published with OIDC |
+| @codexview/react | `release.yml` | `v` | Valid; published with OIDC |
+| @codexview/runtime | `publish-runtime.yml` | `runtime-v` | Pending first-package creation and npm binding |
+
+The four workflows are active and use GitHub-hosted Ubuntu runners, Node 24,
+`id-token: write` for npm OIDC, and `contents: write` for GitHub releases. Regular
+CI publication does not require an `NPM_TOKEN` repository secret or an npm login
+on the maintainer's machine. Each workflow checks that its tag matches the package
+version and publishes with provenance. The repository has no Actions secrets;
+the three successful releases verify these existing bindings end to end.
+
 Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its npm
 package must exist before the package Settings page can configure a trusted
 publisher. For this first release, run
@@ -137,6 +155,9 @@ only the `bootstrap` dist-tag, preserving the source manifest and canonical vers
 Then associate `codexview/codexview`, workflow `publish-runtime.yml`, no
 environment, and allow direct npm publication. Complete the first OIDC publish
 within the trusted publisher's initial verification window.
+After the binding is saved, run `packages/runtime/release.sh 0.7.0 --publish`
+from the clean main checkout described above, then verify the public registry
+and a fresh consumer install. Until those checks pass, runtime remains unpublished.
 
 The canonical release versions are adapters **0.8.0**, runtime **0.7.0**,
 React **0.5.0** and CLI **0.7.1**, using each package's `release.sh`.
