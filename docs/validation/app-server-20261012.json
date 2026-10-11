@@ -185,9 +185,9 @@
     "tests": {
       "adapters": 125,
       "runtime": 30,
-      "cli": 62,
-      "react": 106,
-      "total": 323
+      "cli": 63,
+      "react": 107,
+      "total": 325
     },
     "typecheck": "passed",
     "build": "passed",
@@ -214,6 +214,37 @@
     "releaseDryRun": "react minor",
     "fullTypecheckTestBuild": "passed",
     "runtimeProtocolChanged": false
+  },
+  "completionFollowUp": {
+    "additionalModelBudgetLimit": 6,
+    "additionalModelBudgetUsed": 0,
+    "realAutomaticCompactionBrowser": "prepared; awaiting browser readiness, not triggered",
+    "realManagedNetworkBrowser": "isolated loopback probe prepared; awaiting browser readiness, not triggered",
+    "controlledNetworkProtocol": {
+      "validation": "controlled JSON-RPC subprocess to runtime to HTTP; browser phase prepared but not yet run",
+      "realCodexManagedProxy": false,
+      "modelBudgetUnits": 0,
+      "requestId": "network-approval:7",
+      "generations": 2,
+      "decisions": ["accept", "decline"],
+      "contexts": [
+        { "host": "accept.synthetic.invalid", "protocol": "https" },
+        { "host": "decline.synthetic.invalid", "protocol": "socks5Tcp" }
+      ],
+      "assertions": ["original string ID preserved", "epoch changes on process restart", "missing and previous epoch rejected over HTTP", "duplicate reply rejected over HTTP", "one response per child generation", "no automatic reply"]
+    }
+  },
+  "releaseVersionReporting": {
+    "cli": "-v and --version read the installed package manifest",
+    "react": "VERSION statically imports the package version; explicit declaration entryRoot preserves public type layout",
+    "installedTarballs": {
+      "cliOutput": "codexview-md 0.7.0",
+      "reactVersion": "0.4.2",
+      "manifestMatch": true,
+      "nodeNextPublicTypeImports": "passed"
+    },
+    "regressions": ["both CLI version flags equal package version", "React public VERSION equals package version"],
+    "packageVersionsChanged": false
   },
   "postFixBrowserUi": {
     "approvalThread": "01a12ab4-7662-7633-86ce-3e20bf20e69d",

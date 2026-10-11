@@ -8,18 +8,21 @@ import { tmpdir, homedir } from 'node:os';
 import { join, resolve } from 'node:path';
 import { createRequire } from 'node:module';
 import { createInterface } from 'node:readline';
+import { createServer as createHttpServer } from 'node:http';
 import { CodexRuntime } from '../packages/runtime/dist/index.js';
 import { sessionApiPlugin } from '../packages/react/playground/session-api.mjs';
 if (!process.argv.includes('--run')) {
-    console.log('Opt in with node scripts/accept-app-server.mjs --run [--interactive]. Builds required. Use --cases approvals for approval/question checks, --cases compaction for compaction, or default all. --budget limits turn starts + compactions. --resume DIR resumes saved compaction evidence.');
+    console.log('Opt in with node scripts/accept-app-server.mjs --run [--interactive]. Builds required. --cases all|approvals|compaction|browser-compaction|network. --budget limits cumulative turn starts + compactions. --resume DIR resumes saved synthetic evidence; browser-compaction requires it. Browser-only cases print readiness/finish gate files.');
     process.exit(0);
 }
 const cases = process.argv.includes('--cases') ? process.argv[process.argv.indexOf('--cases') + 1] : 'all';
-assert(['all', 'approvals', 'compaction'].includes(cases), 'Unknown --cases value');
+assert(['all', 'approvals', 'compaction', 'browser-compaction', 'network'].includes(cases), 'Unknown --cases value');
 const budget = Number(process.argv.includes('--budget') ? process.argv[process.argv.indexOf('--budget') + 1] : 11);
 assert(Number.isInteger(budget) && budget > 0, 'Positive integer --budget required');
 const interactive = process.argv.includes('--interactive');
 const resumeRoot = process.argv.includes('--resume') ? process.argv[process.argv.indexOf('--resume') + 1] : undefined;
+const browserCompaction = cases === 'browser-compaction';
+assert(!browserCompaction || resumeRoot, 'browser-compaction requires --resume with isolated synthetic evidence');
 const root = resumeRoot ? resolve(resumeRoot) : await mkdtemp(join(tmpdir(), 'codexview-real-'));
 const work = join(root, 'workspace');
 const home = join(root, 'codex-home');
@@ -37,6 +40,16 @@ if (previous) {
     report.previousFailures = [...(report.previousFailures || []), ...report.failures];
     report.failures = [];
 }
+if (browserCompaction) {
+    // Early acceptance versions did not register their direct-runtime compaction
+    // thread in the HTTP playground. Register only this explicit synthetic ID.
+    const file = join(root, 'threads.json');
+    const rows = existsSync(file) ? JSON.parse(await readFile(file, 'utf8')) : [];
+    if (!rows.some(row => row.id === report.compactionThreadId)) {
+        rows.push({ id: report.compactionThreadId, name: 'Synthetic automatic compaction' });
+        await writeFile(file, JSON.stringify(rows), { mode: 0o600 });
+    }
+}
 for (const [name, flags] of [['stable', []], ['experimental', ['--experimental']]])
     execFileSync('codex', ['app-server', 'generate-ts', ...flags, '--out', join(root, 'schema-' + name)]);
 const snapshots = createWriteStream(join(root, 'snapshots.jsonl'), { mode: 0o600, flags: 'a' });
@@ -46,13 +59,19 @@ const incoming = [];
 const outgoing = [];
 const states = new Set();
 const compactItems = new Set(report.compactionItems || []);
+const initialBudgetUsed = report.turnStarts + report.compactions;
+const initialCompactions = report.compactions;
+const compactionLifecycle = [];
 let child;
+let networkTarget;
 const runtime = new CodexRuntime({ experimentalApi: true, snapshotIntervalMs: 1, spawn: () => {
         child = spawn('codex', ['app-server', '--strict-config'], { cwd: work, env: { ...process.env, CODEX_HOME: home }, stdio: ['pipe', 'pipe', 'pipe'] });
         createInterface({ input: child.stdout }).on('line', line => {
             const m = JSON.parse(line);
             incoming.push(m);
             raw.write(JSON.stringify({ direction: 'in', ...m }) + '\n');
+            if (['item/started', 'item/completed'].includes(m.method) && m.params?.item?.type === 'contextCompaction')
+                compactionLifecycle.push({ method: m.method, at: new Date().toISOString(), itemId: m.params.item.id, turnId: m.params.turnId });
             if (m.method === 'item/started' && m.params?.item?.type === 'contextCompaction' && !compactItems.has(m.params.item.id)) {
                 compactItems.add(m.params.item.id);
                 report.compactions++;
@@ -94,7 +113,61 @@ function passed(name, details) { report.cases.push({ name, result: 'passed', ...
 console.log(JSON.stringify({ root, url, interactive, model, effort }));
 await writeFile(join(root, 'location.json'), JSON.stringify({ root, url }));
 try {
-    if (!resumeRoot && cases !== 'compaction') {
+    if (cases === 'network') {
+        assert(interactive, 'network requires explicit browser decisions with --interactive');
+        const hits = [];
+        networkTarget = createHttpServer((req, res) => { hits.push(req.url); res.end('SYNTHETIC_NETWORK_TARGET'); });
+        await new Promise(resolve => networkTarget.listen(5196, '127.0.0.1', resolve));
+        const id = await thread({ sandbox: 'workspace-write', approvalPolicy: 'on-request', config: {
+            model_reasoning_effort: effort,
+            'sandbox_workspace_write.network_access': true,
+            'features.network_proxy.enabled': true,
+            'features.network_proxy.proxy_url': 'http://127.0.0.1:5319',
+            'features.network_proxy.enable_socks5': false,
+            'features.network_proxy.allow_local_binding': true,
+        } });
+        const gate = join(root, `browser-ready-${process.pid}`);
+        const finish = join(root, `browser-finished-${process.pid}`);
+        console.log('NETWORK_BROWSER_READY', JSON.stringify({ root, url, threadId: id, gate, finish }));
+        await writeFile(join(root, 'network-location.json'), JSON.stringify({ root, url, threadId: id, gate, finish }));
+        await wait(() => existsSync(gate), 'network browser readiness gate', 1800000);
+        const result = await turn(id, `Perform exactly two exec_command calls, sequentially, with login=false and no escalation. First run: curl --noproxy '' --max-time 90 http://127.0.0.1:5196/accept . Then run: curl --noproxy '' --max-time 90 http://localhost:5196/decline . These are isolated synthetic loopback targets. Do not change proxy variables, network policies or retry failures; after both calls report their outputs briefly.`, {});
+        const requests = result.messages.filter(m => m.method === 'item/commandExecution/requestApproval' && m.params.networkApprovalContext);
+        report.networkProbe = { requests: requests.map(m => ({ id: m.id, ...m.params.networkApprovalContext, decision: outgoing.find(o => o.id === m.id && o.result)?.result })), hits, text: result.text };
+        await writeFile(join(root, 'summary.json'), JSON.stringify(report, null, 2));
+        console.log('NETWORK_RESULT', JSON.stringify(report.networkProbe));
+        await wait(() => existsSync(finish), 'network browser finish gate', 1800000);
+        assert(requests.length >= 2, 'Installed CLI did not produce both managed-network approvals; inspect networkProbe and raw protocol');
+        assert.deepEqual(requests.map(m => outgoing.find(o => o.id === m.id && o.result)?.result.decision), ['accept', 'decline']);
+        assert.deepEqual(hits, ['/accept']);
+        passed('real managed-network browser approval accept/decline', report.networkProbe);
+    }
+    if (browserCompaction) {
+        const cid = report.compactionThreadId;
+        assert(cid, 'Saved compactionThreadId required');
+        // A new process applies the lowered threshold to the existing synthetic history.
+        // No compact RPC or fabricated lifecycle event is used.
+        await runtime.start();
+        await runtime.resumeThread(cid, { model, config: { model_reasoning_effort: effort, model_auto_compact_token_limit: 1000 } });
+        observe(cid);
+        const gate = join(root, `browser-ready-${process.pid}`);
+        const finish = join(root, `browser-finished-${process.pid}`);
+        console.log('BROWSER_READY', JSON.stringify({ url, threadId: cid, gate, finish, remainingBudget: budget - initialBudgetUsed }));
+        await writeFile(join(root, 'browser-compaction-location.json'), JSON.stringify({ url, threadId: cid, gate, finish }));
+        await wait(() => existsSync(gate), 'browser readiness gate', 1800000);
+        assert(budget - initialBudgetUsed >= 2, 'Reserve one turn and one automatic compaction');
+        const result = await turn(cid, 'Recall the permanent marker and value from this session. Reply only with them. Do not use tools.');
+        assert(report.compactions > initialCompactions, 'No new automatic compaction');
+        assert(report.turnStarts + report.compactions <= budget, 'Automatic compaction exceeded reserved budget');
+        assert(states.has('compacting'), 'No live compacting snapshot');
+        assert(result.text.includes('CV-COMPACT-7391') && result.text.includes('violet-lantern'), 'Marker recall failed');
+        assert(!outgoing.some(m => /compact/i.test(m.method || '')), 'Manual compaction forbidden');
+        report.browserCompaction = { threshold: 1000, addedBudgetUnits: report.turnStarts + report.compactions - initialBudgetUsed, lifecycle: compactionLifecycle, markerRecall: result.text, browserObservation: 'Record separately from coordinator evidence' };
+        passed('real automatic compaction browser session prepared and completed', report.browserCompaction);
+        await writeFile(join(root, 'summary.json'), JSON.stringify(report, null, 2));
+        await wait(() => existsSync(finish), 'browser finish gate', 1800000);
+    }
+    if (!resumeRoot && ['all', 'approvals'].includes(cases)) {
         const id = await thread();
         console.log('APPROVAL_THREAD', id);
         const decisionCounts = new Map();
@@ -153,7 +226,7 @@ try {
         assert(resumed.text.includes('CV-INTERRUPT-2718') && resumed.text.includes('CV-STEER-3141'));
         passed('tool interruption, live steer, subsequent turn', { markers: ['CV-INTERRUPT-2718', 'CV-STEER-3141'] });
     }
-    if (cases !== 'approvals') {
+    if (['all', 'compaction'].includes(cases)) {
         const cid = resumeRoot ? report.compactionThreadId : await thread({ sandbox: 'workspace-write', approvalPolicy: 'never', config: { model_reasoning_effort: effort, model_auto_compact_token_limit: 18000 } });
         assert(cid, 'Saved compactionThreadId required to resume');
         report.compactionThreadId = cid;
@@ -200,12 +273,13 @@ finally {
     report.effectiveConfigurations = [...(report.effectiveConfigurations || []), ...incoming.filter(m => m.result?.model && m.result?.reasoningEffort).map(m => ({ model: m.result.model, effort: m.result.reasoningEffort }))];
     report.lastInputTokens = [...(report.lastInputTokens || []), ...incoming.filter(m => m.method === 'thread/tokenUsage/updated').map(m => m.params.tokenUsage.last.inputTokens)];
     report.compactionItems = [...compactItems];
-    if (cases !== 'approvals')
-        report.automaticCompactionThreshold = 18000;
+    if (['all', 'compaction', 'browser-compaction'].includes(cases))
+        report.automaticCompactionThreshold = browserCompaction ? 1000 : 18000;
     await writeFile(join(root, 'summary.json'), JSON.stringify(report, null, 2) + '\n');
     console.log('EVIDENCE', join(root, 'summary.json'), 'BUDGET', report.turnStarts + report.compactions);
     await server.close();
     await runtime.close();
+    networkTarget?.close();
     raw.end();
     snapshots.end();
 }

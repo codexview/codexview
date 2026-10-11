@@ -125,11 +125,24 @@ Official references: [app-server](https://learn.chatgpt.com/docs/app-server) and
 Run each affected package's `release.sh minor` for install, typecheck, tests,
 build and tarball checks. Dry runs work on feature branches and leave versions
 unchanged. `--publish` still requires clean main matching origin/main, then tags
-and waits for OIDC publication. Runtime has its own `runtime-v*` workflow; its
-npm trusted-publisher association must be configured before its first publication.
-Publish adapters before packages that depend on its new API. React publication
-uses pnpm so workspace dependency versions are rewritten in the package. This feature branch
-does not merge main or deploy consumers.
+and waits for OIDC publication. Merge the reviewed feature PR with passing CI,
+then use a clean main checkout matching origin/main for publication.
+
+Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its npm
+package must exist before the package Settings page can configure a trusted
+publisher. For this first release, publish a separately prepared, verified
+`0.0.0` bootstrap tarball with the `bootstrap` dist-tag using the maintainer's npm
+login, without changing the source manifest or taking the canonical version.
+Then associate `codexview/codexview`, workflow `publish-runtime.yml`, no
+environment, and allow direct npm publication. Complete the first OIDC publish
+within the trusted publisher's initial verification window.
+
+The planned canonical release order is adapters **0.8.0**, runtime **0.7.0**,
+then React **0.5.0** and CLI **0.7.1**, using each package's `release.sh`.
+Adapters must be bumped and published first: pnpm rewrites workspace dependencies
+using the current package versions during packing/publication. CLI needs a patch
+release to replace its published exact dependency on adapters 0.7.0. Verify each
+workflow and registry version before continuing. Consumer deployment is separate.
 
 ## Initial validation (2026-10-11)
 
@@ -201,6 +214,16 @@ node scripts/accept-app-server.mjs --run --budget 11
 node scripts/accept-app-server.mjs --run --cases approvals --budget 2 --interactive
 # Compaction + recall/restart only, in a fresh synthetic workspace:
 node scripts/accept-app-server.mjs --run --cases compaction --budget 7
+# One real automatic compaction on an existing isolated synthetic thread:
+CODEXVIEW_TEST_PORT=5194 node scripts/accept-app-server.mjs --run \
+  --cases browser-compaction --resume /path/to/synthetic-evidence --budget 11
+# Real managed-network probe against two loopback-only synthetic URLs:
+CODEXVIEW_TEST_PORT=5195 node scripts/accept-app-server.mjs --run \
+  --cases network --interactive --budget 2
+# Zero-model controlled JSON-RPC subprocess through runtime, HTTP and browser:
+node scripts/accept-network-protocol.mjs --run --interactive
+# The same controlled peer with HTTP decisions, without a browser:
+node scripts/accept-network-protocol.mjs --run
 ```
 
 The runner prints its temporary evidence directory and loopback URL (default
@@ -213,16 +236,50 @@ individual tool continuations within a turn can make additional model requests.
 Model behavior can vary; failures remain explicit and the runner does not retry
 prompts automatically. Review the cumulative count before authorizing another run.
 
+The `browser-compaction` and `network` cases print readiness and finish gate
+paths. Open the printed URL, select the printed thread and click **Continue
+session** before creating the readiness file with `touch`; no model turn starts
+before that gate. Continue enables the otherwise read-only approval buttons. Capture the
+browser evidence, then create the finish file to shut down. Browser compaction
+resumes the old synthetic thread in a new process at a threshold of 1,000 tokens,
+sends one marker-recall turn and records timestamped raw compaction events.
+The supplied budget is cumulative when resuming: reserve at least two units
+beyond the saved count. Do not point `--resume` at personal session directories.
+
+The controlled network peer is a real local Node child process exchanging JSONL,
+but implements a scripted protocol and makes no Codex, model or network-proxy
+calls. Its first card requests `accept.synthetic.invalid` over HTTPS; approve it.
+The runner restarts the child and reuses the string request ID for
+`decline.synthetic.invalid` over SOCKS5 TCP; decline it. It checks missing/old
+epochs and duplicate HTTP replies, and asserts exactly one response reaches each
+child generation. Evidence labels interactive browser runs separately from
+automated HTTP-only runs. These results must never be presented as real Codex
+managed-network approval evidence.
+
 No npm publication, main merge or downstream consumer deployment was performed.
 
-Final local checks passed: **323 tests** (125 adapters, 30 runtime, 62 CLI,
-106 React), all package typechecks/builds, all four `release.sh minor` dry runs,
+Final local checks passed: **325 tests** (125 adapters, 30 runtime, 63 CLI,
+107 React), all package typechecks/builds, all four `release.sh minor` dry runs,
 and installation of all four tarballs into a separate consumer. The consumer
 imported runtime/adapters, rendered a packaged React transcript under a browser
 DOM and executed the packaged CLI. The local pnpm store override used for release
 checks was an environment setting, with no repository configuration change.
 The network approval display follow-up reran the React minor release dry run and
 all package typechecks/tests/builds, without additional model turns.
+
+Release review also corrected stale version constants: CLI `-v`/`--version` and
+React `VERSION` now derive from their own package manifests. Focused regressions,
+CLI/React release dry runs, installed-tarball version checks and a NodeNext public
+type import check passed. React's declaration entry root is explicit so importing
+manifest metadata keeps the existing public declaration layout. No package
+version was changed during this follow-up.
+
+The remaining browser follow-up is prepared but has not run: a resumed synthetic
+thread for the real automatic-compaction banner, a real managed-network probe
+against loopback targets, and the controlled network protocol/browser scenario.
+The controlled subprocess's HTTP-only acceptance already passed both decisions,
+request ID preservation, process epoch change, rejected missing/stale epochs and
+duplicate replies. No additional model budget has been consumed at this stage.
 
 The real acceptance used **14 budget units**: nine worker user turns, two automatic
 compactions and three independent browser turns, including the two-turn post-fix

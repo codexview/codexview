@@ -1,4 +1,5 @@
 import { readFile, writeFile } from 'node:fs/promises';
+import { createRequire } from 'node:module';
 import {
   adapt,
   diagnose,
@@ -37,7 +38,7 @@ function parseInput(text: string): RawLine[] {
   return parseInputWithStats(text).lines;
 }
 
-const VERSION = '0.6.0';
+const VERSION: string = createRequire(import.meta.url)('../package.json').version;
 
 const USAGE = `codexview-md — render jsonl agent log to plaintext markdown
 

@@ -1,4 +1,5 @@
 import './styles/tokens.css';
+import { version as packageVersion } from '../package.json';
 
 export type { ChatStreamEvent, ChatStreamEventType, TokenUsage, SearchResult, PatchFile, TodoEntry } from './types/events.js';
 export type { TranscriptModel, TurnView, ItemView, ItemKind, ItemStatus, TranscriptStatus } from './types/model.js';
@@ -42,7 +43,7 @@ export type { ItemErrorBoundaryProps } from './components/ItemErrorBoundary.js';
 export { Markdown } from './components/Markdown.js';
 export type { MarkdownProps } from './components/Markdown.js';
 
-export const VERSION = '0.3.1';
+export const VERSION: string = packageVersion;
 
 export { useCodexSession } from './hooks/useCodexSession.js';
 export type { UseCodexSessionOptions, CodexSessionController } from './hooks/useCodexSession.js';
