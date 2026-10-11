@@ -9,3 +9,9 @@ describe('RawEventBlock', () => {
     expect(screen.getByText(/"x": 1/)).toBeInTheDocument();
   });
 });
+
+it('recognizes an app-server context compaction item', () => {
+  render(<RawEventBlock item={{ id: 'compact', kind: 'raw', status: 'completed', startedAt: 0, updatedAt: 0, payload: { type: 'contextCompaction' } }} />);
+  expect(screen.getByText('Context compaction')).toBeInTheDocument();
+  expect(screen.queryByText(/未知事件/)).not.toBeInTheDocument();
+});

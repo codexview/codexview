@@ -13,7 +13,7 @@ export function ExecBlock({ item, defaultOpen = false }: ExecBlockProps): JSX.El
   const running = item.status === 'running';
   // Auto-open while running so the user can watch output stream in.
   const open = defaultOpen || running;
-  const exitText = item.exit != null ? `(exit ${item.exit}, ${item.durationMs ?? '?'}ms)` : '';
+  const exitText = item.outcome === 'declined' ? '(Declined)' : item.outcome === 'interrupted' ? '(Interrupted)' : item.exit != null ? `(exit ${item.exit}, ${item.durationMs ?? '?'}ms)` : '';
   return (
     <details className={styles.block} data-status={item.status} open={open}>
       <summary className={styles.header}>

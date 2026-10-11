@@ -8,6 +8,7 @@ export default defineConfig({
     react(),
     dts({
       include: ['src'],
+      entryRoot: 'src',
       exclude: ['src/**/*.test.{ts,tsx}', 'src/test-setup.ts', 'src/integration/**'],
       rollupTypes: false,
       insertTypesEntry: true,

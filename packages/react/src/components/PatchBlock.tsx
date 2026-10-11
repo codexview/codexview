@@ -23,7 +23,7 @@ export function PatchBlock({ item, defaultOpen = false }: PatchBlockProps): JSX.
     <details className={styles.block} data-status={item.status} open={defaultOpen}>
       <summary className={styles.header}>
         <Icon size={14} aria-hidden />
-        <span>{item.files.length} 个文件 ({item.ok ? '成功' : '失败'})</span>
+        <span>{item.files.length} 个文件 ({item.status === 'pending' ? '待审批' : item.outcome === 'declined' ? '已拒绝' : item.ok ? '成功' : '失败'})</span>
       </summary>
       <ul className={styles.files}>
         {item.files.map((f) => (

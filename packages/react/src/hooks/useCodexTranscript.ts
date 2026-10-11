@@ -1,4 +1,4 @@
-import { useMemo, useRef } from 'react';
+import { useRef } from 'react';
 import type { ChatStreamEvent } from '../types/events.js';
 import type { TranscriptModel, TranscriptStatus } from '../types/model.js';
 import { EMPTY_MODEL } from '../types/model.js';
@@ -13,6 +13,8 @@ export interface UseCodexTranscriptOptions {
 interface CacheEntry {
   events: ChatStreamEvent[];
   model: TranscriptModel;
+  tailStart: number;
+  tailBase: TranscriptModel;
 }
 
 function safeReduce(
@@ -32,38 +34,30 @@ export function useCodexTranscript(
   events: ChatStreamEvent[],
   options: UseCodexTranscriptOptions = {},
 ): { model: TranscriptModel; status: TranscriptStatus } {
-  const cacheRef = useRef<CacheEntry>({ events: [], model: EMPTY_MODEL });
+  const cacheRef = useRef<CacheEntry>({ events: [], model: EMPTY_MODEL, tailStart: 0, tailBase: EMPTY_MODEL });
 
-  const model = useMemo(() => {
-    const cache = cacheRef.current;
-    const isPrefix =
-      events.length >= cache.events.length &&
-      cache.events.every((e, i) => e === events[i]);
-
-    let next: TranscriptModel;
-    let startIdx: number;
-
-    if (isPrefix) {
-      next = cache.model;
-      startIdx = cache.events.length;
+  // Compare copied references on every render: callers may append to the same array.
+  // Keep one checkpoint before the last turn, avoiding per-event historical models.
+  // A materialized live item replacement only replays that turn's events.
+  const cache = cacheRef.current;
+  let prefix = 0;
+  while (prefix < events.length && prefix < cache.events.length && events[prefix] === cache.events[prefix]) prefix++;
+  const append = prefix === cache.events.length;
+  const reuseTail = !append && prefix >= cache.tailStart;
+  let start = append ? prefix : reuseTail ? cache.tailStart : 0;
+  let model = append ? cache.model : reuseTail ? cache.tailBase : EMPTY_MODEL;
+  let tailStart = append || reuseTail ? cache.tailStart : 0;
+  let tailBase = append || reuseTail ? cache.tailBase : EMPTY_MODEL;
+  for (let i = start; i < events.length; i++) {
+    const event = events[i];
+    if (event == null || typeof event !== 'object') {
+      options.onInternalError?.(new TypeError('non-object event'), event as unknown as ChatStreamEvent);
     } else {
-      next = EMPTY_MODEL;
-      startIdx = 0;
+      if (event.type === 'turn_started') { tailStart = i; tailBase = model; }
+      model = safeReduce(model, event, options.onInternalError);
     }
-
-    for (let i = startIdx; i < events.length; i += 1) {
-      const ev = events[i];
-      if (ev == null || typeof ev !== 'object') {
-        options.onInternalError?.(new TypeError('non-object event'), ev as unknown as ChatStreamEvent);
-        continue;
-      }
-      next = safeReduce(next, ev, options.onInternalError);
-    }
-
-    cacheRef.current = { events, model: next };
-    return next;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [events]);
+  }
+  cacheRef.current = { events: events.slice(), model, tailStart, tailBase };
 
   const status = options.status ?? inferStatus(model);
   return { model, status };

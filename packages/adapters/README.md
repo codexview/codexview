@@ -133,3 +133,13 @@ Independent semver from `@codexview/react`. The two packages share no runtime de
 ## License
 
 MIT.
+
+## Codex app-server
+
+`adaptAppServerThread(thread)` converts a saved v2 thread.
+`AppServerTranscriptStore` incrementally combines history and live notifications
+with thread/turn/item routing, cumulative deltas and authoritative final items.
+Pass `maxTurns` to bound completed-turn retention; `truncated` indicates older
+history must be loaded explicitly. `getEvents()` retains unchanged item references.
+The package also exports the canonical `SessionSnapshot` and `SessionTransport`
+types used by runtime and React. See [the integration guide](../../docs/app-server.md).

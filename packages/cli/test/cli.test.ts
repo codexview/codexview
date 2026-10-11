@@ -22,10 +22,11 @@ describe('cli smoke', () => {
     expect(r.stdout).toContain('USAGE');
   });
 
-  it('prints version on -v', () => {
-    const r = spawnSync('node', [bin, '-v'], { encoding: 'utf8' });
+  it.each(['-v', '--version'])('prints the package version on %s', flag => {
+    const r = spawnSync('node', [bin, flag], { encoding: 'utf8' });
     expect(r.status).toBe(0);
-    expect(r.stdout).toMatch(/codexview-md \d/);
+    const { version } = JSON.parse(readFileSync(resolve(here, '../package.json'), 'utf8'));
+    expect(r.stdout.trim()).toBe(`codexview-md ${version}`);
   });
 
   it('renders fixture to stdout', () => {

@@ -3,10 +3,12 @@ import react from '@vitejs/plugin-react';
 import { resolve } from 'node:path';
 // @ts-expect-error -- plain ESM, no .d.ts
 import { apiPlugin } from './api.mjs';
+// @ts-expect-error -- plain ESM host middleware
+import { sessionApiPlugin } from './session-api.mjs';
 
 export default defineConfig({
   root: resolve(__dirname),
-  plugins: [react(), apiPlugin()],
+  plugins: [react(), sessionApiPlugin(), apiPlugin()],
   server: {
     port: 5181,
     open: false,

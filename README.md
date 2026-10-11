@@ -10,6 +10,12 @@ A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, Op
 | [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert Codex `exec --json` streams and saved rollouts, plus codex-team / Claude Code / OpenCode / GitHub Copilot logs, into `ChatStreamEvent[]`. Optional subagent embedding. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
 | [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL/JSON log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
 
+## Interactive sessions
+
+[`@codexview/runtime`](packages/runtime) runs Codex app-server in Node. React adds
+`CodexSession` and composable controls for sending, steering, stopping, approvals
+and user questions. See the [integration guide](docs/app-server.md).
+
 ## Typical use
 
 Install the two libraries side-by-side:
@@ -60,4 +66,4 @@ This repo also ships a Claude Code skill at [`skills/codexview-cli/`](skills/cod
 
 ## License
 
-MIT for all three packages.
+MIT for all packages.

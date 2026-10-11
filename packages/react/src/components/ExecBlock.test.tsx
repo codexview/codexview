@@ -14,3 +14,9 @@ describe('ExecBlock', () => {
     expect(screen.getByText('no')).toBeInTheDocument();
   });
 });
+
+it('labels a declined command without an invented successful exit', () => {
+  render(<ExecBlock item={{ id: 'e', kind: 'exec', status: 'stopped', outcome: 'declined', startedAt: 0, updatedAt: 0, command: 'printf COMMAND_DECLINE' }} />);
+  expect(screen.getByText('(Declined)')).toBeInTheDocument();
+  expect(screen.queryByText(/exit 0/)).not.toBeInTheDocument();
+});
