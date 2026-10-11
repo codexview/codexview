@@ -150,7 +150,7 @@ pnpm --dir "$package_dir" pack --pack-destination "$pack_dir" >/dev/null
 
 if [[ "$bootstrap" == true ]]; then
   npm whoami >/dev/null 2>&1 || die "npm maintainer login is required for first-package bootstrap"
-  if npm view "$package_name" version >/dev/null 2>&1; then
+  if npm view "$package_name" versions --json >/dev/null 2>&1; then
     die "runtime package already exists; use the OIDC release workflow"
   fi
   bootstrap_dir="$pack_dir/bootstrap"
@@ -166,7 +166,15 @@ writeFileSync(path, JSON.stringify(pkg, null, 2) + '\n');
 JS
   npm pack "$bootstrap_dir/package" --pack-destination "$bootstrap_dir" >/dev/null
   npm publish "$bootstrap_dir"/*.tgz --tag bootstrap --access public
-  [[ "$(npm view "$package_name@0.0.0" version)" == "0.0.0" ]] || die "bootstrap registry verification failed"
+  bootstrap_verified=false
+  for _ in 1 2 3 4 5 6 7 8 9 10; do
+    if [[ "$(npm view "$package_name@0.0.0" version 2>/dev/null || true)" == "0.0.0" ]]; then
+      bootstrap_verified=true
+      break
+    fi
+    sleep 3
+  done
+  [[ "$bootstrap_verified" == true ]] || die "bootstrap registry verification failed; inspect registry before retrying"
   printf 'Bootstrap created: %s@0.0.0 (tag bootstrap). Configure trusted publishing, then use --publish.\n' "$package_name"
   exit 0
 fi
