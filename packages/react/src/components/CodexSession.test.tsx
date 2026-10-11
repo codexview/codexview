@@ -55,6 +55,32 @@ describe('CodexSession', () => {
     expect(screen.getByRole('button', { name: 'Decline' })).toBeDisabled();
   });
 
+  it.each([
+    ['https', 'Approve', 'accept'],
+    ['http', 'Decline', 'decline'],
+    ['socks5Tcp', 'Cancel turn', 'cancel'],
+    ['socks5Udp', 'Approve', 'accept'],
+  ])('shows a context-only %s network approval and preserves reply identity', async (protocol, button, decision) => {
+    const host = fixture(); render(<CodexSession threadId="thread" transport={host.transport} />);
+    // Stable codex-cli 0.162.1 shape: command/reason/cwd are optional;
+    // NetworkApprovalContext has host and protocol, with no port field.
+    host.emit({ epoch: 'network-epoch', execution: 'waitingApproval', requests: [{
+      id: 'network-request', method: 'item/commandExecution/requestApproval', threadId: 'thread', turnId: 'turn',
+      params: { kind: 'command', threadId: 'thread', turnId: 'turn', itemId: 'network-item', startedAtMs: 0, environmentId: null,
+        networkApprovalContext: { host: 'api.example.test', protocol } },
+    }] });
+    const card = screen.getByRole('region', { name: 'Request network-request' });
+    expect(card).toHaveTextContent(`Requested network access: api.example.test (protocol: ${protocol})`);
+    expect(card).toHaveTextContent('Transcript item: network-item');
+    expect(host.transport.reply).not.toHaveBeenCalled();
+    for (const name of ['Approve', 'Decline', 'Cancel turn']) expect(screen.getByRole('button', { name })).toBeEnabled();
+    fireEvent.click(screen.getByRole('button', { name: button }));
+    await waitFor(() => expect(host.transport.reply).toHaveBeenCalledWith('thread', 'network-request', { decision }, 'network-epoch'));
+    await screen.findByText('Response sent');
+    expect(host.transport.reply).toHaveBeenCalledTimes(1);
+    expect(screen.getByRole('button', { name: button })).toBeDisabled();
+  });
+
   it('replies to multiple questions by question IDs', async () => {
     const host = fixture(); render(<CodexSession threadId="thread" transport={host.transport} />);
     host.emit({ execution: 'waitingInput', requests: [{ id: 'request-id', method: 'item/tool/requestUserInput', threadId: 'thread', params: { questions: [

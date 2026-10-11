@@ -92,6 +92,13 @@ turn ID. Server requests retain numeric or string IDs and process epochs, are re
 expire on completion/disconnection. Unsupported server request methods fail
 explicitly. No approval is automatically accepted.
 
+Managed-network command approvals display the requested host and protocol from
+`networkApprovalContext`, including when `command` and `reason` are absent.
+The installed stable schema defines no separate port field. This optional shape
+is covered by React component regressions for all four installed protocol values,
+explicit decisions and original request ID/epoch replies. No live managed-network
+approval was exercised; the real command/file approval evidence below is unchanged.
+
 Stable generated pagination exists in 0.162.1, but it becomes usable only after a
 thread's first message is materialized. The runtime handles the exact pre-message
 error. Before the first message, read/resume of a newly created loaded thread
@@ -208,12 +215,14 @@ prompts automatically. Review the cumulative count before authorizing another ru
 
 No npm publication, main merge or downstream consumer deployment was performed.
 
-Final local checks passed: **319 tests** (125 adapters, 30 runtime, 62 CLI,
-102 React), all package typechecks/builds, all four `release.sh minor` dry runs,
+Final local checks passed: **323 tests** (125 adapters, 30 runtime, 62 CLI,
+106 React), all package typechecks/builds, all four `release.sh minor` dry runs,
 and installation of all four tarballs into a separate consumer. The consumer
 imported runtime/adapters, rendered a packaged React transcript under a browser
 DOM and executed the packaged CLI. The local pnpm store override used for release
 checks was an environment setting, with no repository configuration change.
+The network approval display follow-up reran the React minor release dry run and
+all package typechecks/tests/builds, without additional model turns.
 
 The real acceptance used **14 budget units**: nine worker user turns, two automatic
 compactions and three independent browser turns, including the two-turn post-fix

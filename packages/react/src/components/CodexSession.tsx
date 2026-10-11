@@ -81,12 +81,16 @@ interface Question { id: string; header?: string; question: string; isOther?: bo
 function RequestCard({ request, disabled, resolved, reply, files }: { files?: PatchFile[]; request: SessionRequest; disabled: boolean; resolved: boolean; reply: CodexSessionController['reply'] }) {
   const [answers, setAnswers] = useState<Record<string, string>>({});
   const approval = request.method === 'item/commandExecution/requestApproval' || request.method === 'item/fileChange/requestApproval';
+  const network = request.method === 'item/commandExecution/requestApproval' ? request.params.networkApprovalContext : undefined;
+  const networkTarget = network && typeof network === 'object' && 'host' in network && typeof network.host === 'string' && 'protocol' in network && typeof network.protocol === 'string'
+    ? { host: network.host, protocol: network.protocol } : undefined;
   const userInput = request.method === 'item/tool/requestUserInput';
   const questions = userInput && Array.isArray(request.params.questions) ? request.params.questions as Question[] : [];
   return <section className={styles.request} aria-label={`Request ${request.id}`}>
     <h3>{approval ? 'Approval required' : userInput ? 'Input requested' : 'Unsupported request'}</h3>
     {resolved && <p>Response sent</p>}
     {approval && <>
+      {networkTarget && <p>Requested network access: <code>{networkTarget.host}</code> (protocol: <code>{networkTarget.protocol}</code>)</p>}
       {typeof request.params.reason === 'string' && <p>{request.params.reason}</p>}
       {typeof request.params.command === 'string' && <pre>{request.params.command}</pre>}
       {typeof request.params.cwd === 'string' && <p>Directory: {request.params.cwd}</p>}

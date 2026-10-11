@@ -186,8 +186,8 @@
       "adapters": 125,
       "runtime": 30,
       "cli": 62,
-      "react": 102,
-      "total": 319
+      "react": 106,
+      "total": 323
     },
     "typecheck": "passed",
     "build": "passed",
@@ -204,6 +204,16 @@
       "CLI executable --help"
     ],
     "noPublication": true
+  },
+  "networkApprovalDisplayFollowUp": {
+    "validation": "React component regression only; no live managed-network approval or additional model turns",
+    "schema": "codex-cli 0.162.1 stable CommandExecutionRequestApprovalParams and NetworkApprovalContext",
+    "optionalShape": "networkApprovalContext with host/protocol; command, reason and cwd omitted; no port field in installed schema",
+    "protocols": ["http", "https", "socks5Tcp", "socks5Udp"],
+    "assertions": ["host and protocol visible before decision", "no automatic reply", "accept/decline/cancel remain explicit", "original string request ID and epoch preserved", "duplicate reply disabled"],
+    "releaseDryRun": "react minor",
+    "fullTypecheckTestBuild": "passed",
+    "runtimeProtocolChanged": false
   },
   "postFixBrowserUi": {
     "approvalThread": "01a12ab4-7662-7633-86ce-3e20bf20e69d",
