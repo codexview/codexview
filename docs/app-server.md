@@ -138,12 +138,37 @@ Then associate `codexview/codexview`, workflow `publish-runtime.yml`, no
 environment, and allow direct npm publication. Complete the first OIDC publish
 within the trusted publisher's initial verification window.
 
-The planned canonical release order is adapters **0.8.0**, runtime **0.7.0**,
-then React **0.5.0** and CLI **0.7.1**, using each package's `release.sh`.
+The canonical release versions are adapters **0.8.0**, runtime **0.7.0**,
+React **0.5.0** and CLI **0.7.1**, using each package's `release.sh`.
 Adapters must be bumped and published first: pnpm rewrites workspace dependencies
 using the current package versions during packing/publication. CLI needs a patch
 release to replace its published exact dependency on adapters 0.7.0. Verify each
-workflow and registry version before continuing. Consumer deployment is separate.
+workflow and registry version before continuing. Registry verification waits up
+to two minutes for propagation and checks the intended dist-tag. Consumer
+deployment is separate.
+
+### Publication progress (2026-10-12)
+
+[PR #3](https://github.com/codexview/codexview/pull/3) was merged after passing CI.
+The following canonical releases have succeeded through GitHub OIDC and are
+available under npm's `latest` tag with provenance:
+
+| Package | Version | Workflow |
+| --- | --- | --- |
+| @codexview/adapters | 0.8.0 | [38166747670](https://github.com/codexview/codexview/actions/runs/38166747670) |
+| @codexview/cli | 0.7.1 | [38166953402](https://github.com/codexview/codexview/actions/runs/38166953402) |
+| @codexview/react | 0.5.0 | [38167100060](https://github.com/codexview/codexview/actions/runs/38167100060) |
+
+A fresh consumer installed these three versions from the public npm registry,
+without workspace links or local tarballs. Adapter delta/final/history handling,
+React session rendering in a browser DOM, the CSS export, React `VERSION`, CLI
+`-v`/`--version`/stdin rendering, and NodeNext public type imports all passed.
+Both React and CLI depend on adapters **0.8.0**.
+
+Runtime **0.7.0** is still pending the maintainer's npm login for first-package
+creation and trusted-publisher setup. No runtime npm publication or registry
+consumer check is claimed. No additional model inference was used for publication
+checks, and no downstream consumer was deployed.
 
 ## Initial validation (2026-10-11)
 
@@ -257,7 +282,8 @@ child generation. Evidence labels interactive browser runs separately from
 automated HTTP-only runs. These results must never be presented as real Codex
 managed-network approval evidence.
 
-No npm publication, main merge or downstream consumer deployment was performed.
+No npm publication, main merge or downstream consumer deployment was performed
+during this acceptance run. The later publication status is recorded above.
 
 Final local checks passed: **325 tests** (125 adapters, 30 runtime, 63 CLI,
 107 React), all package typechecks/builds, all four `release.sh minor` dry runs,
