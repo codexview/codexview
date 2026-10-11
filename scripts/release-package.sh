@@ -167,8 +167,8 @@ JS
   npm pack "$bootstrap_dir/package" --pack-destination "$bootstrap_dir" >/dev/null
   npm publish "$bootstrap_dir"/*.tgz --tag bootstrap --access public
   bootstrap_verified=false
-  for _ in 1 2 3 4 5 6 7 8 9 10; do
-    if [[ "$(npm view "$package_name@0.0.0" version 2>/dev/null || true)" == "0.0.0" ]]; then
+  for _ in {1..40}; do
+    if [[ "$(npm view "$package_name@bootstrap" version --prefer-online 2>/dev/null || true)" == "0.0.0" ]]; then
       bootstrap_verified=true
       break
     fi
@@ -228,8 +228,8 @@ done
 
 gh run watch "$run_id" --repo codexview/codexview --exit-status
 
-for _ in 1 2 3 4 5 6 7 8 9 10; do
-  published="$(npm view "$package_name@$target_version" version 2>/dev/null || true)"
+for _ in {1..40}; do
+  published="$(npm view "$package_name@latest" version --prefer-online 2>/dev/null || true)"
   if [[ "$published" == "$target_version" ]]; then
     printf 'Published and verified: %s@%s\n' "$package_name" "$target_version"
     exit 0
