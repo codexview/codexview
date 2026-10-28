@@ -159,14 +159,47 @@ After the binding is saved, run `packages/runtime/release.sh 0.7.0 --publish`
 from the clean main checkout described above, then verify the public registry
 and a fresh consumer install. Until those checks pass, runtime remains unpublished.
 
-The canonical release versions are adapters **0.8.0**, runtime **0.7.0**,
-React **0.5.0** and CLI **0.7.1**, using each package's `release.sh`.
-Adapters must be bumped and published first: pnpm rewrites workspace dependencies
-using the current package versions during packing/publication. CLI needs a patch
-release to replace its published exact dependency on adapters 0.7.0. Verify each
-workflow and registry version before continuing. Registry verification waits up
-to two minutes for propagation and checks the intended dist-tag. Consumer
-deployment is separate.
+Publish changed dependencies first: pnpm rewrites workspace dependencies using
+the current package versions during packing/publication. Verify each workflow
+and registry version before continuing. Registry verification waits up to five
+minutes for propagation and checks the intended dist-tag. A timeout after a
+successful workflow requires inspecting the registry before any retry; it does
+not imply that publication failed. Consumer deployment is separate.
+
+### Package preparation (2026-10-29)
+
+Compatible build and test dependencies were refreshed while retaining React 18
+and Node 20 package support. The full audit reports no known vulnerabilities.
+React now keeps declared dependencies external so Node imports and server
+rendering resolve server-compatible Markdown dependencies. Search-result and
+directive URLs are limited to HTTP(S), unknown directives such as `constructor`
+render safely, and runtime initialization reads the installed package version.
+
+| Package | Public npm version verified | Next publication |
+| --- | --- | --- |
+| @codexview/adapters | 0.8.1 | Already published; do not repeat this version |
+| @codexview/cli | 0.7.1 | 0.7.2, including adapters 0.8.1 |
+| @codexview/react | 0.5.0 | 0.5.1, including the packaging and link fixes |
+| @codexview/runtime | Not published | Bootstrap, configure trusted publisher, then 0.7.0 |
+
+Adapters [workflow 40709863933](https://github.com/codexview/codexview/actions/runs/40709863933)
+completed successfully. npm's processing took longer than the old two-minute
+verification window; a subsequent public registry read confirmed **0.8.1** as
+`latest`. The verification window is now five minutes. No other package was
+published during this preparation; remaining publication is on hold.
+
+Local validation passed **337 tests** (125 adapters, 31 runtime, 63 CLI,
+118 React), all typechecks/builds, and an isolated install of all four local
+tarballs. `pnpm test:packages` now repeats adapter/CLI checks, React server and
+DOM rendering, safe-link checks, CSS exports, a scripted runtime approval
+exchange, and NodeNext public type imports. CI runs the same package checks.
+This uses no real Codex session or model inference.
+
+Tarballs, SHA-256 checksums and `verification.json` are retained locally under
+the ignored `release-artifacts/` directory. Local candidate filenames use the
+current source manifest versions; the report records the source commit and
+whether the working tree was dirty. Final publication still goes through each
+package's `release.sh`, which sets the release version and rebuilds it.
 
 ### Publication progress (2026-10-12)
 
@@ -208,8 +241,8 @@ checks, and no downstream consumer was deployed.
   patches, reconnect snapshots and unsubscribe cleanup.
 - All four package release dry runs, full typecheck/tests/build, tarball installation
   and package imports checked. React import/render was checked with a browser DOM;
-  bare Node SSR currently hits a bundled markdown dependency's `document` usage
-  and is not a supported validation target for this client component.
+  bare Node SSR at that time hit a bundled Markdown dependency's `document`
+  usage. The package preparation on 2026-10-29 fixes and tests this case.
 
 ## Real acceptance (2026-10-12)
 

@@ -1,6 +1,7 @@
 import { memo, useMemo } from 'react';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { webHref } from './webHref.js';
 import styles from './Markdown.module.css';
 
 export interface MarkdownProps {
@@ -112,10 +113,10 @@ const KNOWN: Record<string, { icon: string; label: (p: Record<string, string | b
 };
 
 function DirectiveBadge({ name, params }: { name: string; params: Record<string, string | boolean> }): JSX.Element {
-  const spec = KNOWN[name];
+  const spec = Object.hasOwn(KNOWN, name) ? KNOWN[name] : undefined;
   const icon = spec?.icon ?? '·';
   const label = spec ? spec.label(params) : name;
-  const href = typeof params.url === 'string' ? params.url : null;
+  const href = typeof params.url === 'string' ? webHref(params.url) : null;
   const cwd = typeof params.cwd === 'string' ? params.cwd.split('/').pop() : null;
 
   const inner = (

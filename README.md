@@ -56,10 +56,20 @@ npx -y @codexview/cli ~/Library/Application\ Support/Code/User/workspaceStorage/
 pnpm install
 pnpm -r build
 pnpm -r test
+pnpm test:packages # build, pack all four packages, and verify an isolated consumer
 pnpm playground    # interactive viewer scanning ~/.codex, ~/.claude, ~/.local/share/opencode, ~/Projects/agentweb, ~/Library/Application\ Support/Code/User/workspaceStorage
 ```
 
 The repo is a pnpm workspace under `packages/*`.
+
+`pnpm test:packages` retains local tarballs, SHA-256 checksums, and
+`verification.json` under the ignored `release-artifacts/` directory. It checks
+CLI execution, adapter output, React server and DOM rendering, CSS exports,
+runtime protocol handling, and public TypeScript declarations after installing
+the tarballs in a separate temporary project. It downloads test dependencies
+from npm but does not publish packages or run a model. Tarball versions match
+the current manifests; unpublished builds are identified by the source commit
+and checksums in the report.
 
 ## Skills
 

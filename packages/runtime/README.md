@@ -31,6 +31,9 @@ unsubscribe(); // does not stop the backend task
 
 ## Host API
 
+The default initialization metadata reports the installed package version.
+Hosts can provide their own `clientInfo` through `RuntimeOptions`.
+
 - `start`, `close`, `restart`: own one child process. Restart resumes previously
   created/resumed threads, without replaying prompts. Save thread IDs separately
   to recover after a host restart using `resumeThread`.
@@ -74,6 +77,6 @@ Do not proxy arbitrary RPC, Codex configuration, environment or credentials to
 clients. A browser disconnect should only unsubscribe, not close the runtime.
 The playground is a loopback-only development example, not a multiuser service.
 
-See [integration guide](../../docs/app-server.md), including protocol and validation
+See [integration guide](https://github.com/codexview/codexview/blob/main/docs/app-server.md), including protocol and validation
 limits. The Codex app-server protocol continues to evolve; validate new CLI
 versions before deployment.

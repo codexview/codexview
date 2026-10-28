@@ -5,6 +5,7 @@
   "scripts": {
     "build": "pnpm -r build",
     "test": "pnpm -r test",
+    "test:packages": "node scripts/check-packages.mjs",
     "typecheck": "pnpm -r typecheck",
     "playground": "pnpm --filter @codexview/react playground",
     "dev": "pnpm --filter @codexview/react dev"

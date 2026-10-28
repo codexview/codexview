@@ -2,6 +2,9 @@ import { resolve } from 'node:path';
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import dts from 'vite-plugin-dts';
+import { dependencies, peerDependencies } from './package.json';
+
+const externalPackages = Object.keys({ ...dependencies, ...peerDependencies });
 
 export default defineConfig({
   plugins: [
@@ -30,7 +33,7 @@ export default defineConfig({
     sourcemap: true,
     minify: false,
     rollupOptions: {
-      external: ['react', 'react-dom', 'react/jsx-runtime', 'lucide-react'],
+      external: id => externalPackages.some(name => id === name || id.startsWith(`${name}/`)),
       output: {
         assetFileNames: (assetInfo) => {
           if (assetInfo.name && assetInfo.name.endsWith('.css')) return 'styles.css';

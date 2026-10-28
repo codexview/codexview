@@ -23,4 +23,15 @@ describe('SearchBlock', () => {
     fireEvent.click(screen.getByRole('button'));
     expect(screen.getByText('D')).toBeInTheDocument();
   });
+
+  it.each(['javascript:alert(1)', 'java\nscript:alert(1)', 'data:text/html,<script>alert(1)</script>', 'file:///etc/passwd', 'not a URL'])('keeps an unsafe result URL inert: %s', url => {
+    render(<SearchBlock defaultOpen item={{ id: 's', kind: 'search', status: 'completed', startedAt: 0, updatedAt: 0, query: 'q', results: [
+      { title: 'Untrusted result', url, snippet: 'Still readable' },
+      { title: 'Safe result', url: 'https://example.com/result' },
+    ] }} />);
+    expect(screen.getByText('Untrusted result')).toBeInTheDocument();
+    expect(screen.getByText('Still readable')).toBeInTheDocument();
+    expect(screen.queryByRole('link', { name: 'Untrusted result' })).toBeNull();
+    expect(screen.getByRole('link', { name: 'Safe result' })).toHaveAttribute('href', 'https://example.com/result');
+  });
 });

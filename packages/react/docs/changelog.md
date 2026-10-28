@@ -2,7 +2,14 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.5.1] — 2026-10-29
+## [0.5.1] — unreleased
+
+### Fixed
+
+- Keep declared dependencies external in the library build so importing and
+  rendering the package in Node does not require a browser `document`.
+- Render unsafe search-result and directive URLs as text, and handle unknown
+  directive names such as `constructor` without throwing.
 
 ### Changed
 

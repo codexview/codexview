@@ -1,6 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { spawn } from 'node:child_process';
 import { createInterface } from 'node:readline';
+import { createRequire } from 'node:module';
 import { AppServerTranscriptStore, type SessionSnapshot, type SessionModel, type SessionRequest, type SessionTurnOptions } from '@codexview/adapters';
 import type { RuntimeOptions, RuntimeProcess, RpcId, ThreadStartOptions, ThreadOptions, ThreadListOptions, ThreadResponse, Page, CodexThread, CodexTurn, PageOptions } from './types.js';
 export type * from './types.js';
@@ -17,6 +18,7 @@ interface Session {
 const supportedRequests = new Set(['item/commandExecution/requestApproval', 'item/fileChange/requestApproval', 'item/tool/requestUserInput']);
 const activeStates = new Set(['running', 'waitingApproval', 'waitingInput', 'compacting', 'unknown']);
 const input = (text: string) => [{ type: 'text', text, text_elements: [] }];
+const VERSION: string = createRequire(import.meta.url)('../package.json').version;
 
 /** Own one local Codex process. Hosts own authorization and durable thread IDs. */
 export class CodexRuntime {
@@ -57,7 +59,7 @@ export class CodexRuntime {
     child.stdout.on('end', () => { if (generation === this.generation) this.lost('Codex app-server output closed'); });
     child.stdin.on('error', () => { if (generation === this.generation) this.lost('Codex app-server input closed'); });
     try {
-      await this.rpc('initialize', { clientInfo: this.options.clientInfo ?? { name: 'codexview', version: '0.7.0' }, capabilities: this.options.experimentalApi ? { experimentalApi: true } : null }, true);
+      await this.rpc('initialize', { clientInfo: this.options.clientInfo ?? { name: 'codexview', version: VERSION }, capabilities: this.options.experimentalApi ? { experimentalApi: true } : null }, true);
       if (this.process !== child) throw new UncertainOutcomeError('Connection lost during initialization');
       this.write({ method: 'initialized', params: {} });
       this.ready = true;

@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { ItemView } from '../types/model.js';
 import { ICONS } from './icons.js';
+import { webHref } from './webHref.js';
 import styles from './SearchBlock.module.css';
 
 export interface SearchBlockProps {
@@ -27,12 +28,17 @@ export function SearchBlock({ item, initialVisible = 3, defaultOpen = false }: S
       <div className={styles.body}>
         {results.length > 0 && (
           <ol className={styles.results}>
-            {visible.map((r) => (
-              <li key={r.url}>
-                <a href={r.url} target="_blank" rel="noreferrer">{r.title}</a>
-                {r.snippet && <p className={styles.snippet}>{r.snippet}</p>}
-              </li>
-            ))}
+            {visible.map((r) => {
+              const href = webHref(r.url);
+              return (
+                <li key={r.url}>
+                  {href
+                    ? <a href={href} target="_blank" rel="noopener noreferrer">{r.title}</a>
+                    : <span>{r.title}</span>}
+                  {r.snippet && <p className={styles.snippet}>{r.snippet}</p>}
+                </li>
+              );
+            })}
           </ol>
         )}
         {remaining > 0 && (

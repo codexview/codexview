@@ -3,6 +3,7 @@ import { PassThrough, Writable } from 'node:stream';
 import { describe, it, expect } from 'vitest';
 import { CodexRuntime, UncertainOutcomeError } from '../src/index.js';
 import type { RuntimeProcess } from '../src/types.js';
+import { version } from '../package.json';
 
 class FakeProcess extends EventEmitter implements RuntimeProcess {
   stdout = new PassThrough();
@@ -39,6 +40,15 @@ describe('CodexRuntime protocol', () => {
     await runtime.start(); await runtime.createThread();
     expect(process.messages.map(m => m.method)).toEqual(['initialize', 'initialized', 'thread/start']);
     expect(process.messages[0].params.capabilities).toBeNull();
+    expect(process.messages[0].params.clientInfo).toEqual({ name: 'codexview', version });
+    await runtime.close();
+  });
+  it('preserves host-provided client metadata', async () => {
+    const process = new FakeProcess();
+    const clientInfo = { name: 'host-app', title: 'Host application', version: '2.3.4' };
+    const runtime = new CodexRuntime({ spawn: () => process, clientInfo });
+    await runtime.start();
+    expect(process.messages[0].params.clientInfo).toEqual(clientInfo);
     await runtime.close();
   });
   it('requires explicit experimental opt-in for collaboration mode and preserves plan settings', async () => {

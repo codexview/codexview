@@ -2,7 +2,7 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [0.7.2] — 2026-10-29
+## [0.7.2] — unreleased
 
 ### Changed
 

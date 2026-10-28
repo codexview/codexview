@@ -16,6 +16,11 @@ Import the stylesheet once in your app entrypoint:
 import '@codexview/react/styles.css';
 ```
 
+The ESM package can be imported in Node for server rendering. Its declared
+dependencies remain external so the host resolves the appropriate server or
+browser entry. Search-result and directive links accept HTTP(S) URLs; invalid
+or non-web URLs remain visible as text.
+
 ## 60-second quick start
 
 ```tsx
@@ -80,4 +85,4 @@ Use `CodexSession` with a host-provided `SessionTransport` for input, steer, sto
 approvals, questions and context-compaction status. `useCodexSession`,
 `SessionComposer` and `SessionRequests` support custom layouts. Keep
 `@codexview/runtime` on your Node backend and authenticate the transport.
-See [the runnable example and integration guide](../../docs/app-server.md).
+See [the runnable example and integration guide](https://github.com/codexview/codexview/blob/main/docs/app-server.md).
