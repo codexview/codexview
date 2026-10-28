@@ -4,7 +4,7 @@
   "publishConfig": {
     "access": "public"
   },
-  "description": "React components for rendering AI coding agent transcripts. Reference adapters for Codex CLI, AgentWeb codex-team, and Claude Code; OpenCode planned.",
+  "description": "React components for AI coding agent transcripts and interactive Codex sessions. Supports Codex CLI, AgentWeb codex-team, Claude Code, OpenCode, and GitHub Copilot through @codexview/adapters.",
   "keywords": [
     "ai",
     "agent",
@@ -24,7 +24,8 @@
   "bugs": "https://github.com/codexview/codexview/issues",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/codexview/codexview.git"
+    "url": "git+https://github.com/codexview/codexview.git",
+    "directory": "packages/react"
   },
   "exports": {
     ".": {
@@ -59,21 +60,21 @@
   },
   "devDependencies": {
     "@codexview/runtime": "workspace:*",
-    "@testing-library/jest-dom": "^6.4.6",
-    "@testing-library/react": "^16.0.0",
-    "@testing-library/user-event": "^14.5.2",
-    "@types/node": "^20.14.0",
-    "@types/react": "^18.3.3",
-    "@types/react-dom": "^18.3.0",
-    "@vitejs/plugin-react": "^4.3.1",
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.3",
+    "@testing-library/user-event": "^14.6.8",
+    "@types/node": "^20.19.43",
+    "@types/react": "^18.3.31",
+    "@types/react-dom": "^18.3.7",
+    "@vitejs/plugin-react": "^4.7.0",
     "jsdom": "^29.1.1",
     "lucide-react": "^0.400.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "typescript": "^5.5.4",
-    "vite": "^6.4.3",
-    "vite-plugin-dts": "^5.0.0",
-    "vitest": "^4.1.11"
+    "typescript": "^5.9.3",
+    "vite": "^6.4.5",
+    "vite-plugin-dts": "^5.1.2",
+    "vitest": "^4.1.12"
   },
   "engines": {
     "node": ">=20"

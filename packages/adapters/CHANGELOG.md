@@ -2,6 +2,13 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.8.1] — 2026-10-29
+
+### Changed
+
+- Refresh compatible TypeScript, Node type, Vite, and Vitest dependencies and
+  the workspace lockfile. Public APIs and runtime dependencies are unchanged.
+
 ## [0.7.0] — 2026-07-11
 
 ### Added

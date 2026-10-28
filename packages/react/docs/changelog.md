@@ -2,6 +2,15 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.5.1] — 2026-10-29
+
+### Changed
+
+- Refresh compatible build and test dependencies and rebuild against
+  `@codexview/adapters@0.8.1`, retaining React 18 support.
+- Correct package metadata and installation examples, and document existing
+  OpenCode, GitHub Copilot, and Codex exec stream support.
+
 ## [0.4.0] — 2026-07-11
 
 ### Added

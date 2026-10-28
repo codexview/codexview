@@ -15,7 +15,8 @@
   },
   "pnpm": {
     "overrides": {
-      "postcss": "8.5.25"
+      "postcss": "8.5.25",
+      "unplugin-dts>esbuild": "0.28.2"
     }
   }
 }

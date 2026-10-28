@@ -7,7 +7,7 @@ For raw-log → `ChatStreamEvent[]` conversion, install the companion [`@codexvi
 ## Install
 
 ```bash
-pnpm add @codexview/react lucide-react react react-dom
+pnpm add @codexview/react lucide-react react@^18.3 react-dom@^18.3
 ```
 
 Import the stylesheet once in your app entrypoint:
@@ -41,10 +41,11 @@ export function App() {
 
 CodexView itself only renders `ChatStreamEvent[]`. Hosts convert their raw logs to that shape — either inline or with [`@codexview/adapters`](https://www.npmjs.com/package/@codexview/adapters):
 
-- ✅ **OpenAI Codex CLI** rollouts (`~/.codex/sessions/.../rollout-*.jsonl`)
+- ✅ **OpenAI Codex CLI** `codex exec --json` streams and saved rollouts (`~/.codex/sessions/.../rollout-*.jsonl`)
 - ✅ **AgentWeb codex-team** status logs (`~/Projects/agentweb/.codex-team/runs/*/events.jsonl`)
 - ✅ **Claude Code** main sessions (`~/.claude/projects/<repo>/<sessionId>.jsonl`) — Bash / TodoWrite / Edit / Write / MultiEdit / `mcp__*` / `Agent` tools; subagent transcripts can be embedded under each `Agent` tool call (pass `subagents` to `adapt()`).
-- 🔲 **OpenCode** — planned
+- ✅ **OpenCode** JSON exports, including embedded `task` subagent transcripts
+- ✅ **GitHub Copilot** Chat session exports from VS Code
 
 ## Status
 

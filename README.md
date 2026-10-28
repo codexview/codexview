@@ -9,6 +9,7 @@ A monorepo for rendering AI coding agent transcripts (Codex CLI, Claude Code, Op
 | [`@codexview/react`](packages/react) | React components that render a `ChatStreamEvent[]` stream into a chat transcript UI | [![npm](https://img.shields.io/npm/v/@codexview/react)](https://www.npmjs.com/package/@codexview/react) |
 | [`@codexview/adapters`](packages/adapters) | Stateless adapters that convert Codex `exec --json` streams and saved rollouts, plus codex-team / Claude Code / OpenCode / GitHub Copilot logs, into `ChatStreamEvent[]`. Optional subagent embedding. Zero runtime deps. | [![npm](https://img.shields.io/npm/v/@codexview/adapters)](https://www.npmjs.com/package/@codexview/adapters) |
 | [`@codexview/cli`](packages/cli) | `codexview-md` CLI that converts an agent JSONL/JSON log to compact plaintext markdown (great as compressed context for another LLM) | [![npm](https://img.shields.io/npm/v/@codexview/cli)](https://www.npmjs.com/package/@codexview/cli) |
+| [`@codexview/runtime`](packages/runtime) | Node.js host for persistent Codex app-server sessions, approvals, user input, and history | [![npm](https://img.shields.io/npm/v/@codexview/runtime)](https://www.npmjs.com/package/@codexview/runtime) |
 
 ## Interactive sessions
 
@@ -21,7 +22,7 @@ and user questions. See the [integration guide](docs/app-server.md).
 Install the two libraries side-by-side:
 
 ```bash
-pnpm add @codexview/react @codexview/adapters lucide-react react react-dom
+pnpm add @codexview/react @codexview/adapters lucide-react react@^18.3 react-dom@^18.3
 ```
 
 ```tsx

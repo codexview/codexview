@@ -2,6 +2,13 @@
 
 All notable changes documented here. Format follows [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [0.7.2] — 2026-10-29
+
+### Changed
+
+- Publish with `@codexview/adapters@0.8.1` and refreshed compatible development
+  dependencies. CLI flags and Markdown output are unchanged.
+
 ## [0.7.0] — 2026-07-11
 
 ### Added
