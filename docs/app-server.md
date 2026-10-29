@@ -133,31 +133,27 @@ Each npm package has its own GitHub Actions trusted publisher. All bindings use
 owner **codexview**, repository **codexview**, a blank environment, and permission
 to run `npm publish`. The workflow filename must match exactly:
 
-| npm package | Workflow filename | Tag prefix | npm publisher status checked 2026-10-12 |
+| npm package | Workflow filename | Tag prefix | npm publisher status checked 2026-10-29 |
 | --- | --- | --- | --- |
 | @codexview/adapters | `publish-adapters.yml` | `adapters-v` | Valid; published with OIDC |
 | @codexview/cli | `publish-cli.yml` | `cli-v` | Valid; published with OIDC |
 | @codexview/react | `release.yml` | `v` | Valid; published with OIDC |
-| @codexview/runtime | `publish-runtime.yml` | `runtime-v` | Pending first-package creation and npm binding |
+| @codexview/runtime | `publish-runtime.yml` | `runtime-v` | Valid; published with OIDC |
 
 The four workflows are active and use GitHub-hosted Ubuntu runners, Node 24,
 `id-token: write` for npm OIDC, and `contents: write` for GitHub releases. Regular
 CI publication does not require an `NPM_TOKEN` repository secret or an npm login
 on the maintainer's machine. Each workflow checks that its tag matches the package
 version and publishes with provenance. The repository has no Actions secrets;
-the three successful releases verify these existing bindings end to end.
+the successful releases verify all four bindings end to end.
 
-Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its npm
-package must exist before the package Settings page can configure a trusted
-publisher. For this first release, run
-`packages/runtime/release.sh 0.0.0 --bootstrap` using the maintainer's npm login. This verifies the package, prepares a temporary `0.0.0` tarball and publishes
-only the `bootstrap` dist-tag, preserving the source manifest and canonical version.
-Then associate `codexview/codexview`, workflow `publish-runtime.yml`, no
-environment, and allow direct npm publication. Complete the first OIDC publish
-within the trusted publisher's initial verification window.
-After the binding is saved, run `packages/runtime/release.sh 0.7.0 --publish`
-from the clean main checkout described above, then verify the public registry
-and a fresh consumer install. Until those checks pass, runtime remains unpublished.
+Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its
+first release required creating the npm package and configuring the trusted
+publisher before the OIDC workflow could run. That setup is complete: the
+`bootstrap` tag points to 0.0.0 and `latest` points to 0.7.0. Future releases
+use `packages/runtime/release.sh <version> --publish` from a clean main checkout;
+the GitHub Actions trusted publisher does not require a local npm login or a
+security-key challenge for each release.
 
 Publish changed dependencies first: pnpm rewrites workspace dependencies using
 the current package versions during packing/publication. Verify each workflow
@@ -180,7 +176,7 @@ render safely, and runtime initialization reads the installed package version.
 | @codexview/adapters | 0.8.1 | Already published; do not repeat this version |
 | @codexview/cli | 0.7.2 | Published; includes adapters 0.8.1 |
 | @codexview/react | 0.5.1 | Published; includes the packaging and link fixes |
-| @codexview/runtime | Not published | Bootstrap, configure trusted publisher, then 0.7.0 |
+| @codexview/runtime | 0.7.0 | Published; trusted publisher validated |
 
 Adapters [workflow 40709863933](https://github.com/codexview/codexview/actions/runs/40709863933)
 completed successfully. npm's processing took longer than the old two-minute
@@ -189,9 +185,11 @@ verification window; a subsequent public registry read confirmed **0.8.1** as
 React [workflow 40790377660](https://github.com/codexview/codexview/actions/runs/40790377660)
 and CLI [workflow 40790635131](https://github.com/codexview/codexview/actions/runs/40790635131)
 also succeeded. Fresh public-registry installs verified React SSR and its CSS
-export, the adapter import, and the CLI version. Runtime's first bootstrap still
-requires the maintainer's npm security-key verification and trusted-publisher
-configuration before its 0.7.0 release.
+export, the adapter import, and the CLI version. Runtime's
+[workflow 40797999696](https://github.com/codexview/codexview/actions/runs/40797999696)
+published 0.7.0 after the first-package bootstrap and trusted-publisher setup.
+A fresh public-registry install of all four current packages passed SSR, DOM,
+safe-link, CSS, CLI, NodeNext public-type and controlled runtime protocol checks.
 
 Local validation passed **337 tests** (125 adapters, 31 runtime, 63 CLI,
 118 React), all typechecks/builds, and an isolated install of all four local
@@ -224,10 +222,10 @@ React session rendering in a browser DOM, the CSS export, React `VERSION`, CLI
 `-v`/`--version`/stdin rendering, and NodeNext public type imports all passed.
 Both React and CLI depend on adapters **0.8.0**.
 
-Runtime **0.7.0** is still pending the maintainer's npm login for first-package
-creation and trusted-publisher setup. No runtime npm publication or registry
-consumer check is claimed. No additional model inference was used for publication
-checks, and no downstream consumer was deployed.
+At this point runtime **0.7.0** was still pending first-package creation and
+trusted-publisher setup. No runtime npm publication or registry consumer check
+was claimed in the October 12 verification. No additional model inference was
+used for those publication checks, and no downstream consumer was deployed.
 
 ## Initial validation (2026-10-11)
 
