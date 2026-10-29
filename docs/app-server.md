@@ -162,6 +162,35 @@ minutes for propagation and checks the intended dist-tag. A timeout after a
 successful workflow requires inspecting the registry before any retry; it does
 not imply that publication failed. Consumer deployment is separate.
 
+### Automatic releases after main CI
+
+When a push to `main` passes the complete CI workflow, the automatic release
+workflow compares each `packages/<name>/` directory with the Git tag for that
+package's published npm `latest`. It publishes changed packages in dependency
+order: adapters, runtime, CLI, then React. An unchanged package is skipped.
+Changes anywhere in a package directory, including its README and tests, count
+as package changes; root-only documentation or workflow changes do not.
+
+When a package manifest still matches npm `latest`, automation increments its
+patch version. To release a minor or major version, commit the intended higher
+version in that package's manifest with the change. Review compatibility before
+merging: automation cannot infer whether a change is breaking. The canonical
+package `release.sh` still runs its gates, pushes the version commit and tag,
+waits for the trusted-publisher workflow, and verifies npm. The controller
+dispatches that workflow explicitly because tag pushes made with GitHub's
+`GITHUB_TOKEN` do not start push-triggered workflows. No npm login, security-key
+challenge or long-lived npm token is needed for these subsequent releases.
+
+The controller proceeds only if the tested CI commit is still the tip of
+`main`; a later push must pass its own CI first. It fails closed if a published
+baseline tag is missing, a manifest is behind npm, a target tag already exists,
+or a release fails. Review failed Actions runs and check the tag and npm version
+before recovery. In particular, an npm processing delay after a successful
+workflow is not evidence that publication failed; never delete or recreate a
+published tag. A failed workflow can be rerun only after its publication state
+is understood. Disable the automatic workflow to stop future automatic releases;
+manual `release.sh` publication remains available.
+
 ### Package preparation (2026-10-29)
 
 Compatible build and test dependencies were refreshed while retaining React 18

@@ -15,6 +15,7 @@ name: Publish @codexview/adapters
 on:
   push:
     tags: ['adapters-v*.*.*']
+  workflow_dispatch:
 
 permissions:
   contents: write   # for softprops/action-gh-release to create the GitHub release
@@ -37,13 +38,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Verify tag matches packages/adapters/package.json version
-        run: |
-          TAG="${GITHUB_REF_NAME#adapters-v}"
-          PKG=$(jq -r .version packages/adapters/package.json)
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match packages/adapters/package.json version $PKG"
-            exit 1
-          fi
+        run: bash scripts/verify-release-tag.sh adapters
 
       - name: Typecheck adapters
         working-directory: packages/adapters

@@ -30,3 +30,5 @@ jobs:
       - run: pnpm test
 
       - run: pnpm test:packages
+
+      - run: node --test scripts/auto-release.test.mjs scripts/release-dispatch.test.mjs scripts/verify-release-tag.test.mjs
