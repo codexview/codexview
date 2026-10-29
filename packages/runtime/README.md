@@ -4,6 +4,12 @@ Node 20+ host for persistent local Codex app-server sessions. Requires an instal
 authenticated Codex CLI. Tested against **0.162.1** using stdio and the stable API;
 `experimentalApi` defaults to false. Opt in explicitly for Plan collaboration mode. Authentication stays in the Codex process.
 
+Install the published package in your Node.js host:
+
+```sh
+npm install @codexview/runtime
+```
+
 ```ts
 import { CodexRuntime } from '@codexview/runtime';
 

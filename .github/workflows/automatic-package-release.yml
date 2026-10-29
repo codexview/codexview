@@ -1,0 +1,62 @@
+name: Automatic package release
+
+on:
+  workflow_run:
+    workflows: [CI]
+    types: [completed]
+    branches: [main]
+
+permissions:
+  contents: write
+  actions: write
+
+# A later successful main CI run supersedes an older pending one. The planner
+# compares each package with its published tag, so it includes all unreleased
+# changes from skipped commits.
+concurrency:
+  group: automatic-package-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - uses: pnpm/action-setup@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: 24
+          cache: pnpm
+
+      - name: Confirm main is the commit that passed CI
+        id: revision
+        env:
+          TESTED_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          git fetch origin main --tags
+          if [[ "$(git rev-parse HEAD)" == "$TESTED_SHA" && "$(git rev-parse origin/main)" == "$TESTED_SHA" ]]; then
+            echo 'ready=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'Main has advanced; its own CI run will schedule any pending releases.'
+            echo 'ready=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Release changed packages in dependency order
+        if: steps.revision.outputs.ready == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          node scripts/auto-release.mjs --publish

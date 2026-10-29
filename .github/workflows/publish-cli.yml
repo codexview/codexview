@@ -15,6 +15,7 @@ name: Publish @codexview/cli
 on:
   push:
     tags: ['cli-v*.*.*']
+  workflow_dispatch:
 
 permissions:
   contents: write   # for softprops/action-gh-release to create the GitHub release

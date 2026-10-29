@@ -117,6 +117,10 @@ if [[ "$bootstrap" == true ]]; then
     die "bootstrap is only supported as runtime release.sh 0.0.0 --bootstrap"
 fi
 
+if [[ "${CODEXVIEW_DISPATCH_RELEASE_WORKFLOW:-0}" == "1" && "${GITHUB_ACTIONS:-}" != "true" ]]; then
+  die "automatic workflow dispatch is restricted to GitHub Actions"
+fi
+
 for command in git node npm pnpm; do
   command -v "$command" >/dev/null 2>&1 || die "missing command: $command"
 done
@@ -211,6 +215,14 @@ fi
 
 git tag "$tag"
 git push origin "$tag"
+
+# A tag pushed by GITHUB_TOKEN does not start a push-triggered workflow.
+# The automatic release controller explicitly dispatches the same trusted
+# publisher workflow at the new tag. Human-operated releases use the push event.
+if [[ "${CODEXVIEW_DISPATCH_RELEASE_WORKFLOW:-0}" == "1" ]]; then
+  gh workflow run "$workflow" --repo codexview/codexview --ref "$tag" ||
+    die "workflow dispatch failed; inspect $tag and its workflow before retrying"
+fi
 
 run_id=""
 for _ in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20; do
