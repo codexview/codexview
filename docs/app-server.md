@@ -178,15 +178,20 @@ render safely, and runtime initialization reads the installed package version.
 | Package | Public npm version verified | Next publication |
 | --- | --- | --- |
 | @codexview/adapters | 0.8.1 | Already published; do not repeat this version |
-| @codexview/cli | 0.7.1 | 0.7.2, including adapters 0.8.1 |
-| @codexview/react | 0.5.0 | 0.5.1, including the packaging and link fixes |
+| @codexview/cli | 0.7.2 | Published; includes adapters 0.8.1 |
+| @codexview/react | 0.5.1 | Published; includes the packaging and link fixes |
 | @codexview/runtime | Not published | Bootstrap, configure trusted publisher, then 0.7.0 |
 
 Adapters [workflow 40709863933](https://github.com/codexview/codexview/actions/runs/40709863933)
 completed successfully. npm's processing took longer than the old two-minute
 verification window; a subsequent public registry read confirmed **0.8.1** as
-`latest`. The verification window is now five minutes. No other package was
-published during this preparation; remaining publication is on hold.
+`latest`. The verification window is now five minutes. After publication resumed,
+React [workflow 40790377660](https://github.com/codexview/codexview/actions/runs/40790377660)
+and CLI [workflow 40790635131](https://github.com/codexview/codexview/actions/runs/40790635131)
+also succeeded. Fresh public-registry installs verified React SSR and its CSS
+export, the adapter import, and the CLI version. Runtime's first bootstrap still
+requires the maintainer's npm security-key verification and trusted-publisher
+configuration before its 0.7.0 release.
 
 Local validation passed **337 tests** (125 adapters, 31 runtime, 63 CLI,
 118 React), all typechecks/builds, and an isolated install of all four local
