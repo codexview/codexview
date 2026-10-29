@@ -150,9 +150,10 @@ the successful releases verify all four bindings end to end.
 Runtime has its own `runtime-v*` tags and `publish-runtime.yml` workflow. Its
 first release required creating the npm package and configuring the trusted
 publisher before the OIDC workflow could run. That setup is complete: the
-`bootstrap` tag points to 0.0.0 and `latest` points to 0.7.0. Future releases
-use `packages/runtime/release.sh <version> --publish` from a clean main checkout;
-the GitHub Actions trusted publisher does not require a local npm login or a
+`bootstrap` tag points to 0.0.0 and `latest` points to 0.7.1. Automatic releases
+run the canonical package script after main CI; maintainers can also run
+`packages/runtime/release.sh <version> --publish` from a clean main checkout.
+The GitHub Actions trusted publisher does not require a local npm login or a
 security-key challenge for each release.
 
 Publish changed dependencies first: pnpm rewrites workspace dependencies using
@@ -205,7 +206,7 @@ render safely, and runtime initialization reads the installed package version.
 | @codexview/adapters | 0.8.1 | Already published; do not repeat this version |
 | @codexview/cli | 0.7.2 | Published; includes adapters 0.8.1 |
 | @codexview/react | 0.5.1 | Published; includes the packaging and link fixes |
-| @codexview/runtime | 0.7.0 | Published; trusted publisher validated |
+| @codexview/runtime | 0.7.1 | Published; trusted publisher validated |
 
 Adapters [workflow 40709863933](https://github.com/codexview/codexview/actions/runs/40709863933)
 completed successfully. npm's processing took longer than the old two-minute
@@ -217,8 +218,10 @@ also succeeded. Fresh public-registry installs verified React SSR and its CSS
 export, the adapter import, and the CLI version. Runtime's
 [workflow 40797999696](https://github.com/codexview/codexview/actions/runs/40797999696)
 published 0.7.0 after the first-package bootstrap and trusted-publisher setup.
-A fresh public-registry install of all four current packages passed SSR, DOM,
-safe-link, CSS, CLI, NodeNext public-type and controlled runtime protocol checks.
+The automatic release workflow then published 0.7.1 after main CI passed, using
+the same trusted publisher without another security-key challenge. A fresh
+public-registry install of all four current packages passed SSR, DOM, safe-link,
+CSS, CLI, NodeNext public-type and controlled runtime protocol checks.
 
 Local validation passed **337 tests** (125 adapters, 31 runtime, 63 CLI,
 118 React), all typechecks/builds, and an isolated install of all four local
