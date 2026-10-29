@@ -1,6 +1,6 @@
 {
   "name": "@codexview/runtime",
-  "version": "0.7.0",
+  "version": "0.7.1",
   "description": "Node.js Codex app-server session runtime for CodexView",
   "type": "module",
   "license": "MIT",
