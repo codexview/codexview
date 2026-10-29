@@ -38,13 +38,7 @@ jobs:
       - run: pnpm install --frozen-lockfile
 
       - name: Verify tag matches packages/runtime/package.json version
-        run: |
-          TAG="${GITHUB_REF_NAME#runtime-v}"
-          PKG=$(jq -r .version packages/runtime/package.json)
-          if [ "$TAG" != "$PKG" ]; then
-            echo "::error::tag $GITHUB_REF_NAME does not match packages/runtime/package.json version $PKG"
-            exit 1
-          fi
+        run: bash scripts/verify-release-tag.sh runtime
 
       - name: Build @codexview/adapters (runtime depends on it)
         working-directory: packages/adapters
